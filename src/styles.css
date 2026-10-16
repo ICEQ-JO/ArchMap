@@ -4910,3 +4910,15 @@ pre {
   font-size: 10px;
   white-space: nowrap;
 }
+
+/* Keep the integrated landing's source previews inside narrow grid tracks. */
+.hero > *,
+.feature > * {
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .hero,
+  .feature {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

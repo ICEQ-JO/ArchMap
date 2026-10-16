@@ -110,7 +110,7 @@ const source = [
     title: 'Identity & access',
     code: 'const user = authenticate(token);',
     explanation: 'The generation handler calls authenticate before reserving credits.',
-    hash: 'd8a4f9104c',
+    hash: '8a4e016e98',
   },
   {
     fn: 'reserveCredits()',
@@ -119,7 +119,7 @@ const source = [
     title: 'Billing & credits',
     code: 'reserveCredits(user.id, 1);',
     explanation: 'The next source call reserves one credit for the authenticated user.',
-    hash: '8fa10b99c3',
+    hash: '8a4e016e98',
   },
   {
     fn: 'enqueue()',
@@ -128,7 +128,7 @@ const source = [
     title: 'Job queue',
     code: 'return enqueue({ userId: user.id, prompt });',
     explanation: 'The handler passes the user and prompt to the queue.',
-    hash: '3bc79e4401',
+    hash: '8a4e016e98',
   },
 ];
 const ticks = k.topTicks(-108, 108, 4, 5, 63, 0.7, [1.8, 3.2], P);
