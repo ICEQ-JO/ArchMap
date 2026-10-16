@@ -1,1336 +1,846 @@
+import { useEffect, useRef, useState } from 'react';
 import {
   ArrowDown,
   ArrowRight,
+  ArrowUpRight,
+  Braces,
   Check,
-  ChevronDown,
+  ChevronRight,
   Copy,
-  ExternalLink,
+  Database,
   FileCode2,
   FolderOpen,
   GitBranch,
-  Layers,
   Menu,
+  Network,
   Play,
-  RotateCcw,
-  Shield,
-  Sparkles,
+  ShieldCheck,
   Terminal,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
-import { Brand, Github } from './Brand';
-import { PixelArt, compare, evidence, glyphs, model, route, shield, skyline } from './PixelArt';
-import type { GlyphName } from './PixelArt';
-import TracingInstrument from './figures/TracingInstrument';
+import { Brand, Github, Mark } from './Brand';
+import './Landing.css';
 
 const github = 'https://github.com/ICEQ-JO/ArchMap';
-
-type ShippedItem = {
-  glyph: GlyphName;
-  tag: string;
-  title: string;
-  body: string;
-};
-
-const shipped: ShippedItem[] = [
+const install =
+  'git clone https://github.com/ICEQ-JO/ArchMap.git\ncd ArchMap\nnpm install\nnpm run dev';
+const areas = [
   {
-    glyph: 'overview',
-    tag: 'ORGANIZATION',
-    title: 'Responsibility overview',
-    body: 'API, identity, workers, messaging, storage and UI areas, grouped from source and labelled inferred.',
+    id: 'api',
+    name: 'Generation API',
+    type: 'ENTRY',
+    file: 'src/api/generate.ts',
+    line: 6,
+    code: 'const user = authenticate(token);',
+    x: 18,
+    y: 42,
+    icon: Braces,
+    detail: 'Starts the request. Checks identity, reserves a credit, then queues the work.',
   },
   {
-    glyph: 'flows',
-    tag: 'LEXICAL AST',
-    title: 'Named guided flows',
-    body: 'Step through a feature flow call site by call site, in lexical source order.',
+    id: 'auth',
+    name: 'Identity',
+    type: 'SERVICE',
+    file: 'src/services/auth.ts',
+    line: 1,
+    code: 'export function authenticate(token: string) {',
+    x: 50,
+    y: 17,
+    icon: ShieldCheck,
+    detail: 'The authentication boundary, called by the generation API.',
   },
   {
-    glyph: 'diff',
-    tag: 'GIT REVIEW',
-    title: 'Architecture change review',
-    body: 'Compare a Git revision with your working tree and inspect before/after source.',
+    id: 'credits',
+    name: 'Credits',
+    type: 'SERVICE',
+    file: 'src/api/generate.ts',
+    line: 8,
+    code: 'reserveCredits(user.id, 1);',
+    x: 82,
+    y: 17,
+    icon: GitBranch,
+    detail: 'The generation API reserves a credit before it submits a job.',
   },
   {
-    glyph: 'source',
-    tag: 'PROVENANCE',
-    title: 'Source detail and evidence',
-    body: 'Every observed connection carries its file, line range, snippet and content hash.',
-  },
-  {
-    glyph: 'proposal',
-    tag: 'MODEL VERIFICATION',
-    title: 'Reviewable proposals',
-    body: 'Ask for a proposed map, validate its references, then apply or discard with full undo.',
-  },
-  {
-    glyph: 'save',
-    tag: 'PORTABLE',
-    title: 'Sketches, save and export',
-    body: 'Start blank, edit freely, and keep a readable JSON file with your code.',
-  },
-];
-
-type RoadmapItem = {
-  glyph: GlyphName;
-  tag: string;
-  title: string;
-  body: string;
-};
-
-const roadmap: RoadmapItem[] = [
-  {
-    glyph: 'plug',
-    tag: 'AGENT INTEGRATION',
-    title: 'Coding-agent session integration',
-    body: 'Open the review of an AI coding session’s change without managing a baseline by hand.',
-  },
-  {
-    glyph: 'globe',
-    tag: 'POLYGLOT',
-    title: 'More languages and frameworks',
-    body: 'Analyzers beyond JavaScript and TypeScript, with framework-aware routing and behavior.',
-  },
-  {
-    glyph: 'layers',
-    tag: 'C4 ARCHITECTURE',
-    title: 'Custom boundaries and C4 levels',
-    body: 'Collapse, rename and nest architecture boundaries as you learn the system.',
-  },
-  {
-    glyph: 'cloud',
-    tag: 'COLLABORATION',
-    title: 'Authenticated self-hosting',
-    body: 'Shared workspaces, PR reports and continuous analysis, with genuine workspace isolation.',
-  },
-];
-
-type FaqItem = {
-  category: 'security' | 'models' | 'analysis' | 'general';
-  question: string;
-  answer: string;
-};
-
-const faq: FaqItem[] = [
-  {
-    category: 'security',
-    question: 'Does ArchMap run my code?',
-    answer:
-      'No. The reader parses source using the TypeScript compiler API. It never executes your code, installs dependencies, or runs build scripts — not even inside a Git comparison.',
-  },
-  {
-    category: 'security',
-    question: 'Where does my source go?',
-    answer:
-      'Nowhere by default. Analysis runs in a local service bound strictly to loopback (127.0.0.1), and static analysis needs no network at all. Source leaves your machine only if you configure an optional model endpoint and ask an explicit question, and the server holds that key, never the browser.',
-  },
-  {
-    category: 'models',
-    question: 'Do I need a model or an API key?',
-    answer:
-      'No. Maps, flows, change reviews and exports work 100% offline without one. A model adds written explanations and proposed responsibilities; you can point it at any OpenAI-compatible local server such as Ollama or vLLM.',
-  },
-  {
-    category: 'analysis',
-    question: 'Is this a runtime trace?',
-    answer:
-      'No, and it will not pretend to be. Structural boundaries are inferred from source organization, call-site walkthroughs follow lexical source order, and model output stays an interpretation even when its references check out.',
-  },
-  {
-    category: 'analysis',
-    question: 'Which projects work today?',
-    answer:
-      'JavaScript and TypeScript: .ts, .tsx, .js, .jsx and their .mjs and .cjs equivalents, with root tsconfig paths and aliases. Dynamic dispatch, framework routes and unresolved workspace packages can leave gaps, and other languages are on the roadmap.',
-  },
-  {
-    category: 'general',
-    question: 'How much does it cost?',
-    answer:
-      'Nothing. ArchMap is MIT licensed and runs on your machine. Hosting, team workspaces and provider integrations are later roadmap milestones, not a paywall waiting at the door.',
-  },
-];
-
-// Interactive Demo Data for Feature 01 (Guided Flows)
-const demoFlows = [
-  {
-    id: 'generate',
-    name: 'Generate Image',
-    entry: 'src/api/generate.ts:handleGenerate()',
-    steps: [
-      {
-        fn: 'authenticate(token)',
-        module: 'src/services/auth.ts',
-        callFile: 'src/api/generate.ts',
-        line: 6,
-        code: 'const user = authenticate(token);',
-        tag: 'Identity & Access',
-        flag: 'Parameter shadowing excluded',
-      },
-      {
-        fn: 'reserveCredits(user.id, 1)',
-        module: 'src/services/credits.ts',
-        callFile: 'src/api/generate.ts',
-        line: 8,
-        code: 'reserveCredits(user.id, 1);',
-        tag: 'Billing & Credits',
-        flag: 'Conservative syntax check',
-      },
-      {
-        fn: 'enqueue({ userId, prompt })',
-        module: 'src/services/queue.ts',
-        callFile: 'src/api/generate.ts',
-        line: 9,
-        code: 'return enqueue({ userId: user.id, prompt });',
-        tag: 'Job Queue',
-        flag: 'Lexical call-site order',
-      },
-    ],
+    id: 'queue',
+    name: 'Job queue',
+    type: 'SERVICE',
+    file: 'src/api/generate.ts',
+    line: 9,
+    code: 'return enqueue({ userId: user.id, prompt });',
+    x: 50,
+    y: 42,
+    icon: Network,
+    detail: 'A shared queue connects the request handler and the background worker.',
   },
   {
     id: 'worker',
-    name: 'Process Next Job',
-    entry: 'src/services/worker.ts:processNextJob()',
-    steps: [
-      {
-        fn: 'dequeue()',
-        module: 'src/services/queue.ts',
-        callFile: 'src/services/worker.ts',
-        line: 12,
-        code: 'const job = await dequeue();',
-        tag: 'Job Queue',
-        flag: 'Direct named import',
-      },
-      {
-        fn: 'provider.generate(job.prompt)',
-        module: 'src/services/provider.ts',
-        callFile: 'src/services/worker.ts',
-        line: 15,
-        code: 'const image = await provider.generate(job.prompt);',
-        tag: 'Image Provider',
-        flag: 'Top-level named call',
-      },
-      {
-        fn: 'storage.saveImage(job.id, image)',
-        module: 'src/services/storage.ts',
-        callFile: 'src/services/worker.ts',
-        line: 18,
-        code: 'await storage.saveImage(job.id, image);',
-        tag: 'Storage',
-        flag: 'Grounded in file hash',
-      },
-    ],
+    name: 'Worker',
+    type: 'SERVICE',
+    file: 'src/services/worker.ts',
+    line: 9,
+    code: 'const image = await requestImage(job.prompt);',
+    x: 82,
+    y: 42,
+    icon: Braces,
+    detail: 'Picks up a queued job and calls the configured image provider.',
   },
   {
-    id: 'status',
-    name: 'Get Generation Status',
-    entry: 'src/api/status.ts:handleStatus()',
-    steps: [
-      {
-        fn: 'authenticate(token)',
-        module: 'src/services/auth.ts',
-        callFile: 'src/api/status.ts',
-        line: 7,
-        code: 'const user = authenticate(token);',
-        tag: 'Identity & Access',
-        flag: 'Shared auth boundary',
-      },
-      {
-        fn: 'db.jobs.findById(jobId)',
-        module: 'src/services/database.ts',
-        callFile: 'src/api/status.ts',
-        line: 11,
-        code: 'const job = await db.jobs.findById(jobId);',
-        tag: 'Database',
-        flag: 'Targeted lexical scan',
-      },
-    ],
+    id: 'storage',
+    name: 'File storage',
+    type: 'DATA',
+    file: 'src/services/worker.ts',
+    line: 10,
+    code: 'const url = await saveImage(image);',
+    x: 50,
+    y: 68,
+    icon: FolderOpen,
+    detail: 'The worker saves the generated image and receives its URL.',
+  },
+  {
+    id: 'database',
+    name: 'Database',
+    type: 'DATA',
+    file: 'src/services/worker.ts',
+    line: 11,
+    code: "return saveGeneration({ userId: job.userId, url, status: 'complete' });",
+    x: 82,
+    y: 68,
+    icon: Database,
+    detail: 'The worker records the generation result for later retrieval.',
   },
 ];
+const lines = [
+  ['api', 'auth', 'M115 193 H210 V78 H320'],
+  ['api', 'credits', 'M115 193 H190 V42 H525 V78'],
+  ['api', 'queue', 'M115 193 H320'],
+  ['worker', 'queue', 'M525 193 H320'],
+  ['worker', 'storage', 'M525 193 H422 V313 H320'],
+  ['worker', 'database', 'M525 193 V313'],
+];
 
-export default function Landing({ open }: { open: (example: boolean) => void }) {
-  // Navigation / Mobile drawer state
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Quick Start tab state in Hero
-  const [quickTab, setQuickTab] = useState<'clone' | 'root' | 'npx'>('clone');
-  const [copiedCmd, setCopiedCmd] = useState(false);
-
-  // Interactive Flow Preview state (Feature 01)
-  const [selectedFlowIdx, setSelectedFlowIdx] = useState(0);
-  const [selectedStepIdx, setSelectedStepIdx] = useState(0);
-
-  // Interactive Change Review state (Feature 02)
-  const [diffView, setDiffView] = useState<'diff' | 'impact'>('diff');
-
-  // Interactive Model Proposal state (Feature 04)
-  const [modelMode, setModelMode] = useState<'offline' | 'proposal'>('offline');
-  const [proposalApplied, setProposalApplied] = useState(false);
-
-  // Capabilities tab filter
-  const [capFilter, setCapFilter] = useState<'all' | 'shipped' | 'roadmap'>('all');
-
-  // FAQ filter
-  const [faqCategory, setFaqCategory] = useState<'all' | 'security' | 'models' | 'analysis'>('all');
-
-  // Evidence copy state (Feature 03)
-  const [evidenceCopied, setEvidenceCopied] = useState(false);
-
-  const activeFlow = demoFlows[selectedFlowIdx];
-  const activeStep = activeFlow.steps[selectedStepIdx] || activeFlow.steps[0];
-
-  const quickCommands: Record<string, string> = {
-    clone:
-      'git clone https://github.com/ICEQ-JO/ArchMap.git\ncd ArchMap && npm install && npm run dev',
-    root: 'ARCHMAP_ROOT=/absolute/path/to/projects npm run dev',
-    npx: 'npm run build && npm start',
-  };
-
-  async function copyCommand(cmd: string) {
-    try {
-      await navigator.clipboard.writeText(cmd);
-      setCopiedCmd(true);
-      setTimeout(() => setCopiedCmd(false), 2000);
-    } catch {
-      // Fallback
-    }
-  }
-
-  async function copyEvidenceSnippet() {
-    try {
-      await navigator.clipboard.writeText(
-        `examples/image-studio/src/services/queue.ts:14-22\nexport async function enqueue(job: JobRequest): Promise<JobReceipt> {\n  const id = crypto.randomUUID();\n  const record: JobRecord = { id, ...job, status: 'queued', createdAt: Date.now() };\n  await db.jobs.insert(record);\n  return { id, status: 'queued' };\n}`,
+function Terrain({ muted = false }: { muted?: boolean }) {
+  const blocks = Array.from({ length: 27 }, (_, row) =>
+    Array.from({ length: 38 }, (_, col) => {
+      const wave = Math.sin(col * 0.29 + row * 0.14) * 4 + Math.cos(row * 0.4 - col * 0.12) * 3;
+      const band = Math.floor((row + wave) / 3);
+      return (
+        <rect
+          key={`${row}-${col}`}
+          x={col * 18}
+          y={row * 18}
+          width="18"
+          height="18"
+          fill={
+            (muted
+              ? ['#e2e2d9', '#d7d7cc', '#cacabc', '#b8b8a8', '#a7a795']
+              : ['#f1be67', '#eab15b', '#dfa24f', '#d39343', '#c58438'])[((band % 5) + 5) % 5]
+          }
+        />
       );
-      setEvidenceCopied(true);
-      setTimeout(() => setEvidenceCopied(false), 1800);
-    } catch {
-      // Ignore
-    }
-  }
-
-  const filteredFaq =
-    faqCategory === 'all' ? faq : faq.filter((item) => item.category === faqCategory);
-
+    }),
+  );
   return (
-    <div className="landing">
-      <a className="skip-link" href="#main">
-        Skip to content
-      </a>
+    <svg
+      className="atlas-terrain"
+      viewBox="0 0 684 486"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      {blocks}
+    </svg>
+  );
+}
 
-      {/* Sticky, blur-enhanced top navigation */}
-      <div className="site-header-outer">
-        <header className="site-header wrap">
-          <Brand />
-
-          <nav aria-label="Main navigation" className="desktop-nav">
-            <a href="#how-it-works">How it works</a>
-            <a href="#what-it-does">What it does</a>
-            <a href="#safety">Safety & limits</a>
-            <a href="#faq">FAQ</a>
-            <a href={github} target="_blank" rel="noreferrer" className="nav-github-link">
-              <Github size={15} /> GitHub <ExternalLink size={12} />
-            </a>
-          </nav>
-
-          <div className="site-header-actions">
-            <button
-              className="small-button secondary-action"
-              onClick={() => open(true)}
-              title="Open the Image Studio example"
-            >
-              <Play size={13} className="text-accent" /> Live Example
-            </button>
-            <button className="small-button primary-action" onClick={() => open(false)}>
-              Open workspace <ArrowRight size={14} />
-            </button>
-            <button
-              className="icon-button mobile-menu-toggle"
-              aria-label="Toggle navigation menu"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-        </header>
-
-        {/* Mobile menu dropdown */}
-        {mobileMenuOpen && (
-          <div className="mobile-nav-drawer wrap">
-            <nav aria-label="Mobile navigation">
-              <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)}>
-                How it works
-              </a>
-              <a href="#what-it-does" onClick={() => setMobileMenuOpen(false)}>
-                What it does
-              </a>
-              <a href="#safety" onClick={() => setMobileMenuOpen(false)}>
-                Safety & limits
-              </a>
-              <a href="#faq" onClick={() => setMobileMenuOpen(false)}>
-                FAQ
-              </a>
-              <a href={github} target="_blank" rel="noreferrer">
-                <Github size={15} /> GitHub repository
-              </a>
-            </nav>
-            <div className="mobile-drawer-actions">
-              <button
-                className="button primary full-width"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  open(true);
-                }}
-              >
-                <Play size={15} /> Explore live example
-              </button>
-              <button
-                className="button secondary full-width"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  open(false);
-                }}
-              >
-                <FolderOpen size={15} /> Open local repository
-              </button>
-            </div>
-          </div>
-        )}
+function SourceAtlas() {
+  const [selected, setSelected] = useState('api');
+  const area = areas.find((a) => a.id === selected)!;
+  return (
+    <div className="source-atlas" aria-label="Interactive Image Studio architecture example">
+      <div className="atlas-heading">
+        <span>
+          <Mark size={14} />
+          image-studio
+        </span>
+        <span>ILLUSTRATIVE SOURCE</span>
       </div>
-
-      <main id="main">
-        {/* HERO SECTION */}
-        <section className="hero wrap">
-          <div className="hero-lead">
-            <div className="hero-badge">
-              <span className="live-dot" />
-              <span>STATIC ANALYSIS · SOURCE EVIDENCE · LOCAL ONLY</span>
-            </div>
-            <h1>
-              Understand the feature.
-              <br />
-              <span>Inspect the evidence.</span>
-            </h1>
-            <p className="hero-lead-sub">
-              Deterministic AST architecture workbench for JavaScript and TypeScript. Zero runtime
-              execution, loopback isolation, and verified call-site walkthroughs backed by content
-              hashes.
-            </p>
-
-            <div className="hero-metrics">
-              <div className="hero-metric">
-                <strong>0</strong>
-                <span>Code Execution</span>
-              </div>
-              <div className="hero-metric-sep" />
-              <div className="hero-metric">
-                <strong>100%</strong>
-                <span>Loopback Only</span>
-              </div>
-              <div className="hero-metric-sep" />
-              <div className="hero-metric">
-                <strong>AST</strong>
-                <span>Lexical Call Sites</span>
-              </div>
-              <div className="hero-metric-sep" />
-              <div className="hero-metric">
-                <strong>Git</strong>
-                <span>Working Tree Diffs</span>
-              </div>
-            </div>
-
-            <div className="hero-art-container">
-              <PixelArt
-                sprite={skyline}
-                label="Module blocks joined by routed connections"
-                className="hero-art"
-              />
-              <span className="hero-art-caption">FIG. 00 · LEXICAL MODULE HORIZON</span>
-            </div>
-          </div>
-
-          <div className="hero-brief">
-            <p className="hero-brief-intro">
-              ArchMap reads a local JavaScript or TypeScript project and turns it into a map you can
-              question: responsibility areas, named feature flows, and the exact source behind every
-              connection. Ask a model for a proposal when you want one. Review it before anything
-              changes.
-            </p>
-
-            <div className="hero-actions">
-              <button className="button primary cta-glow" onClick={() => open(true)}>
-                <Play size={16} /> Explore a live example <ArrowRight size={17} />
-              </button>
-              <button className="button secondary" onClick={() => open(false)}>
-                <FolderOpen size={16} /> Open your repository
-              </button>
-            </div>
-
-            {/* Interactive Quickstart Terminal box */}
-            <div className="hero-terminal">
-              <div className="hero-terminal-header">
-                <div className="terminal-dots">
-                  <span className="dot red" />
-                  <span className="dot yellow" />
-                  <span className="dot green" />
-                </div>
-                <div className="terminal-tabs">
-                  <button
-                    className={`terminal-tab ${quickTab === 'clone' ? 'active' : ''}`}
-                    onClick={() => setQuickTab('clone')}
-                  >
-                    Quick clone
-                  </button>
-                  <button
-                    className={`terminal-tab ${quickTab === 'root' ? 'active' : ''}`}
-                    onClick={() => setQuickTab('root')}
-                  >
-                    Sibling root
-                  </button>
-                  <button
-                    className={`terminal-tab ${quickTab === 'npx' ? 'active' : ''}`}
-                    onClick={() => setQuickTab('npx')}
-                  >
-                    Production
-                  </button>
-                </div>
-                <button
-                  className="terminal-copy-btn"
-                  onClick={() => copyCommand(quickCommands[quickTab])}
-                  aria-label="Copy terminal command"
-                  title="Copy command"
-                >
-                  {copiedCmd ? <Check size={14} /> : <Copy size={14} />}
-                </button>
-              </div>
-              <pre className="hero-terminal-body">
-                <code>{quickCommands[quickTab]}</code>
-              </pre>
-              {copiedCmd && <span className="terminal-feedback">Copied to clipboard!</span>}
-            </div>
-
-            <div className="hero-notes">
-              <span>
-                <Check size={13} className="text-accent" /> Open source (MIT)
-              </span>
-              <span>
-                <Check size={13} className="text-accent" /> Runs locally (127.0.0.1)
-              </span>
-              <span>
-                <Check size={13} className="text-accent" /> No API key required
-              </span>
-            </div>
-
-            <p className="hero-requirement">
-              Requires <strong>Node.js 22.12+</strong> and Git. No accounts or sign-ups.
-            </p>
-          </div>
-        </section>
-
-        {/* FIGURE 01: THE SOURCE TRACING INSTRUMENT */}
-        <section className="figure-band wrap">
-          <TracingInstrument />
-          <div className="figure-note">
+      <div className="atlas-field">
+        <Terrain />
+        <svg
+          className="atlas-wires"
+          viewBox="0 0 640 460"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <marker
+              id="atlas-arrow"
+              viewBox="0 0 10 10"
+              refX="7"
+              refY="5"
+              markerWidth="5"
+              markerHeight="5"
+              orient="auto-start-reverse"
+            >
+              <path d="M0 0 9 5 0 10z" fill="currentColor" />
+            </marker>
+          </defs>
+          {lines.map(([from, to, d]) => (
+            <path
+              key={`${from}-${to}`}
+              d={d}
+              className={selected === from || selected === to ? 'is-lit' : ''}
+              markerEnd="url(#atlas-arrow)"
+            />
+          ))}
+        </svg>
+        {areas.map(({ id, name, type, x, y, icon: Icon }) => (
+          <button
+            key={id}
+            className={`atlas-node ${selected === id ? 'is-active' : ''}`}
+            style={{ left: `${x}%`, top: `${y}%` }}
+            aria-pressed={selected === id}
+            aria-label={`Inspect ${name}`}
+            onClick={() => setSelected(id)}
+          >
             <span>
-              <span className="live-dot" /> FIG. 01 · THE SOURCE TRACING INSTRUMENT
+              <Icon size={12} />
+              {type}
+              <i />
             </span>
-            <span>
-              Carriage and readout share one example. Click step pills, arrow buttons or use
-              keyboard [←] [→].
-            </span>
-          </div>
-        </section>
-
-        {/* STACK COMPATIBILITY BAR */}
-        <section className="stack-row wrap" aria-label="Source types read today">
-          <div className="stack-heading">
-            <span className="stack-label">Analyzed today</span>
-            <span className="stack-status-badge">AST COMPILER READY</span>
-          </div>
-          <ul className="stack-chips">
-            <li>JavaScript</li>
-            <li>TypeScript</li>
-            <li>.tsx / .jsx</li>
-            <li>ES modules</li>
-            <li>CommonJS</li>
-            <li>React</li>
-            <li>Vue</li>
-            <li>Local Git repos</li>
-          </ul>
-          <span className="stack-note">
-            Roadmap analyzers: Python, Go, Rust with framework routing.
+            <strong>{name}</strong>
+            <small>
+              {id === 'api'
+                ? 'generateImage()'
+                : id === 'worker'
+                  ? 'processNextJob()'
+                  : 'source-backed'}
+            </small>
+          </button>
+        ))}
+        <div className="atlas-hint">
+          <span className="atlas-cross">+</span> Pick a component. Follow the source.
+        </div>
+      </div>
+      <div className="atlas-evidence" aria-live="polite">
+        <div>
+          <FileCode2 size={13} />
+          <span>
+            {area.file}:{area.line}
           </span>
-        </section>
-
-        {/* FEATURE 01: NAMED GUIDED FLOWS */}
-        <section id="how-it-works" className="feature-section wrap">
-          <article className="feature" data-art="start">
-            <div className="feature-showcase">
-              <div className="feature-art-box">
-                <span className="feature-index">01</span>
-                <PixelArt sprite={route} label="Three responsibilities joined by one routed path" />
-              </div>
-
-              {/* Interactive Flow Inspector Widget */}
-              <div className="interactive-widget flow-widget">
-                <div className="widget-header">
-                  <span className="widget-title">FLOW WALKTHROUGH SIMULATOR</span>
-                  <div className="widget-tabs">
-                    {demoFlows.map((f, idx) => (
-                      <button
-                        key={f.id}
-                        className={`widget-tab ${selectedFlowIdx === idx ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedFlowIdx(idx);
-                          setSelectedStepIdx(0);
-                        }}
-                      >
-                        {f.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flow-step-pipeline">
-                  {activeFlow.steps.map((st, idx) => (
-                    <button
-                      key={st.fn}
-                      className={`pipeline-step ${selectedStepIdx === idx ? 'active' : ''}`}
-                      onClick={() => setSelectedStepIdx(idx)}
-                    >
-                      <span className="pipeline-num">0{idx + 1}</span>
-                      <span className="pipeline-fn">{st.fn}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flow-step-details">
-                  <div className="step-meta-row">
-                    <span className="step-file-badge">
-                      <FileCode2 size={12} /> {activeStep.callFile}:{activeStep.line}
-                    </span>
-                    <span className="step-target-badge">{activeStep.tag}</span>
-                    <span className="step-flag-chip">{activeStep.flag}</span>
-                  </div>
-                  <pre className="step-code-preview">
-                    <code>{activeStep.code}</code>
-                  </pre>
-                </div>
-              </div>
-            </div>
-
-            <div className="feature-copy">
-              <span className="eyebrow">Named guided flows</span>
-              <h2>
-                Follow a feature,
-                <br />
-                not a file tree.
-              </h2>
-              <p>
-                Pick a named flow and step through its call sites in lexical source order. Each step
-                resolves to an exact file, a line range and a snippet, so the walkthrough stays
-                fully checkable. Parameter shadowing, nested callbacks, branches and loops are
-                excluded or flagged: this is conservative syntax analysis, not a runtime trace.
-              </p>
-              <ul className="feature-chips">
-                <li>
-                  <Check size={12} /> Exact file + line range
-                </li>
-                <li>
-                  <Check size={12} /> Call-site snippet inspectable
-                </li>
-                <li>
-                  <Check size={12} /> Excluded shadow cases flagged
-                </li>
-              </ul>
-            </div>
-          </article>
-
-          {/* FEATURE 02: ARCHITECTURE CHANGE REVIEW */}
-          <article className="feature" data-art="end">
-            <div className="feature-showcase">
-              <div className="feature-art-box">
-                <span className="feature-index">02</span>
-                <PixelArt
-                  sprite={compare}
-                  label="Two revisions of one area with the changed line highlighted"
-                />
-              </div>
-
-              {/* Interactive Git Change Review Widget */}
-              <div className="interactive-widget diff-widget">
-                <div className="widget-header">
-                  <div className="diff-baseline-badge">
-                    <GitBranch size={13} />
-                    <span>HEAD (Working tree) vs origin/main</span>
-                  </div>
-                  <div className="widget-tabs">
-                    <button
-                      className={`widget-tab ${diffView === 'diff' ? 'active' : ''}`}
-                      onClick={() => setDiffView('diff')}
-                    >
-                      Source diff
-                    </button>
-                    <button
-                      className={`widget-tab ${diffView === 'impact' ? 'active' : ''}`}
-                      onClick={() => setDiffView('impact')}
-                    >
-                      Topology impact
-                    </button>
-                  </div>
-                </div>
-
-                {diffView === 'diff' ? (
-                  <div className="diff-body">
-                    <div className="diff-header-row">
-                      <span className="diff-filename">src/services/credits.ts</span>
-                      <span className="diff-area-tag">Billing & Credits</span>
-                    </div>
-                    <pre className="diff-code">
-                      <span className="diff-line ctx">
-                        <span>L6</span> export function reserveCredits(userId: string, count:
-                        number) &#123;
-                      </span>
-                      <span className="diff-line del">
-                        <span>L7</span> - return db.credits.decrement(userId, count);
-                      </span>
-                      <span className="diff-line add">
-                        <span>L7</span> + const cost = calculateCost(count);
-                      </span>
-                      <span className="diff-line add">
-                        <span>L8</span> + return db.credits.decrement(userId, cost);
-                      </span>
-                      <span className="diff-line ctx">
-                        <span>L9</span> &#125;
-                      </span>
-                    </pre>
-                  </div>
-                ) : (
-                  <div className="impact-body">
-                    <div className="impact-row">
-                      <span className="impact-label">Changed responsibilities:</span>
-                      <span className="impact-value">1 (Billing & Credits)</span>
-                    </div>
-                    <div className="impact-row">
-                      <span className="impact-label">Static dependency delta:</span>
-                      <span className="impact-value">+1 import (services/pricing.ts)</span>
-                    </div>
-                    <div className="impact-row">
-                      <span className="impact-label">Unchanged core graph:</span>
-                      <span className="impact-value">Preserved</span>
-                    </div>
-                    <div className="impact-security-notice">
-                      <Shield size={13} /> Read-only Git object inspect. No checkout or hooks run.
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="feature-copy">
-              <span className="eyebrow">Architecture change review</span>
-              <h2>
-                Compare a change
-                <br />
-                before you trust it.
-              </h2>
-              <p>
-                Choose a baseline — HEAD, a branch, a tag or a commit — and compare it with your
-                working tree. You get changed responsibility areas, changed files, added and removed
-                static dependencies, and before/after source. No checkout, no hooks, no filters, and
-                no analyzed code is executed.
-              </p>
-              <ul className="feature-chips">
-                <li>
-                  <Check size={12} /> HEAD vs branch or commit
-                </li>
-                <li>
-                  <Check size={12} /> Zero checkout or file edits
-                </li>
-                <li>
-                  <Check size={12} /> Coverage limits explicitly stated
-                </li>
-              </ul>
-            </div>
-          </article>
-
-          {/* FEATURE 03: EVIDENCE ATTACHED */}
-          <article className="feature" data-art="start">
-            <div className="feature-showcase">
-              <div className="feature-art-box">
-                <span className="feature-index">03</span>
-                <PixelArt
-                  sprite={evidence}
-                  label="A source sheet with one inspected line under a magnifier"
-                />
-              </div>
-
-              {/* Interactive Genuine EvidenceCard */}
-              <div className="interactive-widget evidence-widget">
-                <div className="evidence-card-landing">
-                  <div className="evidence-landing-header">
-                    <FileCode2 size={13} className="text-accent" />
-                    <span className="evidence-landing-file">
-                      examples/image-studio/src/services/queue.ts:14-20
-                    </span>
-                    <button
-                      className="evidence-copy-action"
-                      onClick={copyEvidenceSnippet}
-                      aria-label="Copy snippet"
-                    >
-                      {evidenceCopied ? <Check size={12} /> : <Copy size={12} />}
-                      <span>{evidenceCopied ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                  <pre className="evidence-landing-code">
-                    <code>
-                      <span className="code-line">
-                        <span>14</span>
-                        <strong>export async function</strong> enqueue(job: JobRequest) &#123;
-                      </span>
-                      <span className="code-line">
-                        <span>15</span> const id = crypto.randomUUID();
-                      </span>
-                      <span className="code-line highlight">
-                        <span>16</span> await db.jobs.insert(&#123; id, ...job, status:
-                        &apos;queued&apos; &#125;);
-                      </span>
-                      <span className="code-line">
-                        <span>17</span> return &#123; id, status: &apos;queued&apos; &#125;;
-                      </span>
-                      <span className="code-line">
-                        <span>18</span> &#125;
-                      </span>
-                    </code>
-                  </pre>
-                  <div className="evidence-landing-footer">
-                    <span className="evidence-range">Lines 14–18</span>
-                    <span className="evidence-hash">sha256:e8b10f24a6</span>
-                    <span className="evidence-provenance">OBSERVED CONNECTION</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="feature-copy">
-              <span className="eyebrow">Evidence, attached</span>
-              <h2>
-                Every connection
-                <br />
-                points at source.
-              </h2>
-              <p>
-                An observed connection carries the file path, line range, snippet and a SHA-256 hash
-                of the file content. Grouped responsibilities and model proposals are labelled
-                inferred; connections you draw yourself stay manual. Static dependencies are never
-                dressed up as runtime order.
-              </p>
-              <ul className="feature-chips">
-                <li>
-                  <Check size={12} /> Observed / Inferred / Manual tags
-                </li>
-                <li>
-                  <Check size={12} /> Cryptographic content hash
-                </li>
-                <li>
-                  <Check size={12} /> Standalone readable JSON export
-                </li>
-              </ul>
-            </div>
-          </article>
-
-          {/* FEATURE 04: MODELS ARE OPTIONAL */}
-          <article className="feature" data-art="end">
-            <div className="feature-showcase">
-              <div className="feature-art-box">
-                <span className="feature-index">04</span>
-                <PixelArt sprite={model} label="A model chip answering only when asked" />
-              </div>
-
-              {/* Interactive Model Proposal Simulation */}
-              <div className="interactive-widget model-widget">
-                <div className="widget-header">
-                  <span className="widget-title">ANALYSIS MODE</span>
-                  <div className="widget-tabs">
-                    <button
-                      className={`widget-tab ${modelMode === 'offline' ? 'active' : ''}`}
-                      onClick={() => setModelMode('offline')}
-                    >
-                      Offline AST
-                    </button>
-                    <button
-                      className={`widget-tab ${modelMode === 'proposal' ? 'active' : ''}`}
-                      onClick={() => setModelMode('proposal')}
-                    >
-                      <Sparkles size={11} /> Model Proposal
-                    </button>
-                  </div>
-                </div>
-
-                {modelMode === 'offline' ? (
-                  <div className="model-offline-body">
-                    <div className="offline-stat-row">
-                      <span className="stat-pill">0 API TOKENS</span>
-                      <span className="stat-pill">DETERMINISTIC AST</span>
-                      <span className="stat-pill">AIR-GAPPED</span>
-                    </div>
-                    <p className="offline-note">
-                      Grouped by directory topology and static imports into API, Identity, Storage,
-                      and UI. Reliable, instant, zero latency.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="model-proposal-body">
-                    <div className="proposal-card">
-                      <div className="proposal-badge-row">
-                        <span className="proposal-title">Proposal: Billing Orchestration</span>
-                        <span className="proposal-status">3 / 3 verified</span>
-                      </div>
-                      <p className="proposal-desc">
-                        Suggests grouping services/credits.ts and api/generate.ts into a shared
-                        billing responsibility area based on call evidence.
-                      </p>
-                      <div className="proposal-actions">
-                        <button
-                          className={`btn-proposal-apply ${proposalApplied ? 'applied' : ''}`}
-                          onClick={() => setProposalApplied(true)}
-                        >
-                          {proposalApplied ? <Check size={12} /> : null}
-                          {proposalApplied ? 'Applied to preview' : 'Apply proposal'}
-                        </button>
-                        <button
-                          className="btn-proposal-discard"
-                          onClick={() => setProposalApplied(false)}
-                        >
-                          <RotateCcw size={12} /> Discard
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="feature-copy">
-              <span className="eyebrow">Models are optional</span>
-              <h2>
-                Ask a model, or
-                <br />
-                don’t. Both work.
-              </h2>
-              <p>
-                Static analysis runs offline with no key, and without one the app still proposes
-                responsibilities from source. When you configure a chat-completions endpoint, the
-                server validates every referenced file and evidence ID before you see a proposal —
-                and you apply or discard it. Undo restores the view you had.
-              </p>
-              <ul className="feature-chips">
-                <li>
-                  <Check size={12} /> Keys stay server-side in memory
-                </li>
-                <li>
-                  <Check size={12} /> Every reference strictly validated
-                </li>
-                <li>
-                  <Check size={12} /> Full Apply / Discard / Undo cycle
-                </li>
-              </ul>
-            </div>
-          </article>
-        </section>
-
-        {/* CAPABILITIES SECTION */}
-        <section id="what-it-does" className="capability-section">
-          <div className="wrap">
-            <div className="capability-heading">
-              <div>
-                <span className="eyebrow">Detailed capabilities</span>
-                <h2>
-                  Know what your change
-                  <br />
-                  <span>actually touched.</span>
-                </h2>
-              </div>
-              <p>
-                Everything below is either running in the repository today or written down as the
-                next milestone. No universal coverage claims: the map says what it read and what it
-                could not.
-              </p>
-            </div>
-
-            <div className="capability-filters">
-              <button
-                className={`cap-filter-btn ${capFilter === 'all' ? 'active' : ''}`}
-                onClick={() => setCapFilter('all')}
-              >
-                All capabilities ({shipped.length + roadmap.length})
-              </button>
-              <button
-                className={`cap-filter-btn ${capFilter === 'shipped' ? 'active' : ''}`}
-                onClick={() => setCapFilter('shipped')}
-              >
-                Shipped today ({shipped.length})
-              </button>
-              <button
-                className={`cap-filter-btn ${capFilter === 'roadmap' ? 'active' : ''}`}
-                onClick={() => setCapFilter('roadmap')}
-              >
-                On roadmap ({roadmap.length})
-              </button>
-            </div>
-
-            {(capFilter === 'all' || capFilter === 'shipped') && (
-              <div className="capability-group">
-                <span className="group-label">Shipped today</span>
-                <div className="capability-grid">
-                  {shipped.map(({ glyph, tag, title, body }) => (
-                    <Capability
-                      key={title}
-                      glyph={glyph}
-                      tag={tag}
-                      title={title}
-                      body={body}
-                      status="shipped"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {(capFilter === 'all' || capFilter === 'roadmap') && (
-              <div className="capability-group">
-                <span className="group-label">On the roadmap</span>
-                <div className="capability-grid pair">
-                  {roadmap.map(({ glyph, tag, title, body }) => (
-                    <Capability
-                      key={title}
-                      tag={tag}
-                      glyph={glyph}
-                      title={title}
-                      body={body}
-                      status="planned"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* SAFETY & LIMITS SECTION */}
-        <section id="safety" className="safety-section wrap">
-          <div className="safety-copy">
-            <span className="eyebrow">Read-only by construction</span>
-            <h2>
-              Your code stays
-              <br />
-              <span>your code.</span>
-            </h2>
-            <div className="safety-points">
-              <article>
-                <div className="safety-mark-wrapper">
-                  <PixelArt sprite={shield} label="" className="safety-mark" />
-                </div>
-                <div>
-                  <div className="safety-title-row">
-                    <h3>Nothing is executed</h3>
-                    <span className="safety-pill">NO RUNTIME EVAL</span>
-                  </div>
-                  <p>
-                    The reader parses source using the TypeScript compiler AST and reads raw Git
-                    objects. Dependency installation, build scripts, hooks and filters never run.
-                  </p>
-                </div>
-              </article>
-
-              <article>
-                <div className="safety-mark-wrapper">
-                  <PixelArt sprite={glyphs.layers} label="" className="safety-mark" />
-                </div>
-                <div>
-                  <div className="safety-title-row">
-                    <h3>Bounded on purpose</h3>
-                    <span className="safety-pill">400 FILES · 8 MB LIMIT</span>
-                  </div>
-                  <p>
-                    Strict scan bounds prevent resource starvation. Credential paths, dependencies,
-                    build outputs, binary files and out-of-root symlinks are excluded by default.
-                  </p>
-                </div>
-              </article>
-
-              <article>
-                <div className="safety-mark-wrapper">
-                  <PixelArt sprite={glyphs.plug} label="" className="safety-mark" />
-                </div>
-                <div>
-                  <div className="safety-title-row">
-                    <h3>Loopback only</h3>
-                    <span className="safety-pill">127.0.0.1 BOUNDARY</span>
-                  </div>
-                  <p>
-                    The service binds strictly to loopback and rejects foreign Host and Origin
-                    headers. It is built for a single trusted local user; never expose it through a
-                    public proxy.
-                  </p>
-                </div>
-              </article>
-            </div>
-          </div>
-
-          {/* Diagnostic telemetry gaps panel */}
-          <aside className="limits-panel">
-            <div className="limits-head">
-              <span>What the map cannot see</span>
-              <span className="limits-head-tag">RADICAL TRANSPARENCY</span>
-            </div>
-            <ul>
-              <li>
-                <span>Dynamic dispatch and methods</span> <em className="tag-gap">AST GAP</em>
-              </li>
-              <li>
-                <span>Framework routes, deferred callbacks</span>{' '}
-                <em className="tag-gap">AST GAP</em>
-              </li>
-              <li>
-                <span>Bundler aliases, unresolved workspaces</span>{' '}
-                <em className="tag-gap">AST GAP</em>
-              </li>
-              <li>
-                <span>Languages other than JavaScript and TypeScript</span>{' '}
-                <em className="tag-planned">ROADMAP</em>
-              </li>
-              <li>
-                <span>Runtime order and real execution paths</span>{' '}
-                <em className="tag-warn">NOT A TRACE</em>
-              </li>
-              <li>
-                <span>Secrets hardcoded in ordinary source</span>{' '}
-                <em className="tag-warn">NOT REDACTED</em>
-              </li>
-            </ul>
-            <div className="limits-foot">
-              <p>
-                Absence in a bounded scan is not proof of absence. Partial analyses are explicitly
-                labeled wherever coverage is incomplete.
-              </p>
-            </div>
-          </aside>
-        </section>
-
-        {/* FAQ SECTION */}
-        <section id="faq" className="faq-section wrap">
-          <div className="faq-copy">
-            <span className="eyebrow">Straight answers</span>
-            <h2>
-              Questions people
-              <br />
-              actually ask.
-            </h2>
-            <div className="faq-filter-chips">
-              <button
-                className={`faq-chip ${faqCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setFaqCategory('all')}
-              >
-                All
-              </button>
-              <button
-                className={`faq-chip ${faqCategory === 'security' ? 'active' : ''}`}
-                onClick={() => setFaqCategory('security')}
-              >
-                Security & Isolation
-              </button>
-              <button
-                className={`faq-chip ${faqCategory === 'models' ? 'active' : ''}`}
-                onClick={() => setFaqCategory('models')}
-              >
-                AI & Models
-              </button>
-              <button
-                className={`faq-chip ${faqCategory === 'analysis' ? 'active' : ''}`}
-                onClick={() => setFaqCategory('analysis')}
-              >
-                AST & Tracing
-              </button>
-            </div>
-          </div>
-
-          <div className="faq-list">
-            {filteredFaq.map(({ question, answer }) => (
-              <details key={question} className="faq-item">
-                <summary>
-                  <span>{question}</span>
-                  <span className="faq-toggle-icon" aria-hidden="true">
-                    +
-                  </span>
-                </summary>
-                <p>{answer}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        {/* BOTTOM CTA / QUICK WORKSTATION */}
-        <section className="start-section wrap">
-          <div className="start-box">
-            <span className="eyebrow">Ready for exploration</span>
-            <h2>
-              Meet your codebase.
-              <br />
-              Again, properly.
-            </h2>
-            <p>
-              Start in seconds with the included Image Studio example, or point ArchMap at your own
-              repository.
-            </p>
-
-            <div className="start-actions">
-              <button className="button primary cta-glow" onClick={() => open(true)}>
-                <Play size={16} /> Take the example for a spin <ArrowRight size={18} />
-              </button>
-              <button className="button secondary" onClick={() => open(false)}>
-                <FolderOpen size={16} /> Open your repository
-              </button>
-            </div>
-
-            <div className="install-workstation">
-              <div className="workstation-head">
-                <Terminal size={14} className="text-accent" />
-                <span>terminal — bash</span>
-                <span className="workstation-cwd">~/projects/ArchMap</span>
-              </div>
-              <div className="install-command">
-                <code>
-                  git clone https://github.com/ICEQ-JO/ArchMap.git &amp;&amp; cd ArchMap &amp;&amp;
-                  npm i &amp;&amp; npm run dev
-                </code>
-                <button
-                  aria-label="Copy installation command"
-                  onClick={() =>
-                    copyCommand(
-                      'git clone https://github.com/ICEQ-JO/ArchMap.git\ncd ArchMap && npm install && npm run dev',
-                    )
-                  }
-                  title="Copy command"
-                >
-                  {copiedCmd ? <Check size={16} /> : <Copy size={16} />}
-                </button>
-              </div>
-            </div>
-
-            <span className="copy-status" role="status">
-              {copiedCmd
-                ? 'Copied commands to clipboard.'
-                : 'Next steps: cd ArchMap · npm install · npm run dev · open http://localhost:4310'}
-            </span>
-          </div>
-        </section>
-      </main>
-
-      {/* FOOTER */}
-      <footer className="site-footer">
-        <div className="wrap footer-content">
-          <div className="footer-brand">
-            <Brand />
-            <p>
-              A local-first architecture workbench for JavaScript and TypeScript. It shows the
-              source behind every connection, and honestly states what it could not read.
-            </p>
-            <span className="status-pill">
-              <span className="live-dot" /> Loopback only · No telemetry · MIT
-            </span>
-          </div>
-
-          <nav className="footer-columns" aria-label="Footer">
-            <div>
-              <span>Product</span>
-              <a href="#how-it-works">How it works</a>
-              <a href="#what-it-does">What it does</a>
-              <a href="#safety">Safety and limits</a>
-              <a href="#faq">FAQ</a>
-              <button onClick={() => open(true)}>Explore live example</button>
-            </div>
-            <div>
-              <span>Project</span>
-              <a href={github} target="_blank" rel="noreferrer">
-                Source code <ExternalLink size={11} />
-              </a>
-              <a href={`${github}/blob/main/README.md`} target="_blank" rel="noreferrer">
-                README
-              </a>
-              <a href={`${github}/blob/main/DESIGN.md`} target="_blank" rel="noreferrer">
-                Design system
-              </a>
-              <a href={`${github}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noreferrer">
-                Contributing
-              </a>
-              <a href={`${github}/blob/main/LICENSE`} target="_blank" rel="noreferrer">
-                MIT License
-              </a>
-            </div>
-            <div>
-              <span>Guides</span>
-              <a href={`${github}#getting-started`} target="_blank" rel="noreferrer">
-                Getting started
-              </a>
-              <a href={`${github}#review-a-coding-change`} target="_blank" rel="noreferrer">
-                Review a change
-              </a>
-              <a
-                href={`${github}#connect-a-model-in-the-web-interface`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Connect a model
-              </a>
-              <a
-                href={`${github}/blob/main/THIRD_PARTY_NOTICES.md`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Third-party notices
-              </a>
-            </div>
-          </nav>
+          <span>SOURCE</span>
         </div>
-
-        <div className="wrap footer-base">
-          <span>© 2026 ArchMap · MIT License</span>
-          <a href="#main">
-            Back to top <ArrowDown size={13} />
-          </a>
-        </div>
-      </footer>
+        <code>{area.code}</code>
+        <p>{area.detail}</p>
+      </div>
+      <p className="atlas-footnote">
+        Inferred areas · static source relationships, not a runtime trace.
+      </p>
     </div>
   );
 }
 
-function Capability({
-  glyph,
-  tag,
-  title,
-  body,
-  status,
-}: {
-  glyph: GlyphName;
-  tag: string;
-  title: string;
-  body: string;
-  status: 'shipped' | 'planned';
-}) {
+const views = [
+  {
+    label: 'Understand a system',
+    title: 'Find your way into a codebase.',
+    body: 'Start with a responsibility overview. Switch to source files, inspect a connection, and see the code that put it on the map.',
+    action: 'Explore the example',
+    kind: 'map',
+  },
+  {
+    label: 'Follow a feature',
+    title: 'Follow the feature. Keep the source.',
+    body: 'Step through a named source flow with the relevant snippet beside you. Every observed connection has a file, line range, and content hash.',
+    action: 'Explore the example',
+    kind: 'flow',
+  },
+  {
+    label: 'Review a change',
+    title: 'See what changed around the code.',
+    body: 'Compare a Git revision with your working tree. Inspect affected responsibilities, dependency changes, and before-and-after source.',
+    action: 'Explore the example',
+    kind: 'changes',
+  },
+];
+
+function ProductPreview({ view }: { view: number }) {
   return (
-    <article className="capability" data-status={status}>
-      <div className="capability-top">
-        <div className="capability-art">
-          <PixelArt sprite={glyphs[glyph]} label="" />
+    <div className="landing-preview">
+      <div className="preview-top">
+        <span>
+          <Mark size={15} />
+          archmap.
+        </span>
+        <span>
+          image-studio <ChevronRight size={12} />
+          {view === 2 ? 'Changes' : view === 1 ? 'Flows' : 'Architecture'}
+        </span>
+        <span className="preview-local">Local workspace</span>
+      </div>
+      <div className="preview-body">
+        <aside>
+          <span>WORKSPACE</span>
+          {['Architecture', 'Flows', 'Changes', 'Sessions', 'Ask'].map((name, i) => (
+            <div
+              key={name}
+              className={i === (view === 2 ? 2 : view === 1 ? 1 : 0) ? 'is-active' : ''}
+            >
+              {i === 0 ? (
+                <Network size={14} />
+              ) : i === 1 ? (
+                <Play size={14} />
+              ) : i === 2 ? (
+                <GitBranch size={14} />
+              ) : i === 3 ? (
+                <Terminal size={14} />
+              ) : (
+                <Braces size={14} />
+              )}
+              <span>{name}</span>
+            </div>
+          ))}
+        </aside>
+        {view === 0 ? (
+          <div className="preview-map">
+            <svg viewBox="0 0 650 360" aria-hidden="true">
+              <path
+                d="M130 180 H255 V85 H415 M255 180 H415 M480 205 V285 H255"
+                fill="none"
+                stroke="#a7a79d"
+              />
+              {[
+                [45, 150, 'Generation API', 'generateImage()'],
+                [325, 55, 'Identity & access', 'authenticate()'],
+                [325, 150, 'Job queue', 'enqueue()'],
+                [165, 255, 'File storage', 'saveImage()'],
+              ].map(([x, y, title, code]) => (
+                <g key={title} transform={`translate(${x} ${y})`}>
+                  <rect width="180" height="72" rx="5" fill="#fff" stroke="#c7c7ba" />
+                  <text x="15" y="21" fontSize="8" fill="#78786c">
+                    INFERRED RESPONSIBILITY
+                  </text>
+                  <text x="15" y="41" fontSize="13" fill="#25251f">
+                    {title}
+                  </text>
+                  <text x="15" y="59" fontSize="9" fill="#78786c">
+                    {code}
+                  </text>
+                </g>
+              ))}
+            </svg>
+            <div className="preview-mobile-map">
+              <div className="mobile-map-entry">
+                <strong>Generation API</strong>
+                <code>generateImage()</code>
+              </div>
+              <svg viewBox="0 0 280 44" aria-hidden="true">
+                <path d="M140 0 V20 H65 V44 M140 20 H215 V44" fill="none" stroke="#9b9b8e" />
+              </svg>
+              <div className="mobile-map-targets">
+                <div>
+                  <strong>Identity</strong>
+                  <code>authenticate()</code>
+                </div>
+                <div>
+                  <strong>Job queue</strong>
+                  <code>enqueue()</code>
+                </div>
+              </div>
+              <p>
+                Two imports from the generation API.
+                <br />
+                Select a connection in the workspace to inspect its source.
+              </p>
+            </div>
+            <span className="preview-caption">
+              Source-backed connections. A map you can inspect.
+            </span>
+          </div>
+        ) : view === 1 ? (
+          <div className="preview-flow">
+            <div>
+              <span className="preview-label">Generate Image</span>
+              <h4>Authenticate</h4>
+              <p>generateImage calls authenticate.</p>
+              <div className="preview-steps">
+                <b>1</b>
+                <span>2</span>
+                <span>3</span>
+              </div>
+            </div>
+            <div className="preview-source">
+              <span>src/api/generate.ts:6</span>
+              <code>
+                <i>6</i> const user = <em>authenticate</em>(token);
+              </code>
+              <small>Source evidence · SHA-256 snapshot</small>
+            </div>
+          </div>
+        ) : (
+          <div className="preview-change">
+            <div className="preview-change-heading">
+              <span>Illustrative review</span>
+              <strong>Authentication dependency replaced</strong>
+            </div>
+            <div>
+              <span>Before</span>
+              <code className="diff-old">− authenticate(token)</code>
+            </div>
+            <div>
+              <span>After</span>
+              <code className="diff-new">+ validateSession(token)</code>
+            </div>
+            <p>Review the source and surrounding dependencies before accepting a change.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function Landing({ open }: { open: (example: boolean) => void }) {
+  const [menu, setMenu] = useState(false);
+  const [view, setView] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
+  const [step, setStep] = useState(0);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const close = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenu(false);
+        menuButton.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [menu]);
+  async function copyInstall() {
+    try {
+      await navigator.clipboard.writeText(install);
+      setCopied(true);
+      setCopyError(false);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyError(true);
+    }
+  }
+  return (
+    <div className="atlas-landing">
+      <a className="atlas-skip" href="#main">
+        Skip to content
+      </a>
+      <header className="atlas-nav">
+        <Brand />
+        <nav aria-label="Main navigation">
+          <a href="#inside">The product</a>
+          <a href="#workflow">How it works</a>
+          <a href={`${github}#readme`} target="_blank" rel="noreferrer">
+            Documentation <ArrowUpRight size={12} />
+          </a>
+        </nav>
+        <div>
+          <a
+            className="atlas-github"
+            href={github}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="ArchMap on GitHub"
+          >
+            <Github size={18} />
+            <span>Star on GitHub</span>
+          </a>
+          <button className="atlas-button ink" onClick={() => open(false)}>
+            Open workspace <ArrowUpRight size={15} />
+          </button>
+          <button
+            ref={menuButton}
+            className="atlas-menu-button"
+            aria-label={menu ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={menu}
+            aria-controls="atlas-mobile-nav"
+            onClick={() => setMenu(!menu)}
+          >
+            {menu ? <X size={21} /> : <Menu size={21} />}
+          </button>
         </div>
-        <span className="capability-tag">{tag}</span>
-      </div>
-      <div className="capability-body">
-        <h3>
-          {title}
-          <em>{status === 'shipped' ? 'shipped' : 'planned'}</em>
-        </h3>
-        <p>{body}</p>
-      </div>
-    </article>
+      </header>
+      {menu && (
+        <nav id="atlas-mobile-nav" className="atlas-mobile-nav" aria-label="Mobile navigation">
+          <a href="#inside" onClick={() => setMenu(false)}>
+            The product
+          </a>
+          <a href="#workflow" onClick={() => setMenu(false)}>
+            How it works
+          </a>
+          <a href={`${github}#readme`}>
+            Documentation <ArrowUpRight size={15} />
+          </a>
+          <button onClick={() => open(false)}>
+            Open workspace <ArrowUpRight size={15} />
+          </button>
+        </nav>
+      )}
+      <main id="main">
+        <section className="atlas-hero" aria-labelledby="atlas-title">
+          <div className="atlas-hero-copy">
+            <h1 id="atlas-title">
+              Build with AI.
+              <br />
+              Keep the
+              <br />
+              <span>big picture.</span>
+            </h1>
+            <p>
+              Turn your codebase into a map you can follow. Understand the system, trace a feature,
+              and see what your coding agent changed.
+            </p>
+            <div className="atlas-hero-actions">
+              <button
+                className="atlas-button ink"
+                onClick={() => open(true)}
+                aria-label="Explore a live example"
+              >
+                Explore a live example <ArrowRight size={17} />
+              </button>
+              <button className="atlas-text-link" onClick={() => open(false)}>
+                Open your repository <ArrowUpRight size={15} />
+              </button>
+            </div>
+            <p className="atlas-hero-note">
+              <span />
+              Open source. On your machine. In your hands.
+            </p>
+          </div>
+          <SourceAtlas />
+          <div className="atlas-hero-bottom">
+            <span>SOFTWARE MAKES MORE SENSE WHEN YOU CAN SEE IT.</span>
+            <a href="#inside">
+              Take a closer look <ArrowDown size={15} />
+            </a>
+          </div>
+        </section>
+        <div className="atlas-capabilities">
+          <span>JavaScript & TypeScript</span>
+          <i />
+          <span>Local source analysis</span>
+          <i />
+          <span>Bring your own model</span>
+          <i />
+          <a href={`${github}/blob/main/LICENSE`}>
+            MIT licensed <ArrowUpRight size={12} />
+          </a>
+        </div>
+        <section className="atlas-product atlas-section" id="inside">
+          <div className="atlas-section-heading">
+            <h2>
+              A map for the part
+              <br />
+              you’re trying to understand.
+            </h2>
+            <p>
+              Opening files is easy. Seeing how they fit together takes context. Keep that context
+              next to the code.
+            </p>
+          </div>
+          <div className="atlas-product-layout">
+            <div className="atlas-product-copy">
+              <div className="atlas-view-tabs" role="tablist" aria-label="Explore ArchMap features">
+                {views.map((item, i) => (
+                  <button
+                    key={item.kind}
+                    id={`feature-tab-${i}`}
+                    role="tab"
+                    aria-selected={view === i}
+                    aria-controls="feature-panel"
+                    tabIndex={view === i ? 0 : -1}
+                    onClick={() => setView(i)}
+                    onKeyDown={(event) => {
+                      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+                        event.preventDefault();
+                        const next =
+                          event.key === 'Home'
+                            ? 0
+                            : event.key === 'End'
+                              ? 2
+                              : (i + (event.key === 'ArrowRight' ? 1 : 2)) % 3;
+                        setView(next);
+                        document.getElementById(`feature-tab-${next}`)?.focus();
+                      }
+                    }}
+                  >
+                    {item.label}
+                    <ArrowRight size={16} />
+                  </button>
+                ))}
+              </div>
+              <div id="feature-panel" role="tabpanel" aria-labelledby={`feature-tab-${view}`}>
+                <h3>{views[view].title}</h3>
+                <p>{views[view].body}</p>
+                <button className="atlas-text-link" onClick={() => open(true)}>
+                  {views[view].action} <ArrowUpRight size={15} />
+                </button>
+              </div>
+            </div>
+            <ProductPreview view={view} />
+          </div>
+          <p className="atlas-preview-note">
+            Illustrative Image Studio project. Static source relationships are not runtime traces.{' '}
+            <button onClick={() => open(true)}>
+              Try it in the real workspace <ArrowRight size={13} />
+            </button>
+          </p>
+        </section>
+        <section className="atlas-workflow" id="workflow">
+          <div className="atlas-workflow-heading">
+            <h2>
+              The agent writes code.
+              <br />
+              <span>You keep the context.</span>
+            </h2>
+            <p>Give fast-moving development a place to slow down and understand.</p>
+          </div>
+          <div className="atlas-workflow-layout">
+            <div className="atlas-workflow-steps">
+              {[
+                [
+                  'Start with your source.',
+                  'Open a local repository. ArchMap reads your JavaScript and TypeScript without running the project.',
+                ],
+                [
+                  'Follow the connections.',
+                  'Explore inferred responsibilities and named flows. Ask a question locally, or connect your own model for deeper explanations.',
+                ],
+                [
+                  'Review what actually changed.',
+                  'Compare your Git working tree, or track a local OpenCode task from a captured source baseline.',
+                ],
+              ].map(([title, body], i) => (
+                <button key={title} aria-pressed={step === i} onClick={() => setStep(i)}>
+                  <span className="workflow-step-number">{i + 1}</span>
+                  <span>
+                    <strong>{title}</strong>
+                    <p>{body}</p>
+                  </span>
+                  <ChevronRight size={18} />
+                </button>
+              ))}
+            </div>
+            <div className="atlas-source-window">
+              <div className="source-window-top">
+                <span>
+                  <FileCode2 size={14} />
+                  {step === 2
+                    ? 'Working-tree review'
+                    : step === 1
+                      ? 'src/api/generate.ts'
+                      : 'Local repository'}
+                </span>
+                <span>
+                  {step === 2 ? 'READ-ONLY' : step === 1 ? 'SOURCE EVIDENCE' : 'STATIC ANALYSIS'}
+                </span>
+              </div>
+              {step === 0 ? (
+                <div className="atlas-file-tree">
+                  <p>
+                    <FolderOpen size={16} /> image-studio/
+                  </p>
+                  <p>
+                    ├─ src/api/<span>generate.ts</span>
+                  </p>
+                  <p>└─ src/services/</p>
+                  <p>
+                    　├─ <span>auth.ts</span>
+                  </p>
+                  <p>
+                    　├─ <span>queue.ts</span>
+                  </p>
+                  <p>
+                    　├─ <span>worker.ts</span>
+                  </p>
+                  <p>
+                    　└─ <span>storage.ts</span>
+                  </p>
+                  <small className="file-tree-note">
+                    Selected files from the included example.
+                  </small>
+                  <div>
+                    <Network size={17} />
+                    <span>
+                      Source files become components.
+                      <br />
+                      Observed imports become connections.
+                    </span>
+                  </div>
+                </div>
+              ) : step === 1 ? (
+                <div className="atlas-source-code">
+                  <p>
+                    <span>5</span>
+                    <b>export async function</b> generateImage(token, prompt) {'{'}
+                  </p>
+                  <p className="source-line-active">
+                    <span>6</span> const user = <em>authenticate</em>(token);
+                  </p>
+                  <p>
+                    <span>7</span> <b>if</b> (!prompt.trim()) <b>throw new</b> Error(…);
+                  </p>
+                  <p>
+                    <span>8</span> <em>reserveCredits</em>(user.id, 1);
+                  </p>
+                  <p>
+                    <span>9</span> <b>return</b> <em>enqueue</em>({'{'} userId: user.id, prompt{' '}
+                    {'}'});
+                  </p>
+                  <p>
+                    <span>10</span>
+                    {'}'}
+                  </p>
+                  <div>
+                    <ShieldCheck size={16} />
+                    <span>
+                      File, line range, snippet, content hash.
+                      <br />
+                      Evidence you can check yourself.
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="atlas-review-demo">
+                  <p>
+                    OpenCode task <span>Illustrative workflow</span>
+                  </p>
+                  <h3>Update authentication</h3>
+                  <div>
+                    <span>Capture source</span>
+                    <ArrowRight size={16} />
+                    <span>Work in OpenCode</span>
+                    <ArrowRight size={16} />
+                    <span>Review changes</span>
+                  </div>
+                  <p>
+                    ArchMap compares source on disk against your captured baseline, including edits
+                    made outside the agent.
+                  </p>
+                  <small>Read-only adapter. No prompts or tools sent to OpenCode.</small>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="atlas-boundary">
+            <ShieldCheck size={18} />
+            <p>
+              <strong>Your source stays local during analysis.</strong> A model receives relevant
+              snippets only when you explicitly ask a question.
+            </p>
+            <a href={`${github}#how-it-works`}>
+              Read the boundaries <ArrowUpRight size={14} />
+            </a>
+          </div>
+        </section>
+        <section className="atlas-open-source atlas-section" id="start">
+          <div>
+            <Mark size={36} />
+            <h2>
+              Your codebase.
+              <br />
+              Your map.
+              <br />
+              <span>Your rules.</span>
+            </h2>
+            <p>
+              Open source, MIT licensed, and useful without a model key. Edit the map, keep a
+              portable JSON copy, and make ArchMap your own.
+            </p>
+            <a href={github} className="atlas-text-link" target="_blank" rel="noreferrer">
+              Build it with us <Github size={16} />
+              <ArrowUpRight size={14} />
+            </a>
+          </div>
+          <div className="atlas-start">
+            <h3>Take the first step.</h3>
+            <p>Node.js 22.12+ and Git. That’s your starting point.</p>
+            <div className="atlas-install">
+              <div>
+                <span>
+                  <Terminal size={15} />
+                  Terminal
+                </span>
+                <button onClick={() => void copyInstall()} aria-label="Copy installation commands">
+                  {copied ? <Check size={15} /> : <Copy size={15} />}
+                  <span>{copied ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+              <pre>
+                <code>{install}</code>
+              </pre>
+            </div>
+            {copyError && (
+              <p role="status" className="atlas-copy-error">
+                Copy unavailable. Select the commands above.
+              </p>
+            )}
+            <p className="atlas-start-note">
+              Then open <code>localhost:4310</code> in your browser.
+            </p>
+            <button className="atlas-button ink" onClick={() => open(true)}>
+              Try the example first <ArrowRight size={16} />
+            </button>
+            <div className="atlas-questions">
+              <details>
+                <summary>Does it work with my project?</summary>
+                <p>
+                  ArchMap reads local JavaScript and TypeScript repositories, with TypeScript path
+                  aliases. Scans are bounded to 400 source files and 8 MB. Framework-aware runtime
+                  behavior and other languages are on the roadmap.
+                </p>
+              </details>
+              <details>
+                <summary>Do I need an AI model?</summary>
+                <p>
+                  No. Source mapping, guided flows, Git reviews, and local evidence search work
+                  without a model. Connect an OpenAI-compatible endpoint for AI explanations and
+                  model-generated proposals.
+                </p>
+              </details>
+              <details>
+                <summary>Can I use my coding agent?</summary>
+                <p>
+                  The current integration connects read-only to a local OpenCode server. Capture a
+                  baseline before a task, keep Sessions open, and review the actual source changes
+                  after it finishes.
+                </p>
+              </details>
+            </div>
+          </div>
+        </section>
+      </main>
+      <footer className="atlas-footer">
+        <div>
+          <a href="/" aria-label="ArchMap home">
+            <Mark size={25} />
+            archmap.
+          </a>
+          <p>Find your way through what you’re building.</p>
+        </div>
+        <nav aria-label="Footer navigation">
+          <a href={github}>
+            GitHub <ArrowUpRight size={13} />
+          </a>
+          <a href={`${github}#readme`}>
+            Documentation <ArrowUpRight size={13} />
+          </a>
+          <a href="/product-map.html">
+            Roadmap <ArrowUpRight size={13} />
+          </a>
+          <a href={`${github}/blob/main/LICENSE`}>
+            MIT license <ArrowUpRight size={13} />
+          </a>
+        </nav>
+        <span>Made for people who build.</span>
+      </footer>
+    </div>
   );
 }
