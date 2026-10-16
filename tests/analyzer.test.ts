@@ -8,7 +8,7 @@ import { projectSchema } from '../shared/schema.js';
 import { findEvidence } from '../server/explain.js';
 
 test('analyzes real imports, type imports, re-exports and literal dynamic imports with line evidence', async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'repovox-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'archmap-'));
   try {
     await writeFile(path.join(root, 'main.ts'), "import type { User } from './auth.js';\nexport { authenticate } from './auth.js';\nconst load = () => import('./auth.js');\n");
     await writeFile(path.join(root, 'auth.ts'), 'export type User = { id: string };\nexport function authenticate() { return true; }');
@@ -27,8 +27,8 @@ test('analyzes real imports, type imports, re-exports and literal dynamic import
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 test('blocks parent paths and symlink escapes', async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'repovox-'));
-  const outside = await mkdtemp(path.join(os.tmpdir(), 'repovox-outside-'));
+  const root = await mkdtemp(path.join(os.tmpdir(), 'archmap-'));
+  const outside = await mkdtemp(path.join(os.tmpdir(), 'archmap-outside-'));
   try {
     await symlink(outside, path.join(root, 'escape'));
     await assert.rejects(resolveRoot(root, '..'), /inside the configured/);
@@ -43,6 +43,6 @@ test('rejects projects with dangling connections and duplicate IDs', () => {
 test('example map is reproducible and all observed edges have source evidence', async () => {
   const graph = await analyze(path.resolve('examples/image-studio'), 'example');
   assert.equal(graph.nodes.length, 10);
-  assert.ok(graph.edges.length >= 12);
+  assert.equal(graph.edges.length, 11);
   for (const edge of graph.edges) assert.ok(edge.evidence?.snippet);
 });

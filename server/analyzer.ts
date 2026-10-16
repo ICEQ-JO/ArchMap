@@ -10,7 +10,7 @@ const exec = promisify(execFile);
 const MAX_FILES = 400;
 const MAX_BYTES = 8 * 1024 * 1024;
 const extensions = /\.(?:[cm]?[jt]sx?)$/i;
-const excluded = /(^|\/)(?:node_modules|\.git|dist|build|coverage|\.next|\.env[^/]*|vendor|\.repovox|secrets?|credentials?)(\/|$)/i;
+const excluded = /(^|\/)(?:node_modules|\.git|dist|build|coverage|\.next|\.env[^/]*|vendor|\.archmap|secrets?|credentials?)(\/|$)/i;
 const secretFile = /(?:^|[/.])(?:credentials?|secrets?|private[-_]?key)(?:[/.]|$)|\.(?:pem|key|p12|pfx)$/i;
 const normalize = (p: string) => p.split(path.sep).join('/');
 export function isWithin(root: string, candidate: string) {

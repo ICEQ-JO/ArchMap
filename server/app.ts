@@ -29,7 +29,7 @@ export function createApp(allowedRoot: string) {
     return project;
   }
   let scanning = false;
-  app.get('/api/status', (_req, res) => res.json({ root: allowedRoot, ai: Boolean(process.env.REPOVOX_AI_BASE_URL && process.env.REPOVOX_AI_MODEL), model: process.env.REPOVOX_AI_MODEL ?? null }));
+  app.get('/api/status', (_req, res) => res.json({ root: allowedRoot, ai: Boolean(process.env.ARCHMAP_AI_BASE_URL && process.env.ARCHMAP_AI_MODEL), model: process.env.ARCHMAP_AI_MODEL ?? null }));
   app.post('/api/analyze', async (req, res, next) => {
     if (scanning) { res.status(429).json({ error: 'Another scan is running. Wait for it to finish and try again.' }); return; }
     try {

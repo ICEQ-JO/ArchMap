@@ -3,7 +3,7 @@ import path from 'node:path';
 import { realpath } from 'node:fs/promises';
 import { createApp } from './app.js';
 
-const root = await realpath(path.resolve(process.env.REPOVOX_ROOT || process.cwd()));
+const root = await realpath(path.resolve(process.env.ARCHMAP_ROOT || process.cwd()));
 const app = createApp(root);
 const port = Number(process.env.PORT || 3000);
 if (process.env.NODE_ENV === 'production') {
@@ -16,5 +16,5 @@ if (process.env.NODE_ENV === 'production') {
   app.use(vite.middlewares);
 }
 app.listen(port, '127.0.0.1', () => {
-  console.log(`\n  Repovox → http://localhost:${port}\n  Repository root: ${root}\n`);
+  console.log(`\n  ArchMap → http://localhost:${port}\n  Repository root: ${root}\n`);
 });

@@ -1,5 +1,5 @@
 {
-  "name": "repovox",
+  "name": "archmap",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -23,7 +23,7 @@
     "lucide-react": "^1.58.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "typescript": "^7.0.2",
+    "typescript": "~5.9.3",
     "zod": "^4.6.7"
   },
   "devDependencies": {
