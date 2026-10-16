@@ -99,3 +99,18 @@ test('mobile landing and workspace remain usable', async ({ page }) => {
     true,
   );
 });
+
+test('loads with large cookies left by other localhost apps', async ({ page, context }) => {
+  await context.addCookies(
+    Array.from({ length: 18 }, (_, i) => ({
+      name: `unrelated_dev_app_${i}`,
+      value: 'x'.repeat(2800),
+      url: 'http://localhost:4310',
+    })),
+  );
+  const response = await page.goto('/');
+  expect(response?.status()).toBe(200);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await page.getByRole('button', { name: 'Explore a live example' }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(10);
+});
