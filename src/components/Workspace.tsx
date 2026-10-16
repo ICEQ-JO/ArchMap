@@ -397,17 +397,17 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         style: {
           stroke:
             edge.id === activeWalkEdge?.id || selectedEdgeId === edge.id
-              ? '#b4c4ed'
+              ? '#e5c796'
               : edge.origin === 'manual'
-                ? '#c4b4f1'
-                : '#6a6d75',
+                ? '#c9bba3'
+                : '#94948e',
           strokeWidth: edge.id === activeWalkEdge?.id ? 2.5 : 1.4,
           strokeDasharray: edge.origin === 'manual' ? '5 5' : undefined,
           opacity: activeWalkEdge && activeWalkEdge.id !== edge.id ? 0.2 : 1,
         },
-        labelStyle: { fill: '#adb2be', fontSize: 9 },
-        labelBgStyle: { fill: '#171719', fillOpacity: 0.95 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#848891', width: 15, height: 15 },
+        labelStyle: { fill: '#d0d0c9', fontSize: 9 },
+        labelBgStyle: { fill: '#20201e', fillOpacity: 0.95 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#b9b9b0', width: 15, height: 15 },
       })) ?? [],
     [project, selectedEdgeId, activeWalkEdge],
   );
@@ -599,7 +599,18 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <kbd>/</kbd>
+            {query ? (
+              <button
+                type="button"
+                className="bare-icon"
+                aria-label="Clear component search"
+                onClick={() => setQuery('')}
+              >
+                <X size={13} />
+              </button>
+            ) : (
+              <kbd>/</kbd>
+            )}
           </label>
           <div className="explorer-section-title">
             <span>COMPONENTS</span>
@@ -656,6 +667,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             <div className="toolbar-actions">
               <button
                 title="Compare Git revision with working tree"
+                className="review-action"
                 aria-label="Review changes"
                 disabled={!project?.root}
                 onClick={() => setReviewing(true)}
@@ -712,6 +724,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                 <span>Export</span>
               </button>
               <button
+                aria-expanded={inspectorOpen}
                 title="Toggle inspector"
                 aria-label="Toggle inspector"
                 onClick={() => setInspectorOpen(!inspectorOpen)}
@@ -940,11 +953,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                   colorMode="dark"
                   proOptions={{ hideAttribution: false }}
                 >
-                  <Background variant={BackgroundVariant.Dots} color="#3d3f43" gap={22} size={1} />
+                  <Background variant={BackgroundVariant.Dots} color="#363634" gap={22} size={1} />
                   <Controls showInteractive={false} />
                   <MiniMap<ArchitectureFlowNode>
-                    nodeColor={(n) => (n.data.module?.origin === 'manual' ? '#c4b4f1' : '#8e929c')}
-                    maskColor="#17181bc9"
+                    nodeColor={(n) => (n.data.module?.origin === 'manual' ? '#c9bba3' : '#a6a69e')}
+                    maskColor="#181818c9"
                     pannable
                     zoomable
                   />
@@ -1092,12 +1105,17 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           <aside className="inspector" aria-label="Source inspector">
             <div className="inspector-tabs">
               <button
+                aria-pressed={tab === 'inspect'}
                 className={tab === 'inspect' ? 'active' : ''}
                 onClick={() => setTab('inspect')}
               >
                 <ScanIcon /> Inspect
               </button>
-              <button className={tab === 'ask' ? 'active' : ''} onClick={() => setTab('ask')}>
+              <button
+                aria-pressed={tab === 'ask'}
+                className={tab === 'ask' ? 'active' : ''}
+                onClick={() => setTab('ask')}
+              >
                 <MessageSquare size={13} /> Ask the map
               </button>
               <button

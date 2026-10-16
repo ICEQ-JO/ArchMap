@@ -94,7 +94,7 @@
 .changes-canvas {
   position: relative;
   min-height: 0;
-  background: #181a1e;
+  background: #1a1a1a;
 }
 .changes-details {
   min-height: 0;
@@ -127,19 +127,19 @@
   gap: 12px;
   font-size: 10px;
   color: var(--muted);
-  background: #181a1eed;
+  background: #1a1a1aed;
   padding: 8px;
   pointer-events: none;
 }
 .review-added .architecture-node {
-  border-color: #9acbba;
+  border-color: #bfbfbf;
 }
 .review-removed .architecture-node {
   border-color: #e0a8a1;
   border-style: dashed;
 }
 .review-modified .architecture-node {
-  border-color: #a9bde4;
+  border-color: #bcbcbc;
 }
 .review-unchanged {
   opacity: 0.65;
@@ -153,13 +153,13 @@
   letter-spacing: 0.5px;
 }
 .status-added {
-  color: #9acbba;
+  color: #bfbfbf;
 }
 .status-removed {
   color: #e0a8a1;
 }
 .status-modified {
-  color: #a9bde4;
+  color: #bcbcbc;
 }
 .changes-file-list {
   margin: 14px 0;
@@ -300,7 +300,57 @@
   .changes-legend {
     bottom: 6px;
     right: 6px;
-    font-size: 8px;
+    font-size: 10px;
     gap: 7px;
   }
+}
+
+/* Review uses the same paper-on-charcoal reading surface as the workspace. */
+.changes-canvas {
+  background: #161616;
+}
+.changes-legend {
+  background: #1d1d1bf2;
+  color: #d0d0c4;
+  border: 1px solid #45453c;
+  border-radius: 4px;
+}
+.workspace .changes-review .review-modified .architecture-node {
+  border-color: #d8c394;
+}
+.status-modified {
+  color: #e5c796;
+}
+.changes-details {
+  background: #1d1d1b;
+}
+.changes-file-list button {
+  padding: 16px 8px;
+  border-radius: 4px;
+}
+.changes-file-list button:hover {
+  background: #313027;
+}
+.changes-baseline input:focus-visible,
+.changes-filter input:focus-visible {
+  outline: 2px solid #e5c796;
+  outline-offset: 2px;
+}
+.changes-details p {
+  color: #c3c3b7;
+  font-size: 13px;
+}
+.change-status {
+  font-size: 10px;
+}
+.changes-review .small-button {
+  min-height: 38px;
+}
+
+.workspace .changes-review .review-added .architecture-node {
+  border-color: #9acbba;
+}
+.workspace .changes-review .review-removed .architecture-node {
+  border-color: #e0a8a1;
+  border-style: dashed;
 }

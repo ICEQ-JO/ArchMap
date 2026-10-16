@@ -78,14 +78,14 @@ function ChangesReview({
     () =>
       (report?.graph.edges ?? []).map((edge) => {
         const status = report?.relationships.find((r) => r.id === edge.id)?.status;
-        const color = status === 'added' ? '#9acbba' : status === 'removed' ? '#e0a8a1' : '#737a86';
+        const color = status === 'added' ? '#9acbba' : status === 'removed' ? '#e0a8a1' : '#999990';
         return {
           ...edge,
           label: status ? `${status}: ${edge.label}` : edge.label,
           markerEnd: { type: MarkerType.ArrowClosed, color },
           style: { stroke: color, strokeDasharray: status === 'removed' ? '6 4' : undefined },
           labelStyle: { fill: color, fontSize: 11 },
-          labelBgStyle: { fill: '#1c1e23' },
+          labelBgStyle: { fill: '#20201e' },
         };
       }),
     [report],
@@ -200,7 +200,7 @@ function ChangesReview({
                 minZoom={0.08}
                 colorMode="dark"
               >
-                <Background color="#40434b" gap={24} />
+                <Background color="#383834" gap={24} />
                 <Controls showInteractive={false} />
               </ReactFlow>
               <div className="changes-legend">

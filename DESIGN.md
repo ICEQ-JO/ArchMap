@@ -192,3 +192,9 @@ The original inline SVG combines skewed grid lines, pixel clusters, isometric pl
 - **Don't** use pixel lettering for long explanations or source code.
 - **Don't** turn every surface into a floating card or enlarge the restrained corner vocabulary.
 - **Don't** visually conflate static dependencies, model explanations, and manual edits.
+
+## Workspace direction — October 2026
+
+The workspace uses a reading-first charcoal palette independently of landing-page styling. `src/components/Workbench.css` owns this interface; keep landing work in its own files. Workspace surfaces are neutral (#181818, #202020), text is warm near-white (#f0efe9), secondary text is #b7b7ad, and restrained amber (#e5c796) marks focus, selection, and the change-review action. Avoid blue-tinted source surfaces or colored component fills. Source, inferred, and manual labels remain explicit; change status also uses words and line styles.
+
+Use 12px source text with generous line height, readable functional labels, clearly bordered fields, and visible keyboard focus. Component kinds share neutral cards and retain their icons. Selected nodes use a warm border and subtle fill. On mobile, the question composer spans the inspector width beneath scrollable answers. Preserve the responsive explorer and separate read-only change-review dialog.
