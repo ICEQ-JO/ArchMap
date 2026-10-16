@@ -1,12 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type FormEvent,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -32,6 +24,7 @@ import {
   FileCode2,
   FolderOpen,
   GitBranch,
+  GitCompareArrows,
   LoaderCircle,
   Menu,
   MessageSquare,
@@ -51,12 +44,17 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { projectSchema, type Answer, type Module, type Project } from '../../shared/schema';
-import { ask, getStatus, loadProject } from '../lib/api';
+import { projectSchema, type Module, type Project, type Proposal } from '../../shared/schema';
+import { getStatus, loadProject } from '../lib/api';
 import { dependencyWalk, downloadProject, refreshProject, SAVE_KEY } from '../lib/graph';
 import { Brand, Github, Mark } from './Brand';
 import ArchitectureNode, { kindIcons, type ArchitectureFlowNode } from './ArchitectureNode';
 import EvidenceCard from './EvidenceCard';
+import MapAgent from './MapAgent';
+import FlowInspector from './FlowInspector';
+import ModelSettings, { type ServerStatus } from './ModelSettings';
+import ChangesPanel from './ChangesPanel';
+import './Workbench.css';
 
 const nodeTypes = { architecture: ArchitectureNode };
 function readSaved(): Project | null {
@@ -80,19 +78,15 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [path, setPath] = useState('.');
+  const [focus, setFocus] = useState('');
   const [showOpen, setShowOpen] = useState(!initialExample);
-  const [status, setStatus] = useState<{ root: string; ai: boolean; model: string | null } | null>(
-    null,
-  );
+  const [status, setStatus] = useState<ServerStatus | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [tab, setTab] = useState<'inspect' | 'ask'>('inspect');
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState<Answer | null>(null);
-  const [answerQuestion, setAnswerQuestion] = useState('');
-  const [asking, setAsking] = useState(false);
-  const [askError, setAskError] = useState('');
+  const [tab, setTab] = useState<'inspect' | 'ask' | 'settings'>('inspect');
+  const [flowId, setFlowId] = useState<string | null>(null);
+  const [flowIndex, setFlowIndex] = useState(0);
   const [walkStart, setWalkStart] = useState<string | undefined>();
   const [walkStep, setWalkStep] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -102,10 +96,10 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [saved, setSaved] = useState(false);
   const [addName, setAddName] = useState('');
   const [adding, setAdding] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [serverSession, setServerSession] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureFlowNode>([]);
   const fileInput = useRef<HTMLInputElement>(null);
-  const requestVersion = useRef(0);
   const init = useRef(false);
   const { fitView, setCenter } = useReactFlow<ArchitectureFlowNode>();
   const selected = project?.nodes.find((n) => n.id === selectedId);
@@ -114,25 +108,40 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     () => (project ? dependencyWalk(project, walkStart) : []),
     [project, walkStart],
   );
-  const activeWalkEdge = walkStep === null ? undefined : walk[walkStep];
-  const selectedEvidence = selectedEdge?.evidence
-    ? [selectedEdge.evidence]
-    : selected
-      ? [
-          ...new Map(
-            [
-              ...(project?.edges
-                .filter((e) => e.source === selected.id || e.target === selected.id)
-                .flatMap((e) => (e.evidence ? [e.evidence] : [])) ?? []),
-              ...selected.evidence,
-            ].map((e) => [e.id, e]),
-          ).values(),
-        ]
-      : [];
+  const activeFlow = project?.flows?.find((f) => f.id === flowId);
+  const activeFlowStep = activeFlow?.steps[flowIndex];
+  const flowEdge = project?.edges.find((e) => e.id === activeFlowStep?.edgeId);
+  const activeWalkEdge = useMemo(
+    () =>
+      flowEdge && activeFlowStep
+        ? { ...flowEdge, evidence: activeFlowStep.evidence }
+        : walkStep === null
+          ? undefined
+          : walk[walkStep],
+    [flowEdge, activeFlowStep, walkStep, walk],
+  );
+  const selectedEvidence = activeFlowStep
+    ? [activeFlowStep.evidence]
+    : selectedEdge?.evidence
+      ? [selectedEdge.evidence]
+      : selected
+        ? [
+            ...new Map(
+              [
+                ...(project?.edges
+                  .filter((e) => e.source === selected.id || e.target === selected.id)
+                  .flatMap((e) => (e.evidence ? [e.evidence] : [])) ?? []),
+                ...selected.evidence,
+              ].map((e) => [e.id, e]),
+            ).values(),
+          ]
+        : [];
   const filteredNodes = useMemo(
     () =>
       project?.nodes.filter((n) =>
-        `${n.label} ${n.file} ${n.exports.join(' ')}`.toLowerCase().includes(query.toLowerCase()),
+        `${n.label} ${n.file} ${n.members?.join(' ') ?? ''} ${n.exports.join(' ')}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
       ) ?? [],
     [project, query],
   );
@@ -147,11 +156,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setSelectedEdgeId(null);
     setWalkStep(null);
     setWalkStart(undefined);
-    setAnswer(null);
-    setAskError('');
-    setAnswerQuestion('');
-    requestVersion.current++;
-    setAsking(false);
+    setFlowId(null);
+    setFlowIndex(0);
   };
   async function openProject(example: boolean, refresh = false) {
     if (loading) return;
@@ -159,7 +165,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setError('');
     setNotice('');
     try {
-      const fresh = await loadProject(example, refresh && project ? project.root : path);
+      const fresh = await loadProject(
+        example,
+        refresh && project ? project.root : path,
+        refresh ? (project?.focus ?? focus) : focus,
+      );
       setProject(refresh && project ? refreshProject(fresh, project) : fresh);
       setHistory([]);
       setDirty(refresh);
@@ -254,6 +264,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   function selectNode(id: string) {
     setSelectedId(id);
     setSelectedEdgeId(null);
+    setFlowId(null);
     setTab('inspect');
     setInspectorOpen(true);
     setSidebarOpen(false);
@@ -343,6 +354,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setAdding(false);
     setSelectedId(id);
     setSelectedEdgeId(null);
+    setFlowId(null);
     setInspectorOpen(true);
     setTab('inspect');
     setTimeout(() => setCenter(215, -120, { zoom: 1, duration: 250 }), 80);
@@ -351,33 +363,26 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     if (!project) return;
     edit({
       ...project,
+      flows: (project.flows ?? [])
+        .map((f) => ({
+          ...f,
+          steps: f.steps.filter((step) => {
+            const edge = project.edges.find((e) => e.id === step.edgeId);
+            return (
+              edge &&
+              edge.id !== selectedEdgeId &&
+              edge.source !== selectedId &&
+              edge.target !== selectedId
+            );
+          }),
+        }))
+        .filter((f) => f.steps.length),
       nodes: selected ? project.nodes.filter((n) => n.id !== selected.id) : project.nodes,
       edges: project.edges.filter(
         (e) => e.id !== selectedEdgeId && e.source !== selectedId && e.target !== selectedId,
       ),
     });
     resetSelection();
-  }
-  async function submitQuestion(event: FormEvent) {
-    event.preventDefault();
-    if (!project || !question.trim() || asking) return;
-    const version = ++requestVersion.current;
-    setAsking(true);
-    setAskError('');
-    const q = question.trim();
-    setAnswerQuestion(q);
-    try {
-      const result = await ask(project, q, selectedId ?? undefined);
-      if (requestVersion.current === version) {
-        setAnswer(result);
-        setQuestion('');
-      }
-    } catch (e) {
-      if (requestVersion.current === version)
-        setAskError(e instanceof Error ? e.message : 'Could not answer. Try again.');
-    } finally {
-      if (requestVersion.current === version) setAsking(false);
-    }
   }
   const edges = useMemo(
     () =>
@@ -392,22 +397,23 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         style: {
           stroke:
             edge.id === activeWalkEdge?.id || selectedEdgeId === edge.id
-              ? '#baf18e'
+              ? '#b4c4ed'
               : edge.origin === 'manual'
                 ? '#c4b4f1'
-                : '#637554',
+                : '#6a6d75',
           strokeWidth: edge.id === activeWalkEdge?.id ? 2.5 : 1.4,
           strokeDasharray: edge.origin === 'manual' ? '5 5' : undefined,
           opacity: activeWalkEdge && activeWalkEdge.id !== edge.id ? 0.2 : 1,
         },
-        labelStyle: { fill: '#b4bea9', fontSize: 9 },
-        labelBgStyle: { fill: '#141910', fillOpacity: 0.95 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#7d916b', width: 15, height: 15 },
+        labelStyle: { fill: '#adb2be', fontSize: 9 },
+        labelBgStyle: { fill: '#171719', fillOpacity: 0.95 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#848891', width: 15, height: 15 },
       })) ?? [],
     [project, selectedEdgeId, activeWalkEdge],
   );
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (reviewing) return;
       const target = event.target as HTMLElement;
       const typing = target.matches('input, textarea, select') || target.isContentEditable;
       if (typing) return;
@@ -433,12 +439,86 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [project, history]);
+  }, [project, history, reviewing]);
+  function startSketch() {
+    setProject({
+      version: 1,
+      id: crypto.randomUUID(),
+      name: 'System sketch',
+      root: '',
+      revision: null,
+      analyzedAt: new Date().toISOString(),
+      mode: 'local',
+      nodes: [],
+      edges: [],
+      flows: [],
+      warnings: [],
+      filesScanned: 0,
+      level: 'architecture',
+      summary: 'A user-authored architecture sketch.',
+    });
+    setShowOpen(false);
+    setServerSession(false);
+    setDirty(true);
+    setHistory([]);
+    resetSelection();
+    setAdding(true);
+  }
+  function pickFlow(id: string, index: number) {
+    const step = project?.flows?.find((f) => f.id === id)?.steps[index];
+    if (!step) return;
+    setFlowId(id);
+    setFlowIndex(index);
+    setWalkStep(null);
+    setSelectedId(null);
+    setSelectedEdgeId(step.edgeId);
+    setTab('inspect');
+    setInspectorOpen(true);
+  }
+  function switchView() {
+    if (!project?.alternate) return;
+    const { nodes, edges, flows } = project;
+    edit({
+      ...project,
+      ...project.alternate,
+      alternate: { nodes, edges, flows },
+      level: project.level === 'architecture' ? 'modules' : 'architecture',
+    });
+    resetSelection();
+    setQuery('');
+    setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100);
+  }
+  function applyProposal(proposal: Proposal) {
+    if (!project || proposal.projectId !== project.id) return;
+    const original =
+      project.level === 'modules'
+        ? { nodes: project.nodes, edges: project.edges, flows: project.flows }
+        : project.alternate;
+    edit({
+      ...project,
+      ...proposal.graph,
+      alternate: original,
+      level: 'architecture',
+      summary: proposal.summary,
+    });
+    resetSelection();
+    setQuery('');
+    setTab('inspect');
+    setNotice('Proposed map applied. Undo restores your previous view.');
+    setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100);
+  }
   const goBack = () => {
     location.hash = '';
   };
   return (
     <div className="workspace">
+      {reviewing && project && (
+        <ChangesPanel
+          root={project.root}
+          focus={project.focus ?? ''}
+          onClose={() => setReviewing(false)}
+        />
+      )}
       <header className="workspace-header">
         <button
           className="bare-icon mobile-menu"
@@ -565,10 +645,24 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           <div className="map-toolbar">
             <div className="map-view-label">
               <Network size={15} />
-              <span>Architecture</span>
-              <span className="tag">STATIC IMPORTS</span>
+              <span>{project?.level === 'modules' ? 'Source files' : 'Architecture'}</span>
+              {project?.alternate && (
+                <button className="view-toggle" aria-label="Switch map view" onClick={switchView}>
+                  {project.level === 'architecture' ? 'Source files' : 'Architecture'}{' '}
+                  <ChevronDown size={11} />
+                </button>
+              )}
             </div>
             <div className="toolbar-actions">
+              <button
+                title="Compare Git revision with working tree"
+                aria-label="Review changes"
+                disabled={!project?.root}
+                onClick={() => setReviewing(true)}
+              >
+                <GitCompareArrows size={15} />
+                <span>Changes</span>
+              </button>
               <button
                 title="Undo last edit"
                 aria-label="Undo last edit"
@@ -589,7 +683,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               </button>
               <button
                 onClick={() => project && void openProject(project.mode === 'example', true)}
-                disabled={!project || loading}
+                disabled={!project || loading || !project.root}
                 aria-label="Refresh"
                 title="Reanalyze source and preserve manual layout"
               >
@@ -670,6 +764,23 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               </button>
             </div>
           )}
+          {!showOpen && project?.warnings.some((w) => w.includes('Analysis limit')) && (
+            <div className="coverage-notice">
+              <span>
+                <strong>Partial analysis.</strong> {project.filesScanned} files scanned. Focus on a
+                feature or a smaller source folder.
+              </span>
+              <button
+                onClick={() => {
+                  setPath(project.root);
+                  setFocus(project.focus ?? '');
+                  setShowOpen(true);
+                }}
+              >
+                Refine focus <ArrowRight size={12} />
+              </button>
+            </div>
+          )}
           <div className="canvas-area">
             {showOpen ? (
               <div className="open-screen">
@@ -717,6 +828,17 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       'Connecting to the local repository service…'
                     )}
                   </p>
+                  <label className="source-focus-label" htmlFor="source-focus">
+                    Feature focus <span>(optional)</span>
+                  </label>
+                  <input
+                    className="source-focus-input"
+                    id="source-focus"
+                    value={focus}
+                    onChange={(event) => setFocus(event.target.value)}
+                    maxLength={500}
+                    placeholder="e.g. auth, checkout, image generation"
+                  />
                   <button className="button primary" disabled={loading}>
                     {loading ? (
                       <>
@@ -756,6 +878,9 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                 <button className="import-choice" onClick={() => fileInput.current?.click()}>
                   <Upload size={14} /> Import a saved .archmap.json
                 </button>
+                <button className="blank-choice" onClick={startSketch}>
+                  <Plus size={14} /> Start a blank architecture map
+                </button>
                 <p className="scan-disclosure">
                   <ShieldCheck size={14} /> Reads source files. Never executes repository code.
                   <br />
@@ -790,12 +915,14 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                   }}
                   onConnect={connect}
                   onNodeClick={(_, node) => {
+                    setFlowId(null);
                     setSelectedId(node.id);
                     setSelectedEdgeId(null);
                     setTab('inspect');
                     setInspectorOpen(true);
                   }}
                   onEdgeClick={(_, edge) => {
+                    setFlowId(null);
                     setSelectedEdgeId(edge.id);
                     setSelectedId(null);
                     setTab('inspect');
@@ -813,11 +940,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                   colorMode="dark"
                   proOptions={{ hideAttribution: false }}
                 >
-                  <Background variant={BackgroundVariant.Dots} color="#38432d" gap={22} size={1} />
+                  <Background variant={BackgroundVariant.Dots} color="#3d3f43" gap={22} size={1} />
                   <Controls showInteractive={false} />
                   <MiniMap<ArchitectureFlowNode>
-                    nodeColor={(n) => (n.data.module?.origin === 'manual' ? '#c4b4f1' : '#779c59')}
-                    maskColor="#10130fc9"
+                    nodeColor={(n) => (n.data.module?.origin === 'manual' ? '#c4b4f1' : '#8e929c')}
+                    maskColor="#17181bc9"
                     pannable
                     zoomable
                   />
@@ -831,24 +958,37 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                 </div>
                 <div className="canvas-legend">
                   <span>
-                    <i /> Observed import
+                    <i /> Source-backed connection
                   </span>
                   <span>
                     <i /> Manual connection
                   </span>
                 </div>
-                {walkStep === null ? (
+                {flowId ? null : walkStep === null ? (
                   <button
                     className="walk-launcher"
                     onClick={() => {
-                      setWalkStart(selectedId ?? undefined);
-                      setWalkStep(0);
+                      if (project.level === 'architecture' && project.flows?.length)
+                        pickFlow(project.flows[0].id, 0);
+                      else {
+                        setWalkStart(selectedId ?? undefined);
+                        setWalkStep(0);
+                      }
                     }}
-                    disabled={!walk.length}
+                    disabled={
+                      project.level === 'architecture' ? !project.flows?.length : !walk.length
+                    }
                   >
                     <Play size={13} />
-                    <span>Walk dependencies</span>
-                    <span>{walk.length} steps</span>
+                    <span>
+                      {project.level === 'architecture'
+                        ? 'Explore guided flows'
+                        : 'Walk dependencies'}
+                    </span>
+                    <span>
+                      {project.level === 'architecture' ? project.flows?.length : walk.length}{' '}
+                      {project.level === 'architecture' ? 'flows' : 'steps'}
+                    </span>
                   </button>
                 ) : activeWalkEdge ? (
                   <div className="walk-player">
@@ -943,7 +1083,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               <MousePointer2 size={11} /> Drag to pan · scroll to zoom
             </span>
             <span>
-              {status?.ai ? 'Model available' : 'Local analysis'}
+              {status?.ai ? 'Model configured' : 'Local analysis'}
               <span className="live-dot" />
             </span>
           </footer>
@@ -960,9 +1100,40 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               <button className={tab === 'ask' ? 'active' : ''} onClick={() => setTab('ask')}>
                 <MessageSquare size={13} /> Ask the map
               </button>
+              <button
+                className={tab === 'settings' ? 'active' : ''}
+                aria-label="Model settings"
+                title="Model settings"
+                onClick={() => setTab('settings')}
+              >
+                <Settings2 size={14} />
+              </button>
             </div>
             {tab === 'inspect' ? (
               <div className="inspector-scroll">
+                {project?.level === 'architecture' && ((!selected && !selectedEdge) || flowId) && (
+                  <FlowInspector
+                    flows={project.flows ?? []}
+                    activeId={flowId}
+                    index={flowIndex}
+                    onSelect={pickFlow}
+                    onClose={() => {
+                      setFlowId(null);
+                      setSelectedEdgeId(null);
+                    }}
+                  />
+                )}
+                {project?.level === 'architecture' && (selected || selectedEdge) && !flowId && (
+                  <button
+                    className="back-to-flows"
+                    onClick={() => {
+                      setSelectedId(null);
+                      setSelectedEdgeId(null);
+                    }}
+                  >
+                    <ChevronLeft size={12} /> Guided flows & overview
+                  </button>
+                )}
                 {selected || selectedEdge ? (
                   <>
                     <div className="inspector-detail-heading">
@@ -972,7 +1143,9 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       >
                         {(selected?.origin || selectedEdge?.origin) === 'manual'
                           ? 'MANUAL'
-                          : 'OBSERVED'}
+                          : (selected?.origin || selectedEdge?.origin) === 'inferred'
+                            ? 'INFERRED'
+                            : 'OBSERVED'}
                       </span>
                     </div>
                     <h2>
@@ -984,18 +1157,28 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       {selected?.description ||
                         (selectedEdge?.origin === 'manual'
                           ? 'A user-authored relationship. No source evidence is attached.'
-                          : 'This dependency was found in an import or re-export statement. It does not prove runtime execution order.')}
+                          : selectedEdge?.origin === 'inferred'
+                            ? 'A proposed architectural relationship. Check this interpretation against the supporting source.'
+                            : 'The supporting source for this connection is shown below.')}
                     </p>
                     {selected && (
                       <>
                         <div className="detail-stats">
                           <span>{selected.lines} lines</span>
-                          <span>{selected.exports.length} exports</span>
+                          <span>{selected.members?.length ?? 1} files</span>
                           <span>
                             {project?.edges.filter((e) => e.source === selected.id).length}{' '}
                             dependencies
                           </span>
                         </div>
+                        {selected.members && (
+                          <details className="member-files">
+                            <summary>Source files ({selected.members.length})</summary>
+                            {selected.members.map((file) => (
+                              <code key={file}>{file}</code>
+                            ))}
+                          </details>
+                        )}
                         <label className="edit-field">
                           Display name
                           <input
@@ -1013,6 +1196,26 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                   nodes: project.nodes.map((n) =>
                                     n.id === selected.id
                                       ? { ...n, label: e.target.value.trim() }
+                                      : n,
+                                  ),
+                                });
+                            }}
+                          />
+                        </label>
+                        <label className="edit-field">
+                          Responsibility
+                          <textarea
+                            key={`description-${selected.id}`}
+                            defaultValue={selected.description}
+                            rows={3}
+                            maxLength={2000}
+                            onBlur={(event) => {
+                              if (project && event.target.value !== selected.description)
+                                edit({
+                                  ...project,
+                                  nodes: project.nodes.map((n) =>
+                                    n.id === selected.id
+                                      ? { ...n, description: event.target.value }
                                       : n,
                                   ),
                                 });
@@ -1087,7 +1290,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         <p>
                           {project.mode === 'example'
                             ? 'Illustrative project, analyzed from the included source files.'
-                            : 'Observed imports between source files in your local repository.'}
+                            : project.summary ||
+                              'Observed imports between source files in your local repository.'}
                         </p>
                         <p>
                           External packages and runtime calls are outside this scan. Component
@@ -1103,109 +1307,17 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                   </>
                 )}
               </div>
+            ) : tab === 'settings' ? (
+              <ModelSettings status={status} onChange={setStatus} />
             ) : (
-              <div className="ask-panel">
-                <div className="ask-content">
-                  {!answer && !asking ? (
-                    <>
-                      <div className="ask-heading">
-                        <MessageSquare size={23} />
-                        <h2>Go a little deeper.</h2>
-                        <p>
-                          {status?.ai
-                            ? `Ask a question. ${status.model} will explain the relevant source evidence.`
-                            : 'Find the evidence behind a file, symbol, or dependency. No model required.'}
-                        </p>
-                      </div>
-                      <div className="question-suggestions">
-                        {[
-                          'Where is authentication handled?',
-                          'How does the queue connect?',
-                          'Find the image provider',
-                        ].map((q) => (
-                          <button key={q} onClick={() => setQuestion(q)}>
-                            {q}
-                            <ArrowRight size={13} />
-                          </button>
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="asked-question">{answerQuestion}</div>
-                      {asking ? (
-                        <div className="thinking" role="status">
-                          <LoaderCircle size={15} className="spinning" />
-                          {status?.ai ? 'Reading the evidence…' : 'Searching source evidence…'}
-                        </div>
-                      ) : (
-                        answer && (
-                          <>
-                            <span className="answer-mode">
-                              {answer.mode === 'ai'
-                                ? 'MODEL EXPLANATION · VERIFY AGAINST SOURCE'
-                                : 'LOCAL EVIDENCE SEARCH'}
-                            </span>
-                            <p className="answer-text">{answer.text}</p>
-                            {answer.evidence.map((e, i) => (
-                              <EvidenceCard key={e.id} evidence={e} index={i} />
-                            ))}
-                          </>
-                        )
-                      )}
-                    </>
-                  )}
-                  {askError && (
-                    <p className="error-text" role="alert">
-                      {askError}
-                    </p>
-                  )}
-                  {!serverSession && project && (
-                    <p className="session-note">
-                      This is a saved or imported map. Refresh the repository to enable questions.
-                    </p>
-                  )}
-                </div>
-                <form className="question-form" onSubmit={submitQuestion}>
-                  {selected && (
-                    <div className="question-context">
-                      <FileCode2 size={11} />
-                      {selected.label}
-                      <button
-                        className="bare-icon"
-                        type="button"
-                        aria-label="Clear question context"
-                        onClick={() => setSelectedId(null)}
-                      >
-                        <X size={11} />
-                      </button>
-                    </div>
-                  )}
-                  <div>
-                    <textarea
-                      aria-label="Question about your codebase"
-                      value={question}
-                      maxLength={2000}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      placeholder="Ask about your codebase…"
-                      rows={3}
-                      disabled={!project || !serverSession}
-                    />
-                    <button
-                      aria-label="Ask question"
-                      className="send-button"
-                      disabled={!question.trim() || asking || !serverSession}
-                    >
-                      <Send size={15} />
-                    </button>
-                  </div>
-                  <p>
-                    {status?.ai
-                      ? 'Relevant snippets will be sent to your configured model.'
-                      : 'Local evidence search. Add a model in .env for AI explanations.'}
-                  </p>
-                </form>
-              </div>
+              <MapAgent
+                project={project}
+                available={Boolean(status?.ai)}
+                model={status?.model ?? null}
+                live={serverSession}
+                selectedId={selectedId ?? undefined}
+                onApply={applyProposal}
+              />
             )}
           </aside>
         )}

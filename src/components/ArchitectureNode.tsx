@@ -26,10 +26,22 @@ export default function ArchitectureNode({ data, selected }: NodeProps<Architect
           <Icon size={12} />
           {module.kind}
         </span>
-        <span>{module.origin === 'manual' ? 'MANUAL' : 'SOURCE'}</span>
+        <span>
+          {module.origin === 'manual'
+            ? 'MANUAL'
+            : module.origin === 'inferred'
+              ? 'INFERRED'
+              : 'SOURCE'}
+        </span>
       </div>
       <strong>{module.label}</strong>
-      <p>{module.exports.length ? module.exports.slice(0, 2).join(' · ') : module.description}</p>
+      <p>
+        {module.members
+          ? `${module.members.length} source files · ${module.exports.slice(0, 2).join(' · ')}`
+          : module.exports.length
+            ? module.exports.slice(0, 2).join(' · ')
+            : module.description}
+      </p>
       <Handle type="source" position={Position.Right} />
     </div>
   );
