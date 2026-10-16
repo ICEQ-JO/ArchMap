@@ -6,6 +6,7 @@ import { analyze, resolveRoot } from './analyzer.js';
 import { proposeMap } from './proposals.js';
 import { explain } from './explain.js';
 import { compareWorkingTree } from './comparison.js';
+import { OpenCodeReview } from './opencode.js';
 import type { Project } from '../shared/schema.js';
 
 export function createApp(allowedRoot: string) {
@@ -41,6 +42,66 @@ export function createApp(allowedRoot: string) {
     return project;
   }
   let scanning = false;
+  const opencode = new OpenCodeReview(allowedRoot);
+  app.get('/api/opencode/status', (_req, res) => res.json(opencode.status()));
+  app.post('/api/opencode/connect', async (req, res, next) => {
+    try {
+      const input = z
+        .object({
+          path: z.string().trim().min(1).max(2000),
+          baseUrl: z.string().url().max(2000),
+          username: z
+            .string()
+            .max(100)
+            .regex(/^[^:\r\n]+$/)
+            .default('opencode'),
+          password: z.string().max(2000).default(''),
+        })
+        .parse(req.body);
+      res.json(await opencode.connect(input));
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.post('/api/opencode/disconnect', (_req, res) => res.json(opencode.disconnect()));
+  app.get('/api/opencode/sessions', async (_req, res, next) => {
+    try {
+      res.json(await opencode.sessions());
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.post('/api/opencode/poll', async (_req, res, next) => {
+    try {
+      res.json(await opencode.poll());
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.post('/api/opencode/:action', async (req, res, next) => {
+    if (!['track', 'review'].includes(req.params.action)) {
+      res.status(404).json({ error: 'Unknown OpenCode operation.' });
+      return;
+    }
+    if (scanning) {
+      res.status(429).json({ error: 'Another scan is running. Try again when it finishes.' });
+      return;
+    }
+    try {
+      scanning = true;
+      if (req.params.action === 'review') res.json(await opencode.review());
+      else {
+        const input = z
+          .object({ sessionId: z.string().min(1).max(200), focus: z.string().max(500).default('') })
+          .parse(req.body);
+        res.json(await opencode.track(input.sessionId, input.focus));
+      }
+    } catch (error) {
+      next(error);
+    } finally {
+      scanning = false;
+    }
+  });
   const status = () => ({
     root: allowedRoot,
     ai: Boolean(process.env.ARCHMAP_AI_BASE_URL && process.env.ARCHMAP_AI_MODEL),
