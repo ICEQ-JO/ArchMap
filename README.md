@@ -2,25 +2,23 @@
 
 # ArchMap
 
-### Find your way through a codebase.
+### Understand the feature. Inspect the evidence. Shape the map.
 
-Interactive architecture maps. Inspectable source evidence. Your machine.
+Local-first architecture exploration, guided source walkthroughs, and reviewable model proposals.
 
-[Getting started](#getting-started) · [How it works](#how-it-works) · [Roadmap](#roadmap) · [Contributing](CONTRIBUTING.md)
+[Getting started](#getting-started) · [What it does](#what-it-does) · [How-it-works](#how-it-works) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
----
+![ArchMap architecture and guided source walkthrough](docs/images/workspace.png)
 
-ArchMap is an open-source web application for exploring JavaScript and TypeScript repositories. It parses source imports into an editable dependency map, lets you inspect the code behind a connection, and walks you through the dependencies one step at a time.
+ArchMap is an open-source web app for understanding JavaScript and TypeScript projects. Start with a responsibility overview, follow a named feature flow, inspect supporting source, and ask for a proposed map you can review before applying.
 
-![ArchMap source map and evidence inspector](docs/images/workspace.png)
-
-**Early preview:** the current analyzer maps module imports. It does not infer service boundaries, trace function calls, or observe runtime execution. The canvas is the foundation for deeper, evidence-backed architecture exploration.
+**This is an early architecture workbench, not a runtime tracer.** Structural boundaries are inferred from source organization. Call-site walkthroughs follow lexical source order. Model-generated responsibilities and relationships remain interpretations, even when their source references validate.
 
 ## Getting started
 
-Requires **Node.js 22.12+** and Git. No account or model key required.
+Requires **Node.js 22.12+** and Git. A model is optional.
 
 ```bash
 git clone https://github.com/ICEQ-JO/ArchMap.git
@@ -29,113 +27,123 @@ npm install
 npm run dev
 ```
 
-Keep that terminal running while using the app. Open **http://localhost:4310**. Try the included Image Studio example or enter a repository folder.
+Keep that terminal running and open **http://localhost:4310**. The included Image Studio example has architecture areas and named Generate Image, Process Next Job, and Get Generation flows. Its illustrative source is in `examples/image-studio`; it is not a deployed image-generation service.
 
-The reader is restricted to the directory from which you start ArchMap and its descendants. To explore other projects, start with an explicit parent directory:
+Repository access is restricted to the startup directory and its descendants. To explore sibling projects:
 
 ```bash
 ARCHMAP_ROOT=/absolute/path/to/projects npm run dev
 ```
 
-To remember that parent folder, set `ARCHMAP_ROOT` in your local `.env` file and restart the server.
+You can save `ARCHMAP_ROOT` in an ignored local `.env` file. Restart after changing it. Enter an absolute folder inside that root, or a path relative to it. On Windows PowerShell, use `$env:ARCHMAP_ROOT = 'C:\projects'` before running `npm run dev`.
 
-Then enter a project path relative to that directory. ArchMap accepts absolute paths inside the configured root too. On Windows PowerShell, set `$env:ARCHMAP_ROOT = 'C:\projects'` before running `npm run dev`.
+Use **Feature focus** to prioritize matching paths before the scan limit, or choose a smaller source folder. Focus is a filename/path hint, not a semantic search across an entire unscanned repository. Partial analyses are explicitly labeled.
 
-## What works today
+## What it does
 
-- **Source-backed maps:** static imports, re-exports, literal `import()` and `require()` calls between scanned files.
-- **Source inspection:** file, line range, snippet, and SHA-256 file-content hash for observed connections.
-- **A canvas you can edit:** move and rename components, add manual components and connections, remove elements, and undo edits.
-- **Dependency walks:** step through graph dependencies from a selected component. These are static traversals, not runtime traces.
-- **Local evidence search:** ask for a file, symbol, or relationship without a model key.
-- **Optional model explanations:** use a compatible chat-completions endpoint, including a local model server.
-- **Portable maps:** save one map in browser storage, export readable JSON, or import a saved map.
-- **Explicit refresh:** reanalyze the repository while preserving positions and surviving manual elements.
+- **Architecture overview:** group source into responsibility areas such as API handlers, identity, workers, messaging, storage, and UI. Boundaries are labeled inferred; inspect their member files.
+- **Architecture change review:** compare a local Git revision with the working tree; inspect changed responsibility areas, files, static dependencies, and before/after source. The review preserves your editable map.
+- **Source detail view:** switch to individual modules and their observed imports without losing the other view.
+- **Named guided flows:** resolve calls to named imported symbols in top-level functions, step through their lexical order, and inspect the exact call site. Parameter/local shadowing and nested callbacks are excluded; branches and loops are flagged. This is conservative syntax analysis, not whole-program call resolution or a runtime trace.
+- **Reviewable feature maps:** ask a configured model for a feature architecture, inspect proposed responsibilities and relationship evidence, then apply or discard. Undo restores the previous view. Applying deliberately replaces the active view; the original source graph is retained.
+- **Useful without a model:** source-based proposals focus matching responsibilities and immediate dependencies; local explanations search evidence. These modes are labeled and do not pretend to be AI reasoning.
+- **Sketch first:** start a blank map, add components, describe responsibilities, connect them, and save it without a repository connection.
+- **Own the result:** move and rename components, edit descriptions, add manual connections, undo changes, save locally, and import/export readable project JSON.
 
-The example project is an illustrative source fixture included in `examples/image-studio`. Its map is generated by the same analyzer as your own code. It is not a running image-generation service.
+## Review a coding change
 
-## How it works
+Open a local repository, select **Changes** in the workspace toolbar, choose a baseline (`HEAD`, a local branch, tag, or commit), then select **Compare changes**. Filter changed files or select an affected responsibility to inspect before/after evidence. `HEAD` includes staged, unstaged, and untracked source changes.
 
-```text
-Local source folder
-       │
-       ▼
-Bounded file discovery → TypeScript parser → resolved module imports
-                                                │
-                                                ▼
-                                   Graph + source evidence
-                                                │
-                                                ▼
-                                   Browser canvas + inspector
-                                                │
-                                  optional, when you ask
-                                                ▼
-                                   Your configured AI model
-```
+This review uses no model and makes no checkout or source edits. It covers inspected JS/TS source, not a complete application or runtime trace. When coverage is incomplete, addition/removal and dependency-change claims are withheld. Source excerpts show the first changed area, not a full patch. See [change review and its limits](docs/change-review.md).
 
-The analyzer uses the TypeScript compiler API. It supports ordinary relative module resolution and compiler options from the root `tsconfig.json`. It does not execute repository code, install dependencies, or run build scripts. Missing dependencies, project references, custom bundler aliases, and unresolved workspace packages can leave gaps.
+## Connect a model in the web interface
 
-The scan is limited to **400 source files, 256 KB per file, and 8 MB total**. Git roots use Git's tracked and untracked file listing with ignore rules. Other folders use a bounded directory walker and common exclusions; arbitrary `.gitignore` rules are not interpreted in that fallback. Dependencies, build outputs, common secret paths, binaries, and symlinks outside the selected folder are excluded. Hardcoded secrets in ordinary source files are not automatically redacted.
+Open **Model settings** (the controls icon beside Inspect and Ask the map). Enter a chat-completions-compatible API base URL, model ID, and optional API key. For example, a local server can use `http://localhost:11434/v1` with an installed model ID.
 
-Component categories such as “service” and “data” are filename-based hints. Observed arrows establish imports, not runtime order or call behavior. The displayed Git revision is the working tree's HEAD; snippets may include uncommitted changes and are identified by their content hashes.
+Settings are kept in the local server's memory. They do not enter map exports or browser storage. Saving settings makes no model request and sends no source; the next explicit question checks provider connectivity. Clear the configuration with **Use source analysis without a model**. Restarting restores any persistent `.env` configuration instead of session settings.
 
-## Optional AI explanations
-
-Copy `.env.example` to `.env` and configure a chat-completions-compatible endpoint:
+For persistent configuration:
 
 ```dotenv
 ARCHMAP_AI_BASE_URL=http://localhost:11434/v1
 ARCHMAP_AI_MODEL=your-installed-model
-# ARCHMAP_AI_KEY=only-if-your-provider-requires-it
+# ARCHMAP_AI_KEY=only-if-required
 ```
 
-Restart the server. In **Ask the map**, explicitly submitting a question sends the question and up to eight matching evidence snippets to that endpoint. Provider keys stay on the server. The app does not make model requests during a scan or automatically on selection.
+A model question sends relevant code to the configured endpoint. Hosted endpoints have their own data policies. Feature-map proposals use a ranked source selection of up to 60 inspected files, eight evidence snippets per file, with an approximately 48,000-character context budget. Written explanations use up to eight snippets. No model is called during scanning or selection.
 
-With a hosted endpoint, selected code leaves your machine and the provider's data policies apply. Model explanations are unverified interpretations; check them against the supplied evidence. Without model configuration, the same panel performs local evidence search.
+Proposals use structured JSON. The server checks component file IDs, evidence IDs, endpoint membership, observed dependency direction, graph references, and walkthrough references. It rejects unknown files and unsupported topology. These checks establish reference validity; they **do not establish that a model's explanation or architectural boundary is correct**. Review the evidence.
 
-## Saving and refreshing
+## How it works
 
-**Save** stores the current map, including source snippets and local paths, in this browser's local storage. It is one saved slot; saving another map replaces it. **Export** downloads an `.archmap.json` file, which can be committed or shared intentionally. Review its source content before sharing.
+```text
+Read bounded local source → parse imports and named call sites
+                                      │
+                     ┌────────────────┴─────────────────┐
+                     ▼                                  ▼
+             Responsibility overview             Source-file graph
+                     │                                  │
+                     └─────────────┬────────────────────┘
+                                   ▼
+                       Guided flows + source inspector
+                                   │
+                         explicit user request only
+                                   ▼
+                    Source focus or configured model
+                                   │
+                                   ▼
+                      Review proposal → apply / discard
+```
 
-Imported and restored maps work without a live analysis session. Refresh their repository before asking questions. Refresh replaces observed analysis, preserves existing component positions and manual elements whose endpoints still exist, and resets undo history. Edited display names of observed components are regenerated. Source freshness is explicit; files are not watched automatically.
+The TypeScript compiler API reads `.ts`, `.tsx`, `.js`, `.jsx`, and their `.mjs`/`.cjs` equivalents. Root `tsconfig.json` compiler options support ordinary module resolution and aliases. Dynamic dispatch, methods, deferred callbacks, framework routes, custom bundler aliases, and unresolved workspace packages can leave gaps. Other source languages and embedded Vue/Svelte source are not analyzed yet.
+
+The reader never executes repository code, installs its dependencies, or runs its build scripts. Git roots use tracked/untracked listings with ignore rules; other folders use a bounded walker and common exclusions, not full `.gitignore` semantics.
+
+Scans are limited to **400 files, 256 KB per file, and 8 MB total**. Architecture scans prioritize production paths over common tests/fixtures, and an explicit feature focus takes priority over both. External packages are not loaded as source. Common credential paths, dependencies, outputs, binary files, and out-of-root symlinks are excluded. Hardcoded secrets in ordinary source are not automatically redacted.
+
+## Evidence and saving
+
+Observed connections include the file, line range, source snippet, and SHA-256 file-content hash. Grouped responsibilities and model proposals are labeled inferred; user-authored connections are manual. The displayed Git revision is HEAD; snippets may include uncommitted changes and are identified by content hash.
+
+**Save** keeps one map in browser local storage. Saving another replaces that slot. **Export** produces an `.archmap.json` containing source snippets, local paths, both graph views where available, and walkthroughs. Review its contents before sharing. Imported/restored maps do not have an active server analysis session; refresh the repository before asking questions.
+
+Refresh reanalyzes source, preserves surviving positions and manual elements, and resets history. Generated display names/descriptions can change. Git change reviews are explicit point-in-time comparisons; there is no automatic file watcher or coding-agent session integration yet.
 
 ## Development
 
 ```bash
-npm run dev           # local API + Vite on port 4310
-npm test              # analyzer, graph, API and boundary tests
-npm run check         # TypeScript
-npm run build         # typecheck + production client
-npm start             # serve the built client and local API
-npm run format        # format source
-npm run format:check  # verify formatting
+npm run dev
+npm test
+npm run check
+npm run build
+npm start
+npm run format:check
 npx playwright install chromium
-npm run test:e2e      # browser workflows and mobile layout
+npm run test:e2e
 ```
 
-The service binds to loopback and rejects foreign Host and Origin headers for repository access. It is designed for a single trusted local user. **Network hosting, authentication, multi-user isolation, and hosted repository cloning are not implemented.** Do not expose this local reader through a public tunnel or reverse proxy.
+The service binds to loopback and rejects foreign Host/Origin headers. It is for a single trusted local user. Authenticated hosting, multi-user isolation, GitHub cloning, and cloud-service integrations are not implemented. Do not expose the local repository reader through a public reverse proxy.
 
 ```text
-server/       Local API, repository reader, optional model adapter
-shared/       Portable graph schema and validation
-src/          React landing page, canvas, inspector and graph editing
+server/       Reader, call-site extraction, architecture grouping, model proposals
+shared/       Portable graph, flow and proposal validation
+src/          Canvas, guided inspector, mapping agent, model settings, Anatomy figure
 examples/     Reproducible source fixture
-tests/        Unit, integration and browser tests
+tests/        Unit, API, model and browser workflows
 ```
 
 ## Roadmap
 
-- [x] Local TypeScript/JavaScript module maps and source evidence
-- [x] Editable web canvas and guided dependency traversal
-- [x] Optional model explanations and portable map files
-- [ ] Feature-scoped analysis with reviewable AI graph proposals
-- [ ] Richer abstraction levels and collapsible groups
-- [ ] Source change detection and architecture diffs
-- [ ] Function-level evidence and additional language analyzers
-- [ ] Authenticated self-hosting and GitHub repository connections
+- [x] Local source evidence and editable maps
+- [x] Structural architecture overview and source detail
+- [x] Named call-site flows and coordinated inspection
+- [x] Review/apply/discard for model and source-based feature proposals
+- [x] In-app model configuration and blank architecture sketches
+- [ ] Iterative repository exploration by an agent beyond bounded evidence selection
+- [ ] Collapsible custom boundaries and richer C4 levels
+- [x] Read-only Git architecture diffs with before/after source evidence
+- [ ] Automatic source-change detection and coding-agent session integration
+- [ ] More language analyzers and framework-aware behavior
+- [ ] Authenticated self-hosting, GitHub and provider integrations
 
-Contributions are welcome. Focused, verifiable improvements matter more than more arrows.
-
-## License
-
-[MIT](LICENSE). Font licenses and third-party notices are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). [MIT](LICENSE); third-party and Anatomy attribution is in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

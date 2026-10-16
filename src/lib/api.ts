@@ -18,9 +18,12 @@ export async function request<T>(url: string, body?: unknown): Promise<T> {
   if (!response.ok) throw new Error(data.error || 'Request failed. Try again.');
   return data;
 }
-export async function loadProject(example: boolean, path = '.') {
+export async function loadProject(example: boolean, path = '.', focus = '') {
   return projectSchema.parse(
-    await request(example ? '/api/example' : '/api/analyze', example ? undefined : { path }),
+    await request(
+      example ? '/api/example?view=architecture' : '/api/analyze',
+      example ? undefined : { path, view: 'architecture', focus },
+    ),
   );
 }
 export const ask = (project: Project, question: string, selectedId?: string) =>

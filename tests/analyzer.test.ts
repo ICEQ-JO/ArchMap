@@ -72,3 +72,28 @@ test('example map is reproducible and all observed edges have source evidence', 
   assert.equal(graph.edges.length, 11);
   for (const edge of graph.edges) assert.ok(edge.evidence?.snippet);
 });
+
+test('feature focus prioritizes matching source before the bounded file limit', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'archmap-focus-'));
+  try {
+    await Promise.all(
+      Array.from({ length: 405 }, (_, i) =>
+        writeFile(
+          path.join(root, `module-${String(i).padStart(3, '0')}.ts`),
+          `export const value${i} = ${i};`,
+        ),
+      ),
+    );
+    await writeFile(
+      path.join(root, 'zzz-authentication.ts'),
+      'export function authenticate() { return true; }',
+    );
+    const project = await analyze(root, 'local', true, 'authentication');
+    assert.equal(project.filesScanned, 400);
+    assert.ok(project.alternate?.nodes.some((n) => n.file === 'zzz-authentication.ts'));
+    assert.equal(project.focus, 'authentication');
+    assert.ok(project.warnings.some((w) => w.includes('Analysis limit')));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
