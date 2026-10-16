@@ -29,13 +29,15 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:4310**. Try the included Image Studio example or enter a repository folder.
+Keep that terminal running while using the app. Open **http://localhost:4310**. Try the included Image Studio example or enter a repository folder.
 
 The reader is restricted to the directory from which you start ArchMap and its descendants. To explore other projects, start with an explicit parent directory:
 
 ```bash
 ARCHMAP_ROOT=/absolute/path/to/projects npm run dev
 ```
+
+To remember that parent folder, set `ARCHMAP_ROOT` in your local `.env` file and restart the server.
 
 Then enter a project path relative to that directory. ArchMap accepts absolute paths inside the configured root too. On Windows PowerShell, set `$env:ARCHMAP_ROOT = 'C:\projects'` before running `npm run dev`.
 

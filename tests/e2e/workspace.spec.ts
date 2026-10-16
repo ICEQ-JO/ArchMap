@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import path from 'node:path';
 
 test('example: inspect evidence, walk, edit, undo, save, export and restore', async ({ page }) => {
   const failures: string[] = [];
@@ -47,7 +48,7 @@ test('local scanning, local question search and rejected paths', async ({ page }
   await page.getByLabel('Repository folder').fill('../');
   await page.getByRole('button', { name: 'Map repository' }).click();
   await expect(page.getByRole('alert')).toContainText('inside the configured');
-  await page.getByLabel('Repository folder').fill('examples/image-studio');
+  await page.getByLabel('Repository folder').fill(path.resolve('examples/image-studio'));
   await page.getByRole('button', { name: 'Map repository' }).click();
   await expect(page.locator('.react-flow__node')).toHaveCount(10);
   await page.getByRole('button', { name: 'Ask the map' }).click();

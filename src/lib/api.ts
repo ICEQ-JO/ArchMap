@@ -1,10 +1,17 @@
 import { projectSchema, type Answer, type Project } from '../../shared/schema';
 export async function request<T>(url: string, body?: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method: body === undefined ? 'GET' : 'POST',
-    headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: body === undefined ? 'GET' : 'POST',
+      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch {
+    throw new Error(
+      'Cannot reach the local ArchMap server. Start it with npm run dev, then retry.',
+    );
+  }
   const data = await response.json().catch(() => ({
     error: 'The local server returned an unexpected response. Restart ArchMap and try again.',
   }));
