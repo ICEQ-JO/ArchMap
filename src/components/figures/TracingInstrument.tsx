@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, FileCode2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Copy, FileCode2 } from 'lucide-react';
 import * as k from '../iso/iso-kit';
 import '../iso/iso.css';
 
@@ -104,30 +104,37 @@ function Solid({ part: p }: { part: Part }) {
 }
 const source = [
   {
+    fn: 'authenticate()',
     file: 'src/api/generate.ts',
     line: 6,
     title: 'Identity & access',
     code: 'const user = authenticate(token);',
     explanation: 'The generation handler calls authenticate before reserving credits.',
+    hash: 'd8a4f9104c',
   },
   {
+    fn: 'reserveCredits()',
     file: 'src/api/generate.ts',
     line: 8,
     title: 'Billing & credits',
     code: 'reserveCredits(user.id, 1);',
     explanation: 'The next source call reserves one credit for the authenticated user.',
+    hash: '8fa10b99c3',
   },
   {
+    fn: 'enqueue()',
     file: 'src/api/generate.ts',
     line: 9,
     title: 'Job queue',
     code: 'return enqueue({ userId: user.id, prompt });',
     explanation: 'The handler passes the user and prompt to the queue.',
+    hash: '3bc79e4401',
   },
 ];
 const ticks = k.topTicks(-108, 108, 4, 5, 63, 0.7, [1.8, 3.2], P);
 export default function TracingInstrument() {
   const [step, setStep] = useState(0);
+  const [copied, setCopied] = useState(false);
   const anchor = useRef<HTMLElement>(null);
   const holdUntil = useRef(0);
   useEffect(() => {
@@ -151,22 +158,47 @@ export default function TracingInstrument() {
     setStep(next);
   }
 
+  async function copySnippet() {
+    try {
+      await navigator.clipboard.writeText(
+        `${source[step].file}:${source[step].line}\n${source[step].code}`,
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      // Ignore clipboard write failure
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowLeft' && step > 0) {
+      choose(step - 1);
+      e.preventDefault();
+    } else if (e.key === 'ArrowRight' && step < source.length - 1) {
+      choose(step + 1);
+      e.preventDefault();
+    }
+  }
+
   const [dx, dy] = k.axisVector(P, [-69 + step * 69, 0, 0]);
   return (
     <figure
       ref={anchor}
       className="trace-instrument iso iso-plate"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      aria-label="Mechanical source-card reader. Use left and right arrow keys to step through source call sites."
       onPointerEnter={() => {
         holdUntil.current = Date.now() + 20000;
       }}
     >
       <div className="instrument-header">
-        <span>FIG. 01</span>
-        <span>A path through the system</span>
+        <span>FIG. 01 · CALL-SITE READER</span>
+        <span className="instrument-hint">PRESS [←] [→] KEYS TO STEP</span>
       </div>
       <svg
         className="iso-svg"
-        viewBox="0 0 640 390"
+        viewBox="118 95 404 267"
         role="img"
         aria-label="Mechanical source-card reader. The scanning carriage moves between three source call sites as you step through the example."
       >
@@ -220,35 +252,70 @@ export default function TracingInstrument() {
         </g>
       </svg>
       <div className="instrument-controls">
-        <span>Trace the generation handler</span>
-        <div>
+        <div className="instrument-steps" role="tablist" aria-label="Traced call sites">
+          {source.map((item, idx) => (
+            <button
+              key={item.title}
+              role="tab"
+              aria-selected={step === idx}
+              className={`instrument-step-tab ${step === idx ? 'active' : ''}`}
+              onClick={() => choose(idx)}
+            >
+              <span className="step-tab-num">0{idx + 1}</span>
+              <span className="step-tab-fn">{item.fn}</span>
+            </button>
+          ))}
+        </div>
+        <div className="instrument-nav">
           <button
             aria-label="Previous source call"
             disabled={step === 0}
             onClick={() => choose(step - 1)}
+            title="Previous source call"
           >
             <ArrowLeft size={14} />
           </button>
-          <span>{step + 1} / 3</span>
+          <span className="instrument-pager">
+            {step + 1} / {source.length}
+          </span>
           <button
             aria-label="Next source call"
             disabled={step === 2}
             onClick={() => choose(step + 1)}
+            title="Next source call"
           >
             <ArrowRight size={14} />
           </button>
         </div>
       </div>
       <figcaption aria-live="polite">
-        <div>
-          <FileCode2 size={13} />
-          <span>
+        <div className="trace-caption-head">
+          <FileCode2 size={13} className="trace-caption-icon" />
+          <span className="trace-caption-file">
             {source[step].file}:{source[step].line}
           </span>
-          <strong>{source[step].title}</strong>
+          <strong className="trace-caption-title">{source[step].title}</strong>
+          <button
+            className="trace-caption-copy"
+            onClick={copySnippet}
+            aria-label="Copy call site code"
+            title="Copy call site code"
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            <span>{copied ? 'Copied' : 'Copy'}</span>
+          </button>
         </div>
-        <code>{source[step].code}</code>
-        <p>{source[step].explanation}</p>
+        <div className="trace-code-block">
+          <span className="trace-line-num">{source[step].line}</span>
+          <code>{source[step].code}</code>
+        </div>
+        <div className="trace-caption-foot">
+          <p>{source[step].explanation}</p>
+          <div className="trace-caption-badges">
+            <span className="trace-badge">sha256:{source[step].hash}</span>
+            <span className="trace-badge-tag">LEXICAL CALL SITE</span>
+          </div>
+        </div>
       </figcaption>
     </figure>
   );
