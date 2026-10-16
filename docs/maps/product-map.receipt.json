@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/home/iceq/Dev/imagine/docs/maps/product.architecture.json",
+  "output": "/home/iceq/Dev/imagine/public/product-map.html",
+  "specification": {
+    "sha256": "e2e85b8f2a730abbab599d750fd0ba93eeb23b67b70cdeed79b15c16f441598c",
+    "bytes": 5551
+  },
+  "artifact": {
+    "sha256": "3b72ae28bd39e4e992d369a62ae3343627093d3d2eb8777ae177140f6e91dc3d",
+    "bytes": 609076
+  },
+  "validation": {
+    "checksPassed": 9,
+    "checkCount": 9,
+    "compositionProfile": "showcase",
+    "compositionStatus": "pass",
+    "errors": 0,
+    "warnings": 0
+  }
+}
