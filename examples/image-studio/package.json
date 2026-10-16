@@ -1,1 +1,6 @@
-{"name":"image-studio-example","private":true,"type":"module","description":"Illustrative source fixture for Repovox dependency analysis. Not a deployed application."}
+{
+  "name": "image-studio-example",
+  "private": true,
+  "type": "module",
+  "description": "Illustrative source fixture for ArchMap dependency analysis. Not a deployed application."
+}
