@@ -354,3 +354,43 @@
   border-color: #e0a8a1;
   border-style: dashed;
 }
+
+.changes-brief {
+  border: 1px solid #545448;
+  border-radius: 6px;
+  padding: 14px;
+  margin: 16px 0;
+  background: #27271f;
+}
+.changes-brief h3 {
+  margin: 10px 0;
+  line-height: 1.6;
+}
+.changes-brief > p {
+  font-size: 11px;
+}
+.changes-brief details > summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: #e5c796;
+  margin-top: 12px;
+}
+.brief-item {
+  border-top: 1px solid #46463b;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+.brief-item button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #ead5b0;
+  font:
+    11px/1.7 'Geist Mono',
+    monospace;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.brief-item button:hover {
+  text-decoration: underline;
+}
