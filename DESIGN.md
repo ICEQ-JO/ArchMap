@@ -1,125 +1,113 @@
 ---
 name: ArchMap
-description: A local-first workbench for source-backed architecture maps.
+description: A pixel source atlas and a neutral workbench for source-backed architecture.
 colors:
-  bg: '#17181b'
-  surface: '#1e2025'
-  surface-raised: '#282b32'
-  line: '#363a43'
-  text: '#edeef1'
-  muted: '#a7aab3'
-  accent: '#b4c4ed'
-  accent-ink: '#182134'
-  accent-hover: '#cbd7f5'
-  manual: '#c4b4f1'
-  error: '#f8b7a8'
+  paper: '#fafaf7'
+  ink: '#24241f'
+  quiet: '#626257'
+  rule: '#dcdcd1'
+  amber: '#efb965'
+  amber-emphasis: '#70451e'
+  chalk: '#fffdf4'
+  workflow-bg: '#272821'
+  source-window: '#1c1e19'
+  workflow-accent: '#eabc76'
   workspace-bg: '#f7f7f5'
   workspace-surface: '#ffffff'
+  workspace-text: '#292927'
+  workspace-muted: '#676761'
   workspace-line: '#deded8'
+  workspace-action: '#30302e'
   workspace-focus: '#5e5e55'
 typography:
   display:
     fontFamily: 'Jersey 10, sans-serif'
-    fontSize: 'clamp(40px, 4.5vw, 68px)'
+    fontSize: 'clamp(65px, 7.5vw, 108px)'
     fontWeight: 400
-    lineHeight: 1.02
-    letterSpacing: '-1px'
+    lineHeight: 0.88
+    letterSpacing: '-0.025em'
   headline:
     fontFamily: 'Jersey 10, sans-serif'
-    fontSize: 'clamp(44px, 4.8vw, 66px)'
+    fontSize: 'clamp(40px, 4.4vw, 64px)'
     fontWeight: 400
-    lineHeight: 0.99
-    letterSpacing: '-0.7px'
+    lineHeight: 0.98
+    letterSpacing: '-0.02em'
   body:
     fontFamily: 'Geist, sans-serif'
-    fontSize: '16px'
-    fontWeight: 400
-    lineHeight: 1.72
-  title:
-    fontFamily: 'Geist, sans-serif'
-    fontSize: '18px'
-    fontWeight: 500
-    letterSpacing: '-0.6px'
+    fontSize: '15px'
+    lineHeight: 1.6
   evidence:
     fontFamily: 'Geist Mono, monospace'
     fontSize: '12px'
-    fontWeight: 400
-    lineHeight: 2
-  label:
-    fontFamily: 'Geist Mono, monospace'
-    fontSize: '9px'
-    letterSpacing: '1.1px'
+    lineHeight: 1.8
 rounded:
-  card: '12px'
-  list-row: '3px'
-  control: '4px'
-  node: '5px'
-  walk-player: '6px'
+  atlas-node: '3px'
+  evidence: '4px'
+  landing-control: '5px'
+  terminal: '6px'
+  workspace-control: '7px'
+  hero: '8px'
+  workspace-card: '10px'
 spacing:
-  compact-gap: '8px'
-  control-gap: '10px'
-  panel-gap: '12px'
-  action-gap: '22px'
+  compact: '8px'
+  control: '12px'
+  section-gap: '60px'
 components:
   button-primary:
-    backgroundColor: '{colors.accent}'
-    textColor: '{colors.accent-ink}'
-    rounded: '{rounded.control}'
-    padding: '15px 19px'
+    backgroundColor: '{colors.ink}'
+    textColor: '#fffef8'
+    rounded: '{rounded.landing-control}'
+    padding: '13px 19px'
   button-primary-hover:
-    backgroundColor: '{colors.accent-hover}'
-  button-secondary:
-    backgroundColor: '{colors.surface}'
-    rounded: '{rounded.control}'
-    padding: '11px 15px'
-  button-secondary-hover:
-    backgroundColor: '{colors.surface-raised}'
+    backgroundColor: '#414136'
   button-text:
-    padding: '10px 0'
-  architecture-node:
-    backgroundColor: '#ffffff'
-    rounded: '{rounded.node}'
-    padding: '13px 15px'
-    width: '245px'
+    textColor: '{colors.ink}'
+  atlas-node:
+    backgroundColor: '#fafaf3'
+    rounded: '{rounded.atlas-node}'
+    padding: '12px 11px'
+  atlas-node-selected:
+    backgroundColor: '#2c2b23'
+    textColor: '#fefcf1'
   evidence-card:
-    backgroundColor: '#fbfcf8'
-    rounded: '{rounded.control}'
-  tag:
-    backgroundColor: '#2e2e2e'
-    textColor: '#c5c5c5'
-    padding: '4px 6px'
+    backgroundColor: '{colors.chalk}'
+    rounded: '{rounded.evidence}'
+    padding: '14px 16px'
+  workspace-input:
+    backgroundColor: '{colors.workspace-surface}'
+    textColor: '{colors.workspace-text}'
+    rounded: '{rounded.workspace-control}'
+    padding: '11px 12px'
 ---
 
 # Design System: ArchMap
 
 ## Overview
 
-**Creative North Star: "The Tracing Bench"**
+**Creative North Star: "The Pixel Source Atlas"**
 
-ArchMap pairs graphite instrument surfaces with a restrained blue and large pixel lettering. The pixel direction is user-pinned; the original isometric source-tracing instrument and the in-repo pixel figures make that direction specific to architecture exploration.
+ArchMap turns a codebase into a navigable atlas of source-backed connections. Its landing uses a broad amber field, oversized pixel lettering, countable SVG terrain and chalk source panels. The user-pinned hacker/pixel identity and cortad.com inspiration guide the graphic language; the source atlas is original to this product. Green and blue theme directions were rejected.
 
-The working interface is denser than the landing page. Geist carries functional controls and explanations; Geist Mono carries actual source, paths, and technical readouts. The identity stays visible without compromising source evidence.
+The workspace remains a quiet, neutral paper workbench. Geist carries functional controls and explanations; Geist Mono carries source, paths and technical readouts. Illustrative landing examples lead into real inspection without implying runtime tracing.
 
 **Key Characteristics:**
 
 - Pixel display lettering with readable functional typography.
-- Graphite tonal surfaces, fine borders, and restrained depth.
-- An isometric source-tracing instrument and in-repo pixel figures.
-- Responsive panels that preserve access to the map and evidence.
+- Amber terrain, ink actions and chalk evidence on the landing.
+- Neutral paper workspace with explicit task destinations.
+- Inspectable source, honest provenance and responsive reading surfaces.
 
 ## Colors
 
 ### Primary
 
-Restrained blue (`accent`) marks primary actions, focus, traced dependencies, run states, and the pixel figures' highlights. Its lighter hover counterpart (`accent-hover`) brightens primary buttons, and dark blue (`accent-ink`) is the text on them. Blue never fills a source surface or a prose block.
-
-### Secondary
-
-Muted violet (`manual`) distinguishes user-authored graph details and dashed manual connections. It is a provenance cue, not a competing action color. Warm error text (`error`) carries failures; warning copy also uses a muted amber in the implementation.
+Amber (`amber`) creates the hero's graphic field, with brown (`amber-emphasis`) emphasizing the last headline line. Warm amber (`workflow-accent`) marks selected workflow numbers and headline emphasis on the dark block. Ink (`ink`) carries primary actions and selected atlas nodes; action buttons are ink rather than amber-filled.
 
 ### Neutral
 
-Graphite (`bg`), surface (`surface`), and raised surface (`surface-raised`) organize the interface. Gray-blue (`line`) divides regions. Near-white (`text`) is the main reading color; gray (`muted`) supports secondary information. The workspace overrides these with its own neutral set (`workspace-bg`); landing and workspace palettes are deliberately separate.
+Paper (`paper`), quiet text (`quiet`) and fine rules (`rule`) support the editorial landing. Chalk (`chalk`) holds source evidence. The workflow uses dark neutral panels (`workflow-bg`, `source-window`), not a site-wide dark theme. Terrain tones are flat amber steps, with an 18px square grid.
+
+The workspace has its own paper, white, charcoal and neutral border/focus tokens. Small red/olive change-preview diff cues express before/after semantics; they do not establish a green theme. Preserve source/manual provenance labels and line styles in the actual graph.
 
 **The Evidence Color Rule.** Preserve distinct source, manual, selected, and error states; color supplements their text labels and line styles.
 
@@ -127,15 +115,19 @@ Graphite (`bg`), surface (`surface`), and raised surface (`surface-raised`) orga
 
 **Display Font:** Jersey 10, sans-serif. **Body Font:** Geist, sans-serif. **Source/Readout Font:** Geist Mono, monospace. All three are served locally from `/fonts/`.
 
-Display and section headlines use the frontmatter roles. The hero headline keeps one line per sentence at desktop widths and steps to `clamp(44px, 10vw, 62px)` below 820px, then 44px below 520px. Section-specific headline sizes remain intentionally varied.
+The desktop hero uses the display token with three deliberate lines. At 1200px it becomes `clamp(70px, 8.1vw, 96px)`; at 900px it is 75px; below 640px it becomes `clamp(66px, 16vw, 90px)` with 0.9 line height. Section headlines use the headline role, with larger open-source and workflow variants. Brand lettering stays Geist.
 
-Functional headings use Geist at medium weight. Landing introduction copy uses the body role; workspace explanations use 13–14px, with 11–12px reserved for secondary labels. Evidence uses the evidence role at all widths, with (10px) filenames, footers, and line numbers. Compact metadata uses smaller mono labels; do not apply those sizes to source content.
+Landing prose is generally 14–17px with 1.8–1.9 line height and short measures. Functional headings use medium-weight Geist. Workspace interactions and explanations remain 13–14px. Actual workspace evidence remains 12px Geist Mono; landing atlas snippets are 12px desktop and 11px phone, with horizontally scrolling code. Compact preview and terminal samples use smaller mono text; do not export those demo sizes to the working source reader.
 
-**The Reading Surface Rule.** Use pixel lettering for display emphasis, Geist for interaction and prose, and Geist Mono for source and technical identifiers. Keep evidence at (12px).
+**The Reading Surface Rule.** Use pixel lettering for display emphasis, Geist for interaction and prose, and Geist Mono for source and technical identifiers.
 
 ## Layout
 
-The landing container is capped at (1280px), initially with (56px) side gutters. Gutters become (32px) below (1100px) and (20px) below (520px). The desktop hero is a two-card band: headline and module skyline left, introduction and actions right; it stacks below (900px). Feature rows alternate their art side and stack below (900px); the capability grid ends at one column below (520px). Sections use generous vertical intervals while technical readouts stay compact.
+Landing navigation caps at 1480px with 38px side padding. The amber hero caps at 1456px, with 58px horizontal padding and a two-column 0.95fr/1.05fr text/atlas composition. Editorial sections cap at 1280px with 108px vertical and 40px horizontal padding. The product chapter pairs three task selectors and short copy with a large illustrative workspace. The dark workflow pairs numbered steps with a changing source window; the closing section pairs ownership copy with a terminal and FAQ.
+
+At 1200px the hero gains 14px external margins and tighter gaps. At 900px navigation becomes an expandable menu, preview navigation is removed, and gutters become 30px. At 640px the hero, product, workflow and close stack; the hero uses 9px outer margins and 23px inner gutters, editorial content uses 24px gutters. Mobile product proof has its own readable three-node map instead of shrinking the desktop SVG. Atlas labels retain 12px names while small metadata is hidden; evidence stays below the map. The footer wraps vertically.
+
+### Workspace layout and task continuity
 
 The workspace uses a neutral paper palette independent of the landing: `#f7f7f5` canvas, white panels, `#292927` text, `#676761` secondary text, `#deded8` borders, and charcoal primary actions. Geist carries 13–14px interactions and prose; source remains 12px Geist Mono. No blue or green surface tint.
 
@@ -145,67 +137,58 @@ Flows is a dedicated step reader with source evidence and a link back to the hig
 
 Below 640px the navigation becomes a seven-destination bottom bar. Source inspection overlays the canvas. The graph initially focuses a readable first component; Fit map still shows the whole graph. Flow lists stack above the source reader; settings and sessions use one column. Each task scrolls independently. The composer remains available below its scrollable answer region. New component styles are prefixed `wm-` to isolate them from legacy landing styles.
 
+`src/components/Workbench.css` owns the neutral paper workspace. Landing styles and figures remain in their own files. Use the named task navigation and contextual inspector described above; avoid a permanent empty panel or icon-only settings destinations. Static connections, model interpretations, and manual edits must remain distinguishable. Source and snapshot hashes stay inspectable.
+
+Change review is embedded in the shared workspace, with its own source/evidence scrolling. Sessions pauses observation when left; returning resumes the read-only polling lifecycle. Keep question drafts when moving between task pages, and reset them when a different project is opened. The capability map and interface must label unimplemented features as planned.
+
 ## Elevation & Depth
 
-Most depth comes from tonal surfaces and one-pixel borders. Architecture nodes use a small structural shadow (`0 5px 16px #0002`); selected nodes add an accent outline shadow (`0 0 0 1px #c4c4c433`). The floating walk launcher and player have darker shadows. The mobile explorer casts a lateral shadow. Avoid applying these floating treatments to ordinary content sections.
+Depth comes chiefly from flat tonal regions and fine borders. The landing atlas nodes use `0 6px 12px #64421514`; selection uses `0 8px 18px #67401330`. The evidence panel uses the faint `0 8px 22px #6c461d0c`. Other editorial sections remain flat. Workspace overlays use restrained structural shadows; avoid applying floating-panel treatments to normal prose.
 
-The tracing instrument steps its carriage between call sites and its readout follows; the readout controls work by keyboard. Node border transitions take (0.15s), opacity (0.2s). Reduced-motion preference disables animations, transitions, and smooth scrolling.
+Landing buttons transition background, color and transform over 0.2s ease and lift 2px on hover. Atlas nodes lift 4px; lit connection dashes travel over 18s linear, with 0.3s stroke transitions. Task selection updates the demonstration immediately; it does not auto-advance. Reduced-motion disables animations, transitions and smooth scrolling throughout both surfaces.
 
 ## Shapes
 
-Pixel figures use stepped rectangles on an integer grid at whole-pixel scale; the tracing instrument uses isometric plates, rails and routed lines. Ordinary controls use small corners from the frontmatter; tabs and structural panels remain square. One-pixel borders define panels and fields. Tiny circular status indicators are the exception to the predominantly rectilinear language.
+The original terrain uses countable 18px SVG rectangles with five flat amber tones, beneath orthogonal connection paths. Atlas nodes use 3px corners, evidence 4px, primary buttons 5px, terminal 6px and hero 8px (5px on phones). Workspace controls use 7px corners and reading cards generally 9–10px. Small circles and square status marks are functional exceptions. Do not round the pixel terrain or replace its stepped structure with smooth organic artwork.
 
 ## Components
 
-### Buttons
+### Actions and navigation
 
-Primary buttons use the accent colour with dark ink, semibold (13px) Geist, and a (46px) minimum height. Secondary buttons use a dark surface and visible border. Text buttons have no filled container and turn accent on hover. Disabled buttons use (0.45) opacity and a not-allowed cursor. Focus-visible controls receive a (2px) accent outline offset by (4px).
+Ink primary actions use 13px medium Geist, a 1px ink border and 13px by 19px padding. Text actions pair a concise verb with a directional arrow and underline on hover. Example actions call `open(true)`; repository/workspace actions call `open(false)`. Links point to actual repository, documentation and license destinations. The mobile menu exposes `aria-expanded`, closes on Escape and returns focus to its trigger. A skip link precedes navigation. Landing focus outlines are 2px currentColor with 5px offset; workspace focus uses neutral 2px outlines with 3px offset.
 
-### Inputs / Fields
+### Interactive source atlas
 
-Landing fields use dark inset surfaces; workspace fields use white surfaces with visible neutral borders. Search, repository-path, and question containers change their border to the accent on focus-within. Repository paths use mono type; the composer uses readable Geist. Label-edit fields use the shared focus outline. Preserve descriptive labels alongside placeholders.
+Seven real buttons select an illustrative responsibility, update `aria-pressed`, highlight adjacent paths and replace the filename/line, source snippet and explanation in a polite live region. Selected nodes reverse to ink with light text. Terrain is decorative and hidden from assistive technology. The heading labels illustrative source and the footnote labels inferred areas and static relationships. These are source-reading interactions, not evidence of execution order.
 
-### Navigation
+### Product and workflow demonstrations
 
-Header links start muted and turn accent on hover. Workspace destinations use named navigation with a filled neutral active state. Explorer rows use a subtle tinted fill and accent text when selected, and a darker hover fill. Compact breakpoints hide supplementary labels while retaining interactive icons and accessible names.
+The three product tasks are an accessible tablist with ArrowLeft/ArrowRight/Home/End navigation and a labeled tabpanel. Architecture, Flows and Changes previews are illustrative, with one real example action outside the static preview controls. Workflow step buttons expose `aria-pressed` and select a local tree, source snippet or OpenCode baseline-review explanation. Read-only boundaries and explicit-question model disclosure remain visible.
 
-### Chips
+### Installation and FAQ
 
-Small rectilinear tags use mono labels, a neutral fill, and a fine border. Provenance tags distinguish source and manual content. Export-symbol chips wrap long identifiers instead of stretching the panel.
+Terminal commands are selectable text. Copy reports success for two seconds and reports clipboard failure with a visible status message and manual-selection fallback. It never runs the displayed commands. Native `details`/`summary` FAQ rows use plus/minus state marks and keyboard-visible focus.
 
-### Cards / Containers
+### Workspace primitives and evidence
 
-Workspace architecture nodes share a white reading surface, a fine border, 18px padding, and 10px corners. Kind icons and provenance labels carry meaning without colored fills. Hover brightens the border; selection adds an accent border and outline; traced nodes gain a raised surface; unrelated nodes dim to (0.25) opacity.
+Inputs use white surfaces, 1px neutral borders, 7px corners and 11px by 12px padding; paths use mono and questions use readable Geist. Workspace navigation uses a filled neutral active state. Tags remain compact provenance labels; long identifiers wrap. Architecture nodes use white reading surfaces, fine borders, 18px padding and 10px corners. Evidence cards keep filename headers, selectable source with line numbers, line ranges and content hashes together. Preserve horizontal source scrolling and copy feedback. Manual connections and inferred responsibilities remain distinguishable from observed imports.
 
-Evidence cards group a filename header, real selectable source with line numbers, and a range/hash footer. Their source area scrolls horizontally without changing code formatting. Keep source formatting intact. The copy control reports success or failure.
-
-### Pixel Figures
-
-`PixelArt.tsx` draws every figure as rectangles on an integer grid with `shapeRendering="crispEdges"` and four flat tones plus one dithered fill. Sprites cover the hero skyline, the feature rows and the safety marks; glyphs cover the capability cards. A figure with an empty `label` renders as `aria-hidden` decoration, so decorative repeats stay out of the accessibility tree.
-
-### Source Tracing Instrument
-
-`figures/TracingInstrument.tsx` builds an isometric instrument from the vendored MIT kit (`components/iso/`, licence kept alongside): a base plate, a platen carrying three source cards, and a carriage whose reader window lights the card it is over. Punched marks on a card are its source lines. Because a single flat depth sort lets the wide platen bury a card, structure, pages and marks are painted as three groups. The caption steps through three traced call sites and lists the file, line and snippet for each; keep the figure tied to that inspectable example rather than making it ambient decoration.
+The older pixel figures and vendored isometric tracing instrument remain repository assets, not the current landing's defining graphic. `Landing.tsx` and `Landing.css` own the source atlas; `Workbench.css` owns the paper workspace.
 
 ## Do's and Don'ts
 
 ### Do:
 
 - **Do** preserve the pixel display, functional sans, and source mono roles.
-- **Do** keep source evidence readable at (12px), selectable, and connected to its filename and range.
-- **Do** reserve the landing accent for landing; use charcoal controls and neutral focus in the workspace.
+- **Do** keep actual workspace evidence readable at 12px, selectable, and connected to its filename and range.
+- **Do** reserve the amber field for landing identity; use charcoal controls and neutral focus in the workspace.
 - **Do** retain named mobile destinations, readable source inspection, and a persistent question composer.
 - **Do** honor reduced motion across trace animation and interface transitions.
 
 ### Don't:
 
-- **Don't** replace the in-repo pixel figures or the tracing instrument with borrowed imagery or a generic gradient hero.
+- **Don't** reintroduce green or blue as a landing theme.
+- **Don't** replace the original source atlas with borrowed imagery or a generic gradient hero.
 - **Don't** use pixel lettering for long explanations or source code.
-- **Don't** turn every surface into a floating card or enlarge the restrained corner vocabulary.
+- **Don't** turn every section into a floating card or enlarge the restrained corner vocabulary.
 - **Don't** visually conflate static dependencies, model explanations, and manual edits.
-
-## Workspace direction — October 2026
-
-`src/components/Workbench.css` owns the neutral paper workspace. Landing styles and figures remain in their own files. Use the named task navigation and contextual inspector described above; avoid a permanent empty panel or icon-only settings destinations. Static connections, model interpretations, and manual edits must remain distinguishable. Source and snapshot hashes stay inspectable.
-
-Change review is embedded in the shared workspace, with its own source/evidence scrolling. Sessions pauses observation when left; returning resumes the read-only polling lifecycle. Keep question drafts when moving between task pages, and reset them when a different project is opened. The capability map and interface must label unimplemented features as planned.

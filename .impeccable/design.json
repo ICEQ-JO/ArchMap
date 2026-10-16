@@ -1,348 +1,394 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-16T15:00:16.135467+00:00",
+  "generatedAt": "2026-10-16T22:24:24.031336+00:00",
   "title": "Design System: ArchMap",
   "extensions": {
     "colorMeta": {
-      "bg": {
+      "paper": {
         "role": "neutral",
-        "displayName": "Charcoal",
+        "displayName": "Paper",
         "tonalRamp": [
-          "oklch(15% 0.0093 137.85)",
-          "oklch(26% 0.0093 137.85)",
-          "oklch(38% 0.0093 137.85)",
-          "oklch(49% 0.0093 137.85)",
-          "oklch(61% 0.0093 137.85)",
-          "oklch(72% 0.0093 137.85)",
-          "oklch(84% 0.0093 137.85)",
-          "oklch(95% 0.0093 137.85)"
+          "oklch(15% 0.0040 106.47)",
+          "oklch(26% 0.0040 106.47)",
+          "oklch(38% 0.0040 106.47)",
+          "oklch(49% 0.0040 106.47)",
+          "oklch(61% 0.0040 106.47)",
+          "oklch(72% 0.0040 106.47)",
+          "oklch(84% 0.0040 106.47)",
+          "oklch(95% 0.0040 106.47)"
         ]
       },
-      "surface": {
+      "ink": {
         "role": "neutral",
-        "displayName": "Workbench Surface",
+        "displayName": "Ink",
         "tonalRamp": [
-          "oklch(15% 0.0130 135.14)",
-          "oklch(26% 0.0130 135.14)",
-          "oklch(38% 0.0130 135.14)",
-          "oklch(49% 0.0130 135.14)",
-          "oklch(61% 0.0130 135.14)",
-          "oklch(72% 0.0130 135.14)",
-          "oklch(84% 0.0130 135.14)",
-          "oklch(95% 0.0130 135.14)"
+          "oklch(15% 0.0091 107.02)",
+          "oklch(26% 0.0091 107.02)",
+          "oklch(38% 0.0091 107.02)",
+          "oklch(49% 0.0091 107.02)",
+          "oklch(61% 0.0091 107.02)",
+          "oklch(72% 0.0091 107.02)",
+          "oklch(84% 0.0091 107.02)",
+          "oklch(95% 0.0091 107.02)"
         ]
       },
-      "surface-raised": {
+      "quiet": {
         "role": "neutral",
-        "displayName": "Raised Surface",
+        "displayName": "Quiet",
         "tonalRamp": [
-          "oklch(15% 0.0163 133.73)",
-          "oklch(26% 0.0163 133.73)",
-          "oklch(38% 0.0163 133.73)",
-          "oklch(49% 0.0163 133.73)",
-          "oklch(61% 0.0163 133.73)",
-          "oklch(72% 0.0163 133.73)",
-          "oklch(84% 0.0163 133.73)",
-          "oklch(95% 0.0163 133.73)"
+          "oklch(15% 0.0171 107.01)",
+          "oklch(26% 0.0171 107.01)",
+          "oklch(38% 0.0171 107.01)",
+          "oklch(49% 0.0171 107.01)",
+          "oklch(61% 0.0171 107.01)",
+          "oklch(72% 0.0171 107.01)",
+          "oklch(84% 0.0171 107.01)",
+          "oklch(95% 0.0171 107.01)"
         ]
       },
-      "line": {
+      "rule": {
         "role": "neutral",
-        "displayName": "Olive Divider",
+        "displayName": "Rule",
         "tonalRamp": [
-          "oklch(15% 0.0263 131.99)",
-          "oklch(26% 0.0263 131.99)",
-          "oklch(38% 0.0263 131.99)",
-          "oklch(49% 0.0263 131.99)",
-          "oklch(61% 0.0263 131.99)",
-          "oklch(72% 0.0263 131.99)",
-          "oklch(84% 0.0263 131.99)",
-          "oklch(95% 0.0263 131.99)"
+          "oklch(15% 0.0148 106.70)",
+          "oklch(26% 0.0148 106.70)",
+          "oklch(38% 0.0148 106.70)",
+          "oklch(49% 0.0148 106.70)",
+          "oklch(61% 0.0148 106.70)",
+          "oklch(72% 0.0148 106.70)",
+          "oklch(84% 0.0148 106.70)",
+          "oklch(95% 0.0148 106.70)"
         ]
       },
-      "text": {
-        "role": "neutral",
-        "displayName": "Warm Near-white",
-        "tonalRamp": [
-          "oklch(15% 0.0093 106.58)",
-          "oklch(26% 0.0093 106.58)",
-          "oklch(38% 0.0093 106.58)",
-          "oklch(49% 0.0093 106.58)",
-          "oklch(61% 0.0093 106.58)",
-          "oklch(72% 0.0093 106.58)",
-          "oklch(84% 0.0093 106.58)",
-          "oklch(95% 0.0093 106.58)"
-        ]
-      },
-      "muted": {
-        "role": "neutral",
-        "displayName": "Sage-gray",
-        "tonalRamp": [
-          "oklch(15% 0.0260 129.99)",
-          "oklch(26% 0.0260 129.99)",
-          "oklch(38% 0.0260 129.99)",
-          "oklch(49% 0.0260 129.99)",
-          "oklch(61% 0.0260 129.99)",
-          "oklch(72% 0.0260 129.99)",
-          "oklch(84% 0.0260 129.99)",
-          "oklch(95% 0.0260 129.99)"
-        ]
-      },
-      "green": {
+      "amber": {
         "role": "primary",
-        "displayName": "Phosphor Green",
+        "displayName": "Amber",
         "tonalRamp": [
-          "oklch(15% 0.1481 132.16)",
-          "oklch(26% 0.1481 132.16)",
-          "oklch(38% 0.1481 132.16)",
-          "oklch(49% 0.1481 132.16)",
-          "oklch(61% 0.1481 132.16)",
-          "oklch(72% 0.1481 132.16)",
-          "oklch(84% 0.1481 132.16)",
-          "oklch(95% 0.1481 132.16)"
+          "oklch(15% 0.1193 76.83)",
+          "oklch(26% 0.1193 76.83)",
+          "oklch(38% 0.1193 76.83)",
+          "oklch(49% 0.1193 76.83)",
+          "oklch(61% 0.1193 76.83)",
+          "oklch(72% 0.1193 76.83)",
+          "oklch(84% 0.1193 76.83)",
+          "oklch(95% 0.1193 76.83)"
         ]
       },
-      "green-ink": {
+      "amber-emphasis": {
         "role": "primary",
-        "displayName": "Phosphor Ink",
+        "displayName": "Amber Emphasis",
         "tonalRamp": [
-          "oklch(15% 0.0443 133.00)",
-          "oklch(26% 0.0443 133.00)",
-          "oklch(38% 0.0443 133.00)",
-          "oklch(49% 0.0443 133.00)",
-          "oklch(61% 0.0443 133.00)",
-          "oklch(72% 0.0443 133.00)",
-          "oklch(84% 0.0443 133.00)",
-          "oklch(95% 0.0443 133.00)"
+          "oklch(15% 0.0796 60.21)",
+          "oklch(26% 0.0796 60.21)",
+          "oklch(38% 0.0796 60.21)",
+          "oklch(49% 0.0796 60.21)",
+          "oklch(61% 0.0796 60.21)",
+          "oklch(72% 0.0796 60.21)",
+          "oklch(84% 0.0796 60.21)",
+          "oklch(95% 0.0796 60.21)"
         ]
       },
-      "green-hover": {
+      "chalk": {
+        "role": "neutral",
+        "displayName": "Chalk",
+        "tonalRamp": [
+          "oklch(15% 0.0120 96.42)",
+          "oklch(26% 0.0120 96.42)",
+          "oklch(38% 0.0120 96.42)",
+          "oklch(49% 0.0120 96.42)",
+          "oklch(61% 0.0120 96.42)",
+          "oklch(72% 0.0120 96.42)",
+          "oklch(84% 0.0120 96.42)",
+          "oklch(95% 0.0120 96.42)"
+        ]
+      },
+      "workflow-bg": {
+        "role": "neutral",
+        "displayName": "Workflow Bg",
+        "tonalRamp": [
+          "oklch(15% 0.0126 113.84)",
+          "oklch(26% 0.0126 113.84)",
+          "oklch(38% 0.0126 113.84)",
+          "oklch(49% 0.0126 113.84)",
+          "oklch(61% 0.0126 113.84)",
+          "oklch(72% 0.0126 113.84)",
+          "oklch(84% 0.0126 113.84)",
+          "oklch(95% 0.0126 113.84)"
+        ]
+      },
+      "source-window": {
+        "role": "neutral",
+        "displayName": "Source Window",
+        "tonalRamp": [
+          "oklch(15% 0.0099 124.97)",
+          "oklch(26% 0.0099 124.97)",
+          "oklch(38% 0.0099 124.97)",
+          "oklch(49% 0.0099 124.97)",
+          "oklch(61% 0.0099 124.97)",
+          "oklch(72% 0.0099 124.97)",
+          "oklch(84% 0.0099 124.97)",
+          "oklch(95% 0.0099 124.97)"
+        ]
+      },
+      "workflow-accent": {
         "role": "primary",
-        "displayName": "Bright Phosphor",
+        "displayName": "Workflow Accent",
         "tonalRamp": [
-          "oklch(15% 0.1222 131.46)",
-          "oklch(26% 0.1222 131.46)",
-          "oklch(38% 0.1222 131.46)",
-          "oklch(49% 0.1222 131.46)",
-          "oklch(61% 0.1222 131.46)",
-          "oklch(72% 0.1222 131.46)",
-          "oklch(84% 0.1222 131.46)",
-          "oklch(95% 0.1222 131.46)"
+          "oklch(15% 0.1026 77.06)",
+          "oklch(26% 0.1026 77.06)",
+          "oklch(38% 0.1026 77.06)",
+          "oklch(49% 0.1026 77.06)",
+          "oklch(61% 0.1026 77.06)",
+          "oklch(72% 0.1026 77.06)",
+          "oklch(84% 0.1026 77.06)",
+          "oklch(95% 0.1026 77.06)"
         ]
       },
-      "process-field": {
-        "role": "primary",
-        "displayName": "Process Field",
+      "workspace-bg": {
+        "role": "neutral",
+        "displayName": "Workspace Bg",
         "tonalRamp": [
-          "oklch(15% 0.1397 132.33)",
-          "oklch(26% 0.1397 132.33)",
-          "oklch(38% 0.1397 132.33)",
-          "oklch(49% 0.1397 132.33)",
-          "oklch(61% 0.1397 132.33)",
-          "oklch(72% 0.1397 132.33)",
-          "oklch(84% 0.1397 132.33)",
-          "oklch(95% 0.1397 132.33)"
+          "oklch(15% 0.0026 106.45)",
+          "oklch(26% 0.0026 106.45)",
+          "oklch(38% 0.0026 106.45)",
+          "oklch(49% 0.0026 106.45)",
+          "oklch(61% 0.0026 106.45)",
+          "oklch(72% 0.0026 106.45)",
+          "oklch(84% 0.0026 106.45)",
+          "oklch(95% 0.0026 106.45)"
         ]
       },
-      "process-ink": {
-        "role": "primary",
-        "displayName": "Process Ink",
+      "workspace-surface": {
+        "role": "neutral",
+        "displayName": "Workspace Surface",
         "tonalRamp": [
-          "oklch(15% 0.0458 133.41)",
-          "oklch(26% 0.0458 133.41)",
-          "oklch(38% 0.0458 133.41)",
-          "oklch(49% 0.0458 133.41)",
-          "oklch(61% 0.0458 133.41)",
-          "oklch(72% 0.0458 133.41)",
-          "oklch(84% 0.0458 133.41)",
-          "oklch(95% 0.0458 133.41)"
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(49% 0.0000 89.88)",
+          "oklch(61% 0.0000 89.88)",
+          "oklch(72% 0.0000 89.88)",
+          "oklch(84% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
         ]
       },
-      "manual": {
-        "role": "secondary",
-        "displayName": "Manual Violet",
+      "workspace-text": {
+        "role": "neutral",
+        "displayName": "Workspace Text",
         "tonalRamp": [
-          "oklch(15% 0.0866 296.44)",
-          "oklch(26% 0.0866 296.44)",
-          "oklch(38% 0.0866 296.44)",
-          "oklch(49% 0.0866 296.44)",
-          "oklch(61% 0.0866 296.44)",
-          "oklch(72% 0.0866 296.44)",
-          "oklch(84% 0.0866 296.44)",
-          "oklch(95% 0.0866 296.44)"
+          "oklch(15% 0.0036 106.63)",
+          "oklch(26% 0.0036 106.63)",
+          "oklch(38% 0.0036 106.63)",
+          "oklch(49% 0.0036 106.63)",
+          "oklch(61% 0.0036 106.63)",
+          "oklch(72% 0.0036 106.63)",
+          "oklch(84% 0.0036 106.63)",
+          "oklch(95% 0.0036 106.63)"
         ]
       },
-      "error": {
-        "role": "secondary",
-        "displayName": "Warm Error",
+      "workspace-muted": {
+        "role": "neutral",
+        "displayName": "Workspace Muted",
         "tonalRamp": [
-          "oklch(15% 0.0790 33.37)",
-          "oklch(26% 0.0790 33.37)",
-          "oklch(38% 0.0790 33.37)",
-          "oklch(49% 0.0790 33.37)",
-          "oklch(61% 0.0790 33.37)",
-          "oklch(72% 0.0790 33.37)",
-          "oklch(84% 0.0790 33.37)",
-          "oklch(95% 0.0790 33.37)"
+          "oklch(15% 0.0093 106.72)",
+          "oklch(26% 0.0093 106.72)",
+          "oklch(38% 0.0093 106.72)",
+          "oklch(49% 0.0093 106.72)",
+          "oklch(61% 0.0093 106.72)",
+          "oklch(72% 0.0093 106.72)",
+          "oklch(84% 0.0093 106.72)",
+          "oklch(95% 0.0093 106.72)"
+        ]
+      },
+      "workspace-line": {
+        "role": "neutral",
+        "displayName": "Workspace Line",
+        "tonalRamp": [
+          "oklch(15% 0.0081 106.56)",
+          "oklch(26% 0.0081 106.56)",
+          "oklch(38% 0.0081 106.56)",
+          "oklch(49% 0.0081 106.56)",
+          "oklch(61% 0.0081 106.56)",
+          "oklch(72% 0.0081 106.56)",
+          "oklch(84% 0.0081 106.56)",
+          "oklch(95% 0.0081 106.56)"
+        ]
+      },
+      "workspace-action": {
+        "role": "neutral",
+        "displayName": "Workspace Action",
+        "tonalRamp": [
+          "oklch(15% 0.0035 106.60)",
+          "oklch(26% 0.0035 106.60)",
+          "oklch(38% 0.0035 106.60)",
+          "oklch(49% 0.0035 106.60)",
+          "oklch(61% 0.0035 106.60)",
+          "oklch(72% 0.0035 106.60)",
+          "oklch(84% 0.0035 106.60)",
+          "oklch(95% 0.0035 106.60)"
+        ]
+      },
+      "workspace-focus": {
+        "role": "neutral",
+        "displayName": "Workspace Focus",
+        "tonalRamp": [
+          "oklch(15% 0.0141 106.92)",
+          "oklch(26% 0.0141 106.92)",
+          "oklch(38% 0.0141 106.92)",
+          "oklch(49% 0.0141 106.92)",
+          "oklch(61% 0.0141 106.92)",
+          "oklch(72% 0.0141 106.92)",
+          "oklch(84% 0.0141 106.92)",
+          "oklch(95% 0.0141 106.92)"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Pixel Display",
-        "purpose": "Hero and first-run display emphasis."
+        "purpose": "Three-line hero emphasis."
+      },
+      "headline": {
+        "displayName": "Pixel Headline",
+        "purpose": "Editorial section headings."
+      },
+      "body": {
+        "displayName": "Functional Sans",
+        "purpose": "Readable controls and explanations."
       },
       "evidence": {
-        "displayName": "Source Evidence",
-        "purpose": "Actual selectable source; retain 12px across widths."
+        "displayName": "Source Mono",
+        "purpose": "Actual source, paths and technical readouts."
       }
     },
     "shadows": [
       {
-        "name": "node",
-        "value": "0 5px 16px #0002",
-        "purpose": "Structural depth on graph nodes."
+        "name": "atlas-node",
+        "value": "0 6px 12px #64421514",
+        "purpose": "Structural separation over terrain."
       },
       {
-        "name": "node-selected",
-        "value": "0 0 0 1px #bbf58b33, 0 5px 16px #0002",
-        "purpose": "Selected node outline and depth."
+        "name": "atlas-node-selected",
+        "value": "0 8px 18px #67401330",
+        "purpose": "Selected responsibility."
       },
       {
-        "name": "walk-launcher",
-        "value": "0 5px 18px #0003",
-        "purpose": "Floating guided-walk action."
-      },
-      {
-        "name": "walk-player",
-        "value": "0 5px 22px #0005",
-        "purpose": "Floating guided-walk player."
-      },
-      {
-        "name": "mobile-explorer",
-        "value": "8px 0 24px #0006",
-        "purpose": "Mobile explorer overlay."
+        "name": "atlas-evidence",
+        "value": "0 8px 22px #6c461d0c",
+        "purpose": "Quiet chalk evidence separation."
       }
     ],
     "motion": [
       {
-        "name": "terrain-trace",
-        "value": "trace-line 5s linear infinite",
-        "purpose": "Animate dash offset to -110 along the selected illustrative route; disabled for reduced motion."
+        "name": "control-transition",
+        "value": "0.2s ease",
+        "purpose": "Background, color and hover position."
       },
       {
-        "name": "node-state",
-        "value": "border-color 0.15s, opacity 0.2s",
-        "purpose": "Node hover and trace context transitions; disabled for reduced motion."
+        "name": "atlas-trace",
+        "value": "18s linear infinite",
+        "purpose": "Selected static relationship emphasis; disabled for reduced motion."
+      },
+      {
+        "name": "wire-stroke",
+        "value": "0.3s ease",
+        "purpose": "Connection selection feedback."
       }
     ],
     "breakpoints": [
       {
-        "name": "wide",
-        "value": "1500px"
-      },
-      {
-        "name": "workspace-compact",
+        "name": "compact-desktop",
         "value": "1200px"
       },
       {
-        "name": "landing-compact",
-        "value": "1100px"
-      },
-      {
-        "name": "workspace-tablet",
+        "name": "menu",
         "value": "900px"
       },
       {
-        "name": "landing-stack",
-        "value": "820px"
-      },
-      {
-        "name": "workspace-stack",
-        "value": "760px"
-      },
-      {
         "name": "phone",
-        "value": "520px"
+        "value": "640px"
       },
       {
-        "name": "narrow-phone",
-        "value": "380px"
+        "name": "wide",
+        "value": "1600px"
+      },
+      {
+        "name": "workspace-compact",
+        "value": "350px"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary Button",
+      "name": "Landing Primary",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Main action with phosphor fill.",
-      "html": "<button class=\"ds-primary\">Open example project \u2192</button>",
-      "css": ".ds-primary{font:600 13px Geist,sans-serif;display:inline-flex;align-items:center;gap:10px;border:1px solid transparent;border-radius:4px;padding:15px 19px;min-height:46px;background:var(--green,#bbf58b);color:var(--green-ink,#18250e);cursor:pointer}.ds-primary:hover{background:#d0ffa8}.ds-primary:disabled{opacity:.45;cursor:not-allowed}.ds-primary:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "description": "Primary entry into the included example.",
+      "html": "<button class=\"ds-primary\">Explore a live example \u2192</button>",
+      "css": ".ds-primary{font:500 13px/1.4 Geist,sans-serif;padding:13px 19px;border:1px solid #24241f;border-radius:5px;background:var(--ink,#24241f);color:#fffef8;cursor:pointer;transition:background .2s,transform .2s}.ds-primary:hover{background:#414136;transform:translateY(-2px)}.ds-primary:focus-visible{outline:2px solid currentColor;outline-offset:5px}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}",
+      "refersTo": "button-primary"
     },
     {
-      "name": "Secondary Button",
+      "name": "Landing Text Action",
       "kind": "button",
-      "refersTo": "button-secondary",
-      "description": "Bordered action for supporting tasks.",
-      "html": "<button class=\"ds-secondary\">Export map</button>",
-      "css": ".ds-secondary{font:12px Geist,sans-serif;border:1px solid #47503f;border-radius:4px;padding:11px 15px;background:var(--surface,#171b15);color:var(--text,#eeeee7);cursor:pointer}.ds-secondary:hover{background:var(--surface-raised,#20251d)}.ds-secondary:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
-    },
-    {
-      "name": "Text Button",
-      "kind": "button",
-      "refersTo": "button-text",
-      "description": "Lightweight supporting action.",
-      "html": "<button class=\"ds-text\">View source \u2192</button>",
-      "css": ".ds-text{font:13px Geist,sans-serif;border:0;padding:10px 0;background:none;color:var(--text,#eeeee7);cursor:pointer}.ds-text:hover{color:var(--green,#bbf58b)}.ds-text:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "description": "Supporting workspace entry.",
+      "html": "<button class=\"ds-text\">Open your repository \u2197</button>",
+      "css": ".ds-text{font:500 13px Geist,sans-serif;border:0;background:none;color:var(--ink,#24241f);cursor:pointer}.ds-text:hover{text-decoration:underline;text-underline-offset:5px}.ds-text:focus-visible{outline:2px solid currentColor;outline-offset:5px}",
+      "refersTo": "button-text"
     },
     {
       "name": "Repository Path",
       "kind": "input",
-      "description": "Mono path field with a container focus border.",
-      "html": "<label class=\"ds-path-label\">Repository path<span class=\"ds-path\"><input aria-label=\"Repository path\" placeholder=\"/path/to/repository\" /></span></label>",
-      "css": ".ds-path-label{font:10px Geist,sans-serif;color:#d0ddc5}.ds-path{display:flex;margin-top:9px;border:1px solid #50653d;background:#1b2514;padding:0 12px}.ds-path:focus-within{border-color:var(--green,#bbf58b)}.ds-path input{width:100%;border:0;outline:0!important;background:none;color:var(--text,#eeeee7);font:12px var(--mono,monospace);padding:14px 0}.ds-path input::placeholder{color:var(--muted,#a6af9e)}.ds-path input:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "description": "Neutral paper workspace field.",
+      "html": "<label class=\"ds-label\">Repository path<input class=\"ds-input\" placeholder=\"/path/to/repository\" /></label>",
+      "css": ".ds-label{display:grid;gap:8px;font:13px Geist,sans-serif;color:#292927}.ds-input{font:12px \"Geist Mono\",monospace;padding:11px 12px;background:#fff;color:#292927;border:1px solid #c2c2b8;border-radius:7px}.ds-input:hover{border-color:#7b7b69}.ds-input:focus-visible{outline:2px solid #7b7b69;outline-offset:1px}",
+      "refersTo": "workspace-input"
     },
     {
-      "name": "Inspector Tabs",
+      "name": "Workspace Navigation",
       "kind": "nav",
-      "description": "Underline identifies the active inspector section.",
-      "html": "<nav class=\"ds-tabs\" aria-label=\"Inspector\"><button aria-current=\"page\">Details</button><button>Ask</button></nav>",
-      "css": ".ds-tabs{display:flex;height:51px;gap:25px;padding:0 15px;background:#151a12;border-bottom:1px solid var(--line,#30382a)}.ds-tabs button{background:none;border:0;border-bottom:1px solid transparent;border-radius:0;color:var(--muted,#a6af9e);font:10px Geist,sans-serif;padding:0 2px;cursor:pointer}.ds-tabs button[aria-current]{color:var(--green,#bbf58b);border-color:var(--green,#bbf58b)}.ds-tabs button:hover{color:var(--green,#bbf58b)}.ds-tabs button:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "description": "Named task destinations with neutral active state.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace\"><button aria-current=\"page\">Architecture</button><button>Flows</button><button>Changes</button></nav>",
+      "css": ".ds-nav{display:flex;gap:5px;padding:5px;background:#f7f7f5}.ds-nav button{font:13px Geist,sans-serif;color:#292927;background:transparent;border:0;border-radius:7px;padding:10px;cursor:pointer}.ds-nav button[aria-current]{background:#efefe8}.ds-nav button:hover{background:#eeeee9}.ds-nav button:focus-visible{outline:2px solid #5e5e55;outline-offset:3px}"
     },
     {
-      "name": "Provenance Tag",
+      "name": "Source Label",
       "kind": "chip",
-      "refersTo": "tag",
-      "description": "Compact noninteractive repository status.",
-      "html": "<span class=\"ds-tag\">EXAMPLE</span>",
-      "css": ".ds-tag{display:inline-block;font:7px var(--mono,monospace);letter-spacing:.7px;padding:4px 6px;background:#26311e;color:#c0d3ac;border:1px solid #3c4d2e;white-space:nowrap}.ds-tag:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "description": "Noninteractive provenance label.",
+      "html": "<span class=\"ds-tag\">SOURCE</span>",
+      "css": ".ds-tag{display:inline-block;font:9px \"Geist Mono\",monospace;color:#6b634f;border:1px solid #dcdcd1;padding:4px 6px;background:#fffdf4}"
     },
     {
-      "name": "Architecture Node",
-      "kind": "card",
-      "refersTo": "architecture-node",
-      "description": "Source module with provenance, title, and export summary.",
-      "html": "<article class=\"ds-node\" tabindex=\"0\"><div class=\"ds-meta\"><span>MODULE</span><span>SOURCE</span></div><strong>Generation endpoint</strong><p>generateImage \u00b7 enqueue</p></article>",
-      "css": ".ds-node{width:226px;min-height:106px;border:1px solid #465437;border-radius:5px;background:#1c2516;padding:13px 15px;box-shadow:0 5px 16px #0002;transition:border-color .15s,opacity .2s}.ds-node:hover{border-color:#93ae75}.ds-meta{display:flex;justify-content:space-between;font:9px var(--mono,monospace);letter-spacing:.6px;color:#b2c69e}.ds-meta span:last-child{font-size:8px;color:#9daa91}.ds-node strong{display:block;font:500 13px Geist,sans-serif;color:#eef3e8;margin-top:10px}.ds-node p{font:10px/1.7 var(--mono,monospace);color:#a9b99a;margin:7px 0 0}.ds-node:focus-visible{border-color:var(--green,#bbf58b);box-shadow:0 0 0 1px #bbf58b33,0 5px 16px #0002}@media(prefers-reduced-motion:reduce){.ds-node{transition:none}}.ds-node:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "name": "Atlas Node",
+      "kind": "button",
+      "description": "Selectable illustrative source responsibility.",
+      "html": "<button class=\"ds-node\" aria-pressed=\"true\"><span>ENTRY</span><strong>Generation API</strong><small>generateImage()</small></button>",
+      "css": ".ds-node{width:155px;padding:12px 11px;background:#fafaf3;color:#24241f;border:1px solid #8d794e;border-radius:3px;text-align:left;box-shadow:0 6px 12px #64421514;cursor:pointer;transition:translate .2s}.ds-node span,.ds-node small{display:block;font:7px \"Geist Mono\",monospace}.ds-node strong{display:block;font:550 12px Geist,sans-serif;margin:8px 0 5px}.ds-node[aria-pressed=true]{background:#2c2b23;color:#fefcf1;border-color:#2c2b23;box-shadow:0 8px 18px #67401330}.ds-node:hover{translate:0 -4px}.ds-node:focus-visible{outline:2px solid currentColor;outline-offset:5px}@media(prefers-reduced-motion:reduce){.ds-node{transition:none}}",
+      "refersTo": "atlas-node"
     },
     {
       "name": "Source Evidence",
       "kind": "card",
-      "refersTo": "evidence-card",
-      "description": "Readable evidence with filename, line number, and hash.",
-      "html": "<article class=\"ds-evidence\"><header>src/app.ts<button aria-label=\"Copy source evidence\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\"/><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"/></svg></button></header><pre><span>12</span>import { enqueue } from './queue';</pre><footer><span>L12\u201312</span><span>sha256:3a702d19</span></footer></article>",
-      "css": ".ds-evidence{border:1px solid #35442a;background:#11170d;border-radius:4px;overflow:hidden}.ds-evidence header{display:flex;align-items:center;justify-content:space-between;background:#1b2515;border-bottom:1px solid #35442a;padding:10px;color:#b6c7a6;font:10px var(--mono,monospace)}.ds-evidence button{display:flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;padding:4px;border:0;background:none;color:var(--muted,#a6af9e);cursor:pointer}.ds-evidence button:hover{color:var(--green,#bbf58b)}.ds-evidence pre{margin:0;overflow:auto;padding:13px 0;font:12px/2 var(--mono,monospace);color:#baf18e;max-height:220px}.ds-evidence pre>span{display:inline-block;width:31px;text-align:right;padding-right:9px;font-size:10px;color:#8d9e7d;user-select:none}.ds-evidence footer{display:flex;justify-content:space-between;border-top:1px solid #303d27;padding:8px 9px;font:10px var(--mono,monospace);color:#a4b494}.ds-evidence button:focus-visible{outline:2px solid var(--green,#bbf58b);outline-offset:4px}"
+      "description": "Chalk evidence panel with file, line, snippet and explanation.",
+      "html": "<article class=\"ds-evidence\"><header>src/api/generate.ts:6 \u00b7 SOURCE</header><code>const user = authenticate(token);</code><p>Starts the request. Checks identity, reserves a credit, then queues the work.</p></article>",
+      "css": ".ds-evidence{padding:14px 16px;background:#fffdf4;border:1px solid #b58e53;border-radius:4px;box-shadow:0 8px 22px #6c461d0c;color:#6b634f}.ds-evidence header{font:10px \"Geist Mono\",monospace}.ds-evidence code{display:block;font:12px/1.8 \"Geist Mono\",monospace;color:#373427;padding:10px 0 7px;overflow:auto;white-space:nowrap}.ds-evidence p{font:12px/1.7 Geist,sans-serif;margin:0}",
+      "refersTo": "evidence-card"
+    },
+    {
+      "name": "FAQ Disclosure",
+      "kind": "custom",
+      "description": "Native keyboard-operable disclosure.",
+      "html": "<details class=\"ds-faq\"><summary>Do I need a model key?</summary><p>ArchMap is useful without a model key.</p></details>",
+      "css": ".ds-faq{border-block:1px solid #dcdcd1;padding:17px 0;color:#24241f}.ds-faq summary{display:flex;justify-content:space-between;cursor:pointer;list-style:none;font:500 13px Geist,sans-serif}.ds-faq summary:after{content:\"+\"}.ds-faq[open] summary:after{content:\"\u2212\"}.ds-faq summary:hover{text-decoration:underline}.ds-faq summary:focus-visible{outline:2px solid currentColor;outline-offset:5px}.ds-faq p{font:12px/1.9 Geist,sans-serif;color:#626257;margin:14px 0 0}"
     }
   ],
   "narrative": {
-    "northStar": "The Pixel Circuit Workbench",
-    "overview": "ArchMap pairs charcoal instrument surfaces with phosphor green and large pixel lettering. The user-pinned hacker/pixel direction informs the identity; the original SVG circuit terrain makes that direction specific to architecture exploration.\n\nThe working interface is denser than the landing page. Geist carries functional controls and explanations; Geist Mono carries actual source, paths, and technical readouts. The identity stays visible without compromising source evidence.",
+    "northStar": "The Pixel Source Atlas",
+    "overview": "ArchMap turns a codebase into a navigable atlas of source-backed connections. Its landing uses a broad amber field, oversized pixel lettering, countable SVG terrain and chalk source panels. The user-pinned hacker/pixel identity and cortad.com inspiration guide the graphic language; the source atlas is original to this product. Green and blue theme directions were rejected.\n\nThe workspace remains a quiet, neutral paper workbench. Geist carries functional controls and explanations; Geist Mono carries source, paths and technical readouts. Illustrative landing examples lead into real inspection without implying runtime tracing.",
     "keyCharacteristics": [
       "Pixel display lettering with readable functional typography.",
-      "Green-black tonal surfaces, fine borders, and restrained depth.",
-      "Original circuit terrain and inspectable source-backed connections.",
-      "Responsive panels that preserve access to the map and evidence."
+      "Amber terrain, ink actions and chalk evidence on the landing.",
+      "Neutral paper workspace with explicit task destinations.",
+      "Inspectable source, honest provenance and responsive reading surfaces."
     ],
     "rules": [
       {
@@ -352,21 +398,22 @@
       },
       {
         "name": "The Reading Surface Rule",
-        "body": "Use pixel lettering for display emphasis, Geist for interaction and prose, and Geist Mono for source and technical identifiers. Keep evidence at (12px).",
+        "body": "Use pixel lettering for display emphasis, Geist for interaction and prose, and Geist Mono for source and technical identifiers.",
         "section": "typography"
       }
     ],
     "dos": [
       "**Do** preserve the pixel display, functional sans, and source mono roles.",
-      "**Do** keep source evidence readable at (12px), selectable, and connected to its filename and range.",
-      "**Do** use green for action, focus, selection, and trace emphasis with clear state labels.",
-      "**Do** retain the stacked mobile workspace and accessible explorer toggle.",
+      "**Do** keep actual workspace evidence readable at 12px, selectable, and connected to its filename and range.",
+      "**Do** reserve the amber field for landing identity; use charcoal controls and neutral focus in the workspace.",
+      "**Do** retain named mobile destinations, readable source inspection, and a persistent question composer.",
       "**Do** honor reduced motion across trace animation and interface transitions."
     ],
     "donts": [
-      "**Don't** replace the original circuit terrain with borrowed imagery or a generic gradient hero.",
+      "**Don't** reintroduce green or blue as a landing theme.",
+      "**Don't** replace the original source atlas with borrowed imagery or a generic gradient hero.",
       "**Don't** use pixel lettering for long explanations or source code.",
-      "**Don't** turn every surface into a floating card or enlarge the restrained corner vocabulary.",
+      "**Don't** turn every section into a floating card or enlarge the restrained corner vocabulary.",
       "**Don't** visually conflate static dependencies, model explanations, and manual edits."
     ]
   }
