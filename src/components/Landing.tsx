@@ -1,6 +1,6 @@
-import { ArrowDown, ArrowRight, Check, CheckCheck, Copy, FolderOpen, GitBranch, Github, Network, ScanLine, Terminal, Waypoints } from 'lucide-react';
+import { ArrowDown, ArrowRight, Check, CheckCheck, Copy, FolderOpen, GitBranch, Network, ScanLine, Terminal, Waypoints } from 'lucide-react';
 import { useState } from 'react';
-import { Brand, Mark } from './Brand';
+import { Brand, Mark, Github } from './Brand';
 import PixelTerrain from './PixelTerrain';
 
 const github = 'https://github.com/ICEQ-JO/ArchMap';
