@@ -30,7 +30,7 @@ export default function FlowInspector({
               <span>
                 <strong>{f.title}</strong>
                 <small>
-                  {f.steps.length} steps ·{' '}
+                  {f.steps.length} {f.steps.length === 1 ? 'step' : 'steps'} ·{' '}
                   {f.origin === 'inferred' ? 'Model interpretation' : 'Source call sites'}
                 </small>
               </span>
