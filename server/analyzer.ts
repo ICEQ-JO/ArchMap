@@ -251,10 +251,13 @@ export async function analyze(
     new Map([...snapshot.files].map(([file, content]) => [path.resolve(root, file), content]));
   const host: ts.ModuleResolutionHost = virtualFiles
     ? {
+        getCurrentDirectory: () => root,
         fileExists: (file) => virtualFiles.has(path.resolve(file)),
         readFile: (file) => virtualFiles.get(path.resolve(file)),
       }
     : {
+        // Paths without baseUrl are relative to the config directory, not ArchMap's cwd.
+        getCurrentDirectory: () => root,
         fileExists: (file) => {
           try {
             return isWithin(root, ts.sys.realpath!(file)) && ts.sys.fileExists(file);
