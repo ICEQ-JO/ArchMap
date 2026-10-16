@@ -16,6 +16,7 @@ async function fixture() {
   let phase = 'idle',
     userId = 'old',
     complete = true;
+  let foreignPath = false;
   let foreign = false,
     oversized = false,
     redirect = false,
@@ -29,7 +30,7 @@ async function fixture() {
   const server = createServer((req, res) => {
     const url = new URL(req.url!, 'http://local');
     calls.push({ method: req.method!, route: url.pathname, auth: req.headers.authorization });
-    assert.equal(url.searchParams.get('directory'), root);
+    assert.equal(url.searchParams.get('directory'), null);
     if (
       requireAuth &&
       req.headers.authorization !==
@@ -47,7 +48,8 @@ async function fixture() {
       res.end(JSON.stringify({ text: 'x'.repeat(1024 * 1024 + 1) }));
       return;
     }
-    if (url.pathname === '/path') res.end(JSON.stringify({ directory: root }));
+    if (url.pathname === '/path')
+      res.end(JSON.stringify({ directory: foreignPath ? path.dirname(root) : root }));
     else if (url.pathname === '/session')
       res.end(
         JSON.stringify([
@@ -103,6 +105,9 @@ async function fixture() {
     setTurn: (id: string, done: boolean) => {
       userId = id;
       complete = done;
+    },
+    foreignPath: () => {
+      foreignPath = true;
     },
     foreign: () => {
       foreign = true;
@@ -252,6 +257,21 @@ test('unknown upstream status never turns into a completion signal', async () =>
     f.invalidStatus();
     await assert.rejects(f.bridge.poll());
     assert.equal(f.bridge.status().tracking?.state, 'waiting');
+  } finally {
+    await f.close();
+  }
+});
+
+test('connecting verifies the server existing project without initializing a directory override', async () => {
+  const f = await fixture();
+  try {
+    f.foreignPath();
+    await assert.rejects(f.bridge.connect(f.input), /same repository folder/);
+    assert.equal(f.bridge.status().connected, false);
+    assert.deepEqual(
+      f.calls.map((c) => c.route),
+      ['/path'],
+    );
   } finally {
     await f.close();
   }

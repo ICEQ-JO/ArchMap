@@ -66,7 +66,8 @@ async function readJson(
   params: Record<string, string> = {},
 ) {
   const url = new URL(route, connection.baseUrl);
-  url.searchParams.set('directory', connection.root);
+  // Stay in the server's existing project. A directory override could initialize
+  // another OpenCode instance (and its project plugins) before scope is verified.
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   let response: Response;
   try {
