@@ -10,7 +10,7 @@ Local-first architecture exploration, guided source walkthroughs, and reviewable
 
 </div>
 
-![ArchMap architecture and guided source walkthrough](docs/images/workspace.png)
+![ArchMap workspace with a guided source walkthrough](docs/images/workspace.png)
 
 ArchMap is an open-source web app for understanding JavaScript and TypeScript projects. Start with a responsibility overview, follow a named feature flow, inspect supporting source, and ask for a proposed map you can review before applying.
 
