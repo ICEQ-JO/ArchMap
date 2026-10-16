@@ -1,4 +1,4 @@
-# Repovox
+# ArchMap
 
 <!-- impeccable:product-schema 1 -->
 
@@ -21,7 +21,7 @@ Browser interface backed by a locally running repository reader. Self-hosting is
 First increment: bounded JavaScript/TypeScript static dependency analysis, source inspection, editable graph, guided dependency walks, JSON import/export, local save, optional model explanations. Static dependencies must not be presented as runtime traces. Multi-language semantic analysis and automatic architecture refresh are open roadmap items.
 
 ## Brand Commitments
-User requested a hacker/pixel direction inspired by cortad.com. Repovox is a provisional name pending the user's choice. Open source with meaningful feature branches and commits; push and merge when the remote is provided.
+User requested a hacker/pixel direction inspired by cortad.com. The user named the project ArchMap; its repository is https://github.com/ICEQ-JO/ArchMap. Open source with meaningful feature branches and commits; push and merge when the remote is provided.
 
 ## Evidence on Hand
 Empty repository at start. An explicitly labeled example project will provide reproducible demonstration data. No customers, testimonials, usage statistics, or performance claims exist.

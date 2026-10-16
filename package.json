@@ -1,11 +1,13 @@
 {
-  "name": "repovox",
+  "name": "archmap",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Find your way through a codebase. Local architecture maps with source evidence.",
   "license": "MIT",
-  "engines": { "node": ">=22.12" },
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "tsx server/index.ts",
     "build": "tsc --noEmit && vite build",
@@ -13,5 +15,25 @@
     "test": "tsx --test tests/*.test.ts",
     "check": "tsc --noEmit",
     "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.12.0",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "lucide-react": "^1.58.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "~5.9.3",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "tsx": "^4.23.15",
+    "vite": "^8.3.4"
   }
 }
