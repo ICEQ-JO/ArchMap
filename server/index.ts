@@ -1,12 +1,12 @@
 import 'dotenv/config';
 import path from 'node:path';
-import { createServer as createHttpServer } from 'node:http';
+import { createLocalServer } from './http.js';
 import { realpath } from 'node:fs/promises';
 import { createApp } from './app.js';
 
 const root = await realpath(path.resolve(process.env.ARCHMAP_ROOT || process.cwd()));
 const app = createApp(root);
-const httpServer = createHttpServer(app);
+const httpServer = createLocalServer(app);
 const port = Number(process.env.PORT || 4310);
 if (process.env.NODE_ENV === 'production') {
   const { default: express } = await import('express');
