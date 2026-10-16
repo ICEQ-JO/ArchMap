@@ -52,7 +52,7 @@ Use **Feature focus** to prioritize matching paths before the scan limit, or cho
 
 ## Review a coding change
 
-Open a local repository, select **Changes** in the workspace toolbar, choose a baseline (`HEAD`, a local branch, tag, or commit), then select **Compare changes**. Filter changed files or select an affected responsibility to inspect before/after evidence. `HEAD` includes staged, unstaged, and untracked source changes.
+Open a local repository, select **Changes** in the workspace toolbar, choose a baseline (`HEAD`, a local branch, tag, or commit), then select **Compare changes**. Focus the review with a feature question, symbol, or path; read a source-cited change brief and select an affected responsibility to inspect before/after evidence. `HEAD` includes staged, unstaged, and untracked source changes.
 
 This review uses no model and makes no checkout or source edits. It covers inspected JS/TS source, not a complete application or runtime trace. When coverage is incomplete, addition/removal and dependency-change claims are withheld. Source excerpts show the first changed area, not a full patch. See [change review and its limits](docs/change-review.md).
 

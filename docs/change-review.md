@@ -13,9 +13,17 @@ The comparison includes staged, unstaged, and untracked source files permitted b
 
 Changes to source within an area mark it modified; this is not a claim that its architecture or behavior changed. Static imports are dependencies, not execution order. The review does not assert test results, security correctness, or runtime behavior.
 
+## Focus on a feature
+
+Use **Focus this review** for a path, symbol, responsibility name, or question such as “What changed in authentication?”. This is deterministic keyword matching across changed paths, exported names on both sides, inferred responsibility labels, and changed dependency references. It is not semantic question answering. Common auth/generation word forms are normalized.
+
+The file list and static-dependency list narrow together. The graph retains matched responsibility areas and their direct neighbors for context. Selecting an area further restricts the focus; clear the area filter to return to all matching changes. No additional repository reads or model calls occur when filtering.
+
+Expand **Read change brief** for concrete file and export changes. Each numbered file reference opens its before/after evidence. Unchanged exported names do not establish unchanged behavior. Context and coverage limitations remain visible, including the withholding of absence-based claims for incomplete scans.
+
 ## Coverage
 
-Both sides use the existing limits: 400 source files, 256 KB per file, and 8 MB total. Source-language support and module-resolution limitations are the same as the normal scanner. The repository's feature focus, if set, prioritizes paths before these limits; the review filter only searches already detected changed filenames.
+Both sides use the existing limits: 400 source files, 256 KB per file, and 8 MB total. Source-language support and module-resolution limitations are the same as the normal scanner. The repository's feature focus, if set, prioritizes paths before these limits; the review focus searches only already inspected changes; it does not expand the source scan.
 
 When either scan reports gaps (for example unresolved relative imports, skipped files, or a file limit), the review marks coverage incomplete. Addition, removal, and dependency-change claims are withheld because absence from a partial graph is insufficient evidence. Modifications to files inspected on both sides remain available. Historical symlinks and common credential paths are excluded; source access stays within the selected repository.
 

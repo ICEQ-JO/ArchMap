@@ -66,7 +66,12 @@ for (const width of [1440, 390, 320]) {
     await page.getByRole('button', { name: 'Compare changes', exact: true }).click();
     await expect(dialog.getByRole('status')).toContainText('2 dependency changes');
     await expect(dialog.locator('.react-flow__node')).toHaveCount(3);
-    await page.getByLabel('Filter changed files').fill('main');
+    await page.getByLabel('Filter changed files').fill('What changed in authentication?');
+    await expect(dialog.locator('.changes-file-list button')).toHaveCount(1);
+    await dialog.getByText('Read change brief', { exact: true }).click();
+    await expect(dialog.getByRole('region', { name: 'Source change brief' })).toContainText(
+      'Exported names are unchanged',
+    );
     await dialog.locator('.changes-file-list button').click();
     await expect(dialog.getByRole('heading', { name: 'src/main.ts' })).toBeVisible();
     await expect(dialog.locator('.changes-source-side').first()).toContainText('authenticate');

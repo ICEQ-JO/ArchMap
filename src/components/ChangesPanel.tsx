@@ -4,6 +4,7 @@ import { ArrowLeft, GitCompareArrows, LoaderCircle, X } from 'lucide-react';
 import { comparisonSchema, type Comparison, type FileChange } from '../../shared/schema';
 import { request } from '../lib/api';
 import EvidenceCard from './EvidenceCard';
+import { focusChanges } from '../../shared/change-focus';
 import ArchitectureNode, { type ArchitectureFlowNode } from './ArchitectureNode';
 import './ChangesPanel.css';
 
@@ -43,52 +44,60 @@ function ChangesReview({
   const [filter, setFilter] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
-  const files = (report?.files ?? []).filter(
-    (file) =>
-      file.file.toLowerCase().includes(filter.toLowerCase()) &&
-      (!selectedArea ||
-        report?.areas.find((a) => a.id === selectedArea)?.files.includes(file.file)),
+  const focused = useMemo(
+    () => (report ? focusChanges(report, filter, selectedArea) : null),
+    [report, filter, selectedArea],
   );
+  const files = focused?.files ?? [];
+  const scoped = Boolean(filter.trim() || selectedArea);
   const selected = report?.files.find((f) => f.file === selectedFile);
   const nodes = useMemo<ArchitectureFlowNode[]>(
     () =>
-      (report?.graph.nodes ?? []).map((module) => {
-        const area = report?.areas.find((a) => a.id === module.id);
-        return {
-          id: module.id,
-          type: 'architecture',
-          position: module.position,
-          selected: module.id === selectedArea,
-          className: area ? `review-node review-${area.status}` : 'review-node review-unchanged',
-          data: {
-            module: {
-              ...module,
-              label: area
-                ? `${area.status === 'added' ? '+ ' : area.status === 'removed' ? '− ' : '± '}${module.label}`
-                : module.label,
+      (report?.graph.nodes ?? [])
+        .filter((module) => !scoped || focused?.nodeIds.has(module.id))
+        .map((module) => {
+          const area = report?.areas.find((a) => a.id === module.id);
+          return {
+            id: module.id,
+            type: 'architecture',
+            position: module.position,
+            selected: module.id === selectedArea,
+            className: area ? `review-node review-${area.status}` : 'review-node review-unchanged',
+            data: {
+              module: {
+                ...module,
+                label: area
+                  ? `${area.status === 'added' ? '+ ' : area.status === 'removed' ? '− ' : '± '}${module.label}`
+                  : module.label,
+              },
+              focused: module.id === selectedArea,
+              dimmed: false,
             },
-            focused: module.id === selectedArea,
-            dimmed: false,
-          },
-        };
-      }),
-    [report, selectedArea],
+          };
+        }),
+    [report, selectedArea, focused, scoped],
   );
   const edges = useMemo(
     () =>
-      (report?.graph.edges ?? []).map((edge) => {
-        const status = report?.relationships.find((r) => r.id === edge.id)?.status;
-        const color = status === 'added' ? '#9acbba' : status === 'removed' ? '#e0a8a1' : '#999990';
-        return {
-          ...edge,
-          label: status ? `${status}: ${edge.label}` : edge.label,
-          markerEnd: { type: MarkerType.ArrowClosed, color },
-          style: { stroke: color, strokeDasharray: status === 'removed' ? '6 4' : undefined },
-          labelStyle: { fill: color, fontSize: 11 },
-          labelBgStyle: { fill: '#20201e' },
-        };
-      }),
-    [report],
+      (report?.graph.edges ?? [])
+        .filter(
+          (edge) =>
+            !scoped || (focused?.nodeIds.has(edge.source) && focused?.nodeIds.has(edge.target)),
+        )
+        .map((edge) => {
+          const status = report?.relationships.find((r) => r.id === edge.id)?.status;
+          const color =
+            status === 'added' ? '#9acbba' : status === 'removed' ? '#e0a8a1' : '#999990';
+          return {
+            ...edge,
+            label: status ? `${status}: ${edge.label}` : edge.label,
+            markerEnd: { type: MarkerType.ArrowClosed, color },
+            style: { stroke: color, strokeDasharray: status === 'removed' ? '6 4' : undefined },
+            labelStyle: { fill: color, fontSize: 11 },
+            labelBgStyle: { fill: '#20201e' },
+          };
+        }),
+    [report, scoped, focused],
   );
   async function compare() {
     setBusy(true);
@@ -184,7 +193,7 @@ function ChangesReview({
           <div className="changes-content">
             <div className="changes-canvas">
               <ReactFlow
-                key={report.current.analyzedAt}
+                key={report.current.analyzedAt + filter + (selectedArea ?? '')}
                 nodes={nodes}
                 edges={edges}
                 nodeTypes={nodeTypes}
@@ -273,14 +282,56 @@ function ChangesReview({
                       </button>
                     )}
                     <label className="changes-filter">
-                      Filter changed files
+                      Focus this review
                       <input
                         aria-label="Filter changed files"
                         value={filter}
                         onChange={(e) => setFilter(e.target.value)}
-                        placeholder="auth, billing, or a path…"
+                        placeholder="What changed in authentication?"
                       />
                     </label>
+                    <section className="changes-brief" aria-label="Source change brief">
+                      <span className="change-status">LOCAL SOURCE SUMMARY</span>
+                      <h3>
+                        {files.length} matching {files.length === 1 ? 'file' : 'files'} ·{' '}
+                        {focused?.dependencies.length ?? 0} dependency changes
+                      </h3>
+                      <p>
+                        Matched by paths, exports, responsibility names, and changed dependency
+                        references. The graph includes direct neighbors as context.
+                      </p>
+                      <details>
+                        <summary>Read change brief</summary>
+                        {focused?.brief.map((item, index) => (
+                          <div key={item.file} className="brief-item">
+                            <button
+                              onClick={() => setSelectedFile(item.file)}
+                              aria-label={`Inspect change evidence for ${item.file}`}
+                            >
+                              [{index + 1}] {item.file}
+                            </button>
+                            <p>{item.text}</p>
+                          </div>
+                        ))}
+                        {!files.length && (
+                          <p>
+                            No matching changes in this inspected scope. Try another feature or
+                            clear the filters.
+                          </p>
+                        )}
+                        {!!focused?.contextFiles.length && (
+                          <p>
+                            Related files in changed dependencies: {focused.contextFiles.join(', ')}
+                            .
+                          </p>
+                        )}
+                        <p>
+                          {report.partial
+                            ? 'Coverage is incomplete; absence-based claims are withheld.'
+                            : 'Static source facts only. No runtime behavior or test results have been verified.'}
+                        </p>
+                      </details>
+                    </section>
                     <div className="changes-file-list">
                       {files.map((file) => (
                         <button key={file.file} onClick={() => setSelectedFile(file.file)}>
@@ -303,33 +354,19 @@ function ChangesReview({
                     {report.dependencies.length > 0 && (
                       <section className="changes-dependencies">
                         <h3>Static dependencies</h3>
-                        {report.dependencies
-                          .filter(
-                            (d) =>
-                              (!filter ||
-                                `${d.source} ${d.target}`
-                                  .toLowerCase()
-                                  .includes(filter.toLowerCase())) &&
-                              (!selectedArea ||
-                                report.areas
-                                  .find((a) => a.id === selectedArea)
-                                  ?.files.some((f) => f === d.source || f === d.target)),
-                          )
-                          .map((d, i) => (
-                            <details key={i}>
-                              <summary>
-                                <span className={`change-status status-${d.status}`}>
-                                  {d.status}
-                                </span>
-                                {d.source} → {d.target}
-                              </summary>
-                              <p>
-                                {d.label} ·{' '}
-                                {d.status === 'removed' ? 'Baseline source' : 'Working-tree source'}
-                              </p>
-                              <EvidenceCard evidence={d.evidence} />
-                            </details>
-                          ))}
+                        {(focused?.dependencies ?? []).map((d, i) => (
+                          <details key={i}>
+                            <summary>
+                              <span className={`change-status status-${d.status}`}>{d.status}</span>
+                              {d.source} → {d.target}
+                            </summary>
+                            <p>
+                              {d.label} ·{' '}
+                              {d.status === 'removed' ? 'Baseline source' : 'Working-tree source'}
+                            </p>
+                            <EvidenceCard evidence={d.evidence} />
+                          </details>
+                        ))}
                       </section>
                     )}
                   </>
