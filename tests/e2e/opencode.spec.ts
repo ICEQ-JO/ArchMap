@@ -68,7 +68,7 @@ for (const width of [1440, 390]) {
       await page.getByRole('button', { name: 'Component', exact: true }).click();
       await page.getByLabel('New component name').fill('My planned cache');
       await page.getByRole('button', { name: 'Add component', exact: true }).click();
-      await page.getByRole('button', { name: 'OpenCode sessions', exact: true }).click();
+      await page.getByRole('button', { name: 'Sessions', exact: true }).click();
       await page.getByLabel('OpenCode server address').fill(`http://127.0.0.1:${address.port}`);
       await page.getByText('Server authentication (optional)', { exact: true }).click();
       await page.getByLabel('OpenCode password').fill('synthetic-password');
@@ -89,21 +89,21 @@ for (const width of [1440, 390]) {
       await writeFile(path.join(root, 'main.ts'), 'export const version = 2;\n');
       phase = 'idle';
       completed = true;
-      const dialog = page.getByRole('dialog', { name: 'Review architecture changes' });
+      const dialog = page.getByRole('region', { name: 'Review architecture changes' });
       await expect(dialog).toBeVisible({ timeout: 10000 });
       await expect(dialog).toContainText('Working-tree baseline captured');
       await expect(dialog).toContainText('Update application version');
       await expect(dialog.getByRole('status')).toContainText('1 modified');
-      await dialog.locator('.changes-file-list button').click();
-      await expect(dialog.locator('.changes-source-side').first()).toContainText('version = 1');
-      await expect(dialog.locator('.changes-source-side').last()).toContainText('version = 2');
+      await dialog.locator('.wm-changes-file-list button').click();
+      await expect(dialog.locator('.wm-changes-source-side').first()).toContainText('version = 1');
+      await expect(dialog.locator('.wm-changes-source-side').last()).toContainText('version = 2');
       expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
       await page.screenshot({ path: `test-results/opencode-review-${width}.png`, fullPage: true });
       await page.getByRole('button', { name: 'Close change review', exact: true }).click();
       await expect(page.locator('.react-flow__node')).toHaveCount(3);
       const previousPolls = calls.filter((call) => call === 'GET /session/status').length;
-      await page.getByRole('button', { name: 'Inspect', exact: true }).click();
-      await page.getByRole('button', { name: 'OpenCode sessions', exact: true }).click();
+      await page.getByRole('button', { name: 'Architecture', exact: true }).click();
+      await page.getByRole('button', { name: 'Sessions', exact: true }).click();
       await expect
         .poll(() => calls.filter((call) => call === 'GET /session/status').length)
         .toBeGreaterThan(previousPolls + 1);

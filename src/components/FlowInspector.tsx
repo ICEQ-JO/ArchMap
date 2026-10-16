@@ -17,7 +17,7 @@ export default function FlowInspector({
   if (!flow)
     return (
       <section className="guided-flows" aria-label="Guided flows">
-        <div className="flow-heading">
+        <div className="wm-flow-heading">
           <h3>Guided flows</h3>
           <span>{flows.length}</span>
         </div>
@@ -47,23 +47,23 @@ export default function FlowInspector({
     );
   const step = flow.steps[index];
   return (
-    <section className="flow-walkthrough" aria-label="Flow walkthrough">
-      <div className="flow-heading">
+    <section className="wm-flow-walkthrough" aria-label="Flow walkthrough">
+      <div className="wm-flow-heading">
         <span>
           <Play size={12} /> {flow.title}
         </span>
-        <button className="bare-icon" aria-label="Close guided flow" onClick={onClose}>
+        <button className="wm-bare-icon" aria-label="Close guided flow" onClick={onClose}>
           <X size={14} />
         </button>
       </div>
       <p className="flow-source-notice">{flow.description}</p>
-      <div className="flow-step-controls">
+      <div className="wm-flow-step-controls">
         <span>
           STEP {index + 1} OF {flow.steps.length}
         </span>
         <div>
           <button
-            className="icon-button"
+            className="wm-icon-button"
             aria-label="Previous flow step"
             disabled={index === 0}
             onClick={() => onSelect(flow.id, index - 1)}
@@ -71,7 +71,7 @@ export default function FlowInspector({
             <ChevronLeft />
           </button>
           <button
-            className="icon-button"
+            className="wm-icon-button"
             aria-label="Next flow step"
             disabled={index === flow.steps.length - 1}
             onClick={() => onSelect(flow.id, index + 1)}
@@ -82,7 +82,7 @@ export default function FlowInspector({
       </div>
       <h3>{step.title}</h3>
       <p>{step.description}</p>
-      <div className="flow-step-dots">
+      <div className="wm-flow-step-dots">
         {flow.steps.map((s, i) => (
           <button
             key={s.id}

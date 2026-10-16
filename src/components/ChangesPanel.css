@@ -1,4 +1,4 @@
-.changes-review {
+.wm-changes-review {
   margin: 0;
   border: 0;
   padding: 0;
@@ -14,7 +14,7 @@
   background: var(--bg);
   color: var(--text);
 }
-.changes-header {
+.wm-changes-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,32 +22,32 @@
   padding: 16px 24px;
   border-bottom: 1px solid var(--line);
 }
-.changes-header > div {
+.wm-changes-header > div {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-.changes-header span,
-.changes-baseline small {
+.wm-changes-header span,
+.wm-changes-baseline small {
   font-size: 12px;
   color: var(--muted);
 }
-.changes-baseline {
+.wm-changes-baseline {
   display: flex;
   align-items: end;
   gap: 14px;
   padding: 16px 24px;
   border-bottom: 1px solid var(--line);
 }
-.changes-baseline label,
-.changes-filter {
+.wm-changes-baseline label,
+.wm-changes-filter {
   display: flex;
   flex-direction: column;
   gap: 7px;
   font-size: 12px;
 }
-.changes-baseline input,
-.changes-filter input {
+.wm-changes-baseline input,
+.wm-changes-filter input {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -55,19 +55,19 @@
   padding: 10px 12px;
   min-width: 0;
 }
-.changes-baseline > span {
+.wm-changes-baseline > span {
   padding-bottom: 10px;
   color: var(--muted);
   font-size: 12px;
 }
-.changes-baseline small {
+.wm-changes-baseline small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-left: auto;
   padding-bottom: 10px;
 }
-.changes-summary {
+.wm-changes-summary {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 24px;
@@ -76,50 +76,50 @@
   font-size: 12px;
   border-bottom: 1px solid var(--line);
 }
-.changes-summary b {
+.wm-changes-summary b {
   font-size: 18px;
   margin-right: 4px;
 }
-.changes-summary small {
+.wm-changes-summary small {
   margin-left: auto;
   color: var(--muted);
   align-self: center;
 }
-.changes-content {
+.wm-changes-content {
   flex: 1;
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
 }
-.changes-canvas {
+.wm-changes-canvas {
   position: relative;
   min-height: 0;
-  background: #1a1a1a;
+  background: #f7f7f5;
 }
-.changes-details {
+.wm-changes-details {
   min-height: 0;
   overflow: auto;
   border-left: 1px solid var(--line);
 }
-.changes-detail-scroll {
+.wm-changes-detail-scroll {
   padding: 22px;
 }
-.changes-details h2 {
+.wm-changes-details h2 {
   font-size: 18px;
   line-height: 1.4;
   overflow-wrap: anywhere;
   margin: 8px 0 12px;
 }
-.changes-details h3 {
+.wm-changes-details h3 {
   font-size: 13px;
   margin: 22px 0 12px;
 }
-.changes-details p {
+.wm-changes-details p {
   font-size: 12px;
   color: var(--muted);
   line-height: 1.75;
 }
-.changes-legend {
+.wm-changes-legend {
   position: absolute;
   bottom: 14px;
   right: 14px;
@@ -127,24 +127,24 @@
   gap: 12px;
   font-size: 10px;
   color: var(--muted);
-  background: #1a1a1aed;
+  background: #f7f7f5ed;
   padding: 8px;
   pointer-events: none;
 }
-.review-added .architecture-node {
-  border-color: #bfbfbf;
+.wm-review-added .wm-architecture-node {
+  border-color: #727269;
 }
-.review-removed .architecture-node {
-  border-color: #e0a8a1;
+.wm-review-removed .wm-architecture-node {
+  border-color: #a54735;
   border-style: dashed;
 }
-.review-modified .architecture-node {
-  border-color: #bcbcbc;
+.wm-review-modified .wm-architecture-node {
+  border-color: #727269;
 }
-.review-unchanged {
+.wm-review-unchanged {
   opacity: 0.65;
 }
-.change-status {
+.wm-change-status {
   display: inline-block;
   text-transform: uppercase;
   font:
@@ -152,19 +152,19 @@
     monospace;
   letter-spacing: 0.5px;
 }
-.status-added {
-  color: #bfbfbf;
+.wm-status-added {
+  color: #727269;
 }
-.status-removed {
-  color: #e0a8a1;
+.wm-status-removed {
+  color: #a54735;
 }
-.status-modified {
-  color: #bcbcbc;
+.wm-status-modified {
+  color: #727269;
 }
-.changes-file-list {
+.wm-changes-file-list {
   margin: 14px 0;
 }
-.changes-file-list button {
+.wm-changes-file-list button {
   display: flex;
   align-items: start;
   gap: 12px;
@@ -177,18 +177,18 @@
   padding: 13px 0;
   font-size: 12px;
 }
-.changes-file-list button:hover {
+.wm-changes-file-list button:hover {
   background: var(--surface);
 }
-.changes-file-list button > span:last-child {
+.wm-changes-file-list button > span:last-child {
   overflow-wrap: anywhere;
   min-width: 0;
 }
-.changes-file-list .change-status {
+.wm-changes-file-list .wm-change-status {
   min-width: 65px;
   padding-top: 2px;
 }
-.changes-back {
+.wm-changes-back {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -198,7 +198,7 @@
   font-size: 12px;
   padding: 8px 0;
 }
-.changes-export-diff {
+.wm-changes-export-diff {
   display: grid;
   gap: 8px;
   font:
@@ -207,97 +207,97 @@
   color: var(--muted);
   overflow-wrap: anywhere;
 }
-.changes-source-side {
+.wm-changes-source-side {
   margin-top: 22px;
 }
-.changes-coverage {
+.wm-changes-coverage {
   border-top: 1px solid var(--line);
   margin-top: 26px;
   padding-top: 16px;
   font-size: 12px;
 }
-.changes-coverage summary,
-.changes-dependencies summary {
+.wm-changes-coverage summary,
+.wm-changes-dependencies summary {
   cursor: pointer;
   overflow-wrap: anywhere;
 }
-.changes-dependencies details {
+.wm-changes-dependencies details {
   border-top: 1px solid var(--line);
   padding: 12px 0;
   font-size: 11px;
   line-height: 1.7;
 }
-.changes-dependencies .change-status {
+.wm-changes-dependencies .wm-change-status {
   margin-right: 8px;
 }
-.changes-start {
+.wm-changes-start {
   margin: auto;
   padding: 40px 24px;
   max-width: 540px;
 }
-.changes-start h2 {
+.wm-changes-start h2 {
   font:
     48px/0.95 'Jersey 10',
     sans-serif;
 }
-.changes-start p {
+.wm-changes-start p {
   color: var(--muted);
   line-height: 1.7;
   font-size: 14px;
 }
-.changes-error {
+.wm-changes-error {
   padding: 12px 24px;
-  color: #e0a8a1;
+  color: #a54735;
   font-size: 13px;
 }
 @media (max-width: 760px) {
-  .changes-header,
-  .changes-baseline {
+  .wm-changes-header,
+  .wm-changes-baseline {
     padding: 12px 16px;
   }
-  .changes-header span {
+  .wm-changes-header span {
     display: none;
   }
-  .changes-baseline {
+  .wm-changes-baseline {
     flex-wrap: wrap;
     align-items: end;
     gap: 8px;
   }
-  .changes-baseline label {
+  .wm-changes-baseline label {
     flex: 1;
     min-width: 120px;
   }
-  .changes-baseline input {
+  .wm-changes-baseline input {
     width: 100%;
   }
-  .changes-baseline > span {
+  .wm-changes-baseline > span {
     display: none;
   }
-  .changes-baseline small {
+  .wm-changes-baseline small {
     width: 100%;
     margin: 0;
     padding: 0;
   }
-  .changes-summary {
+  .wm-changes-summary {
     padding: 10px 16px;
     gap: 6px 14px;
   }
-  .changes-summary small {
+  .wm-changes-summary small {
     width: 100%;
     margin: 0;
   }
-  .changes-content {
+  .wm-changes-content {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(180px, 40%) minmax(0, 1fr);
   }
-  .changes-details {
+  .wm-changes-details {
     border-left: 0;
     border-top: 1px solid var(--line);
   }
-  .changes-detail-scroll {
+  .wm-changes-detail-scroll {
     padding: 16px;
   }
-  .changes-legend {
+  .wm-changes-legend {
     bottom: 6px;
     right: 6px;
     font-size: 10px;
@@ -305,105 +305,105 @@
   }
 }
 
-/* Review uses the same paper-on-charcoal reading surface as the workspace. */
-.changes-canvas {
-  background: #161616;
+/* Review uses the same paper-on-charcoal reading surface as the wm-workspace. */
+.wm-changes-canvas {
+  background: #f7f7f5;
 }
-.changes-legend {
-  background: #1d1d1bf2;
-  color: #d0d0c4;
-  border: 1px solid #45453c;
+.wm-changes-legend {
+  background: #fffffff2;
+  color: #55554d;
+  border: 1px solid #deded8;
   border-radius: 4px;
 }
-.workspace .changes-review .review-modified .architecture-node {
-  border-color: #d8c394;
+.wm-workspace .wm-changes-review .wm-review-modified .wm-architecture-node {
+  border-color: #a38c51;
 }
-.status-modified {
-  color: #e5c796;
+.wm-status-modified {
+  color: #80672c;
 }
-.changes-details {
-  background: #1d1d1b;
+.wm-changes-details {
+  background: #fff;
 }
-.changes-file-list button {
+.wm-changes-file-list button {
   padding: 16px 8px;
   border-radius: 4px;
 }
-.changes-file-list button:hover {
-  background: #313027;
+.wm-changes-file-list button:hover {
+  background: #efefe8;
 }
-.changes-baseline input:focus-visible,
-.changes-filter input:focus-visible {
-  outline: 2px solid #e5c796;
+.wm-changes-baseline input:focus-visible,
+.wm-changes-filter input:focus-visible {
+  outline: 2px solid #80672c;
   outline-offset: 2px;
 }
-.changes-details p {
-  color: #c3c3b7;
+.wm-changes-details p {
+  color: #676761;
   font-size: 13px;
 }
-.change-status {
+.wm-change-status {
   font-size: 10px;
 }
-.changes-review .small-button {
+.wm-changes-review .wm-small-button {
   min-height: 38px;
 }
 
-.workspace .changes-review .review-added .architecture-node {
-  border-color: #9acbba;
+.wm-workspace .wm-changes-review .wm-review-added .wm-architecture-node {
+  border-color: #4a7757;
 }
-.workspace .changes-review .review-removed .architecture-node {
-  border-color: #e0a8a1;
+.wm-workspace .wm-changes-review .wm-review-removed .wm-architecture-node {
+  border-color: #a54735;
   border-style: dashed;
 }
 
-.changes-brief {
-  border: 1px solid #545448;
+.wm-changes-brief {
+  border: 1px solid #cecec2;
   border-radius: 6px;
   padding: 14px;
   margin: 16px 0;
-  background: #27271f;
+  background: #f4f4ec;
 }
-.changes-brief h3 {
+.wm-changes-brief h3 {
   margin: 10px 0;
   line-height: 1.6;
 }
-.changes-brief > p {
+.wm-changes-brief > p {
   font-size: 11px;
 }
-.changes-brief details > summary {
+.wm-changes-brief details > summary {
   cursor: pointer;
   font-size: 12px;
-  color: #e5c796;
+  color: #80672c;
   margin-top: 12px;
 }
-.brief-item {
-  border-top: 1px solid #46463b;
+.wm-brief-item {
+  border-top: 1px solid #deded8;
   padding-top: 12px;
   margin-top: 12px;
 }
-.brief-item button {
+.wm-brief-item button {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #ead5b0;
+  color: #6e5b2f;
   font:
     11px/1.7 'Geist Mono',
     monospace;
   text-align: left;
   overflow-wrap: anywhere;
 }
-.brief-item button:hover {
+.wm-brief-item button:hover {
   text-decoration: underline;
 }
 
-.session-review-context {
+.wm-session-review-context {
   padding: 16px 24px;
   border-bottom: 1px solid var(--line);
-  background: #24231e;
+  background: #f6f6ef;
 }
-.session-review-context > strong {
+.wm-session-review-context > strong {
   font-size: 14px;
 }
-.session-review-context p {
+.wm-session-review-context p {
   font-size: 12px;
   line-height: 1.7;
   color: var(--muted);
@@ -413,20 +413,11 @@
   max-height: 120px;
   overflow: auto;
 }
-.session-review-context summary {
+.wm-session-review-context summary {
   cursor: pointer;
   font-size: 12px;
   color: var(--accent);
 }
-.session-review-context .small-button {
+.wm-session-review-context .wm-small-button {
   margin-top: 10px;
-}
-.workspace .inspector-tabs {
-  gap: 14px;
-}
-.workspace .inspector-tabs > button[aria-label='Model settings'] {
-  margin-left: auto;
-}
-.workspace .inspector-tabs > button[aria-label='OpenCode sessions'] {
-  min-width: 26px;
 }

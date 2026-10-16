@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "ArchMap \u00b7 Product capability map",
+    "subtitle": "Understand a system, review AI changes, and retain shared context. CURRENT denotes bounded functionality; NEXT and PLANNED denote unimplemented capabilities.",
+    "quality_profile": "showcase",
+    "visual_preset": "editorial",
+    "animation": "none",
+    "views": [
+      {
+        "id": "understand",
+        "label": "Understand a codebase",
+        "focus": [
+          "repository",
+          "evidence",
+          "map",
+          "explore"
+        ],
+        "note": "Current JS/TS source exploration; framework-aware end-to-end behavior is next."
+      },
+      {
+        "id": "review",
+        "label": "Review AI changes",
+        "focus": [
+          "map",
+          "explore",
+          "review",
+          "agent"
+        ],
+        "note": "Independent source comparison complements an explicitly connected OpenCode session."
+      },
+      {
+        "id": "context",
+        "label": "Complete system context",
+        "focus": [
+          "services",
+          "frameworks",
+          "collaboration"
+        ],
+        "note": "Live context, richer framework analysis, and shared team workspaces are planned."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "cols": 4,
+    "origin": [
+      50,
+      80
+    ],
+    "cellW": 230,
+    "cellH": 90,
+    "gapX": 100,
+    "gapY": 120
+  },
+  "components": [
+    {
+      "id": "repository",
+      "type": "external",
+      "label": "Local repository",
+      "sublabel": "CURRENT \u00b7 bounded JS/TS",
+      "row": 1,
+      "col": 0,
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "evidence",
+      "type": "backend",
+      "label": "Source evidence",
+      "sublabel": "CURRENT \u00b7 files and call sites",
+      "row": 1,
+      "col": 1,
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "map",
+      "type": "frontend",
+      "label": "Architecture workspace",
+      "sublabel": "CURRENT \u00b7 inferred boundaries",
+      "row": 1,
+      "col": 2,
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "explore",
+      "type": "frontend",
+      "label": "Explore and explain",
+      "sublabel": "CURRENT \u00b7 flows, optional model",
+      "row": 1,
+      "col": 3,
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "frameworks",
+      "type": "backend",
+      "label": "Framework understanding",
+      "sublabel": "NEXT \u00b7 routes and data journeys",
+      "row": 0,
+      "col": 1,
+      "tag": "PLANNED",
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "services",
+      "type": "cloud",
+      "label": "Live service context",
+      "sublabel": "PLANNED \u00b7 deployments and traces",
+      "row": 0,
+      "col": 2,
+      "tag": "PLANNED",
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "collaboration",
+      "type": "cloud",
+      "label": "Shared architecture context",
+      "sublabel": "PLANNED \u00b7 history and discussion",
+      "row": 0,
+      "col": 3,
+      "tag": "PLANNED",
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "agent",
+      "type": "external",
+      "label": "Coding agent session",
+      "sublabel": "CURRENT \u00b7 read-only OpenCode",
+      "row": 2,
+      "col": 2,
+      "size": [
+        250,
+        90
+      ]
+    },
+    {
+      "id": "review",
+      "type": "security",
+      "label": "Review actual changes",
+      "sublabel": "CURRENT \u00b7 baselines and evidence",
+      "row": 2,
+      "col": 3,
+      "size": [
+        250,
+        90
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "read",
+      "from": "repository",
+      "to": "evidence",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ground",
+      "from": "evidence",
+      "to": "map",
+      "variant": "emphasis"
+    },
+    {
+      "id": "understand",
+      "from": "map",
+      "to": "explore",
+      "variant": "emphasis"
+    },
+    {
+      "id": "inspect-change",
+      "from": "explore",
+      "to": "review",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "observe-task",
+      "from": "agent",
+      "to": "review"
+    },
+    {
+      "id": "resolve-behavior",
+      "from": "frameworks",
+      "to": "evidence",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "runtime-context",
+      "from": "services",
+      "to": "map",
+      "variant": "dashed"
+    },
+    {
+      "id": "share-context",
+      "from": "collaboration",
+      "to": "explore",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "Developer outcomes",
+      "items": [
+        "Faster onboarding through source-backed exploration",
+        "Understand the surrounding system before changing it",
+        "Inspect what an AI coding task actually changed"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Next product milestones",
+      "items": [
+        "Framework-aware routes, components and data access",
+        "Evidence-backed architectural rule checks",
+        "Live service context and shared, durable maps"
+      ]
+    },
+    {
+      "dot": "slate",
+      "title": "Intended users and limits",
+      "items": [
+        "New joiners, maintainers, leads, students and AI-assisted builders",
+        "Current maps are bounded structural interpretations, not full runtime traces",
+        "Collaboration, live services and automatic correctness checks are not implemented"
+      ]
+    }
+  ]
+}

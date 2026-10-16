@@ -14,34 +14,34 @@ export default function EvidenceCard({ evidence, index }: { evidence: Evidence; 
     }
   }
   return (
-    <div className="evidence-card">
-      <div className="evidence-card-header">
+    <div className="wm-evidence-card">
+      <div className="wm-evidence-card-header">
         <FileCode2 size={13} />
         <span>
           {index !== undefined ? `[${index + 1}] ` : ''}
           {evidence.file}
         </span>
-        <button className="bare-icon" aria-label="Copy source evidence" onClick={copy}>
+        <button className="wm-bare-icon" aria-label="Copy source evidence" onClick={copy}>
           {copied ? <Check size={13} /> : <Copy size={13} />}
         </button>
       </div>
       <pre>
         <code>
           {evidence.snippet.split('\n').map((line, i) => (
-            <span className="code-line" key={i}>
+            <span className="wm-code-line" key={i}>
               <span>{evidence.line + i}</span>
               {line || ' '}
             </span>
           ))}
         </code>
       </pre>
-      <div className="evidence-card-footer">
+      <div className="wm-evidence-card-footer">
         <span>
           L{evidence.line}–{evidence.endLine}
         </span>
         <span title={`SHA-256 ${evidence.hash}`}>sha256:{evidence.hash.slice(0, 8)}</span>
       </div>
-      {failed && <p className="error-text">Copy unavailable. Select the source text above.</p>}
+      {failed && <p className="wm-error-text">Copy unavailable. Select the source text above.</p>}
     </div>
   );
 }

@@ -1,0 +1,9 @@
+{
+  "diagram_type": "architecture",
+  "output": "/home/iceq/Dev/imagine/public/product-map.html",
+  "specification_sha256": "18a87fe69030892ec86213663a65fb32a733e6c2c78cd46d0bbde7d8558a3b9b",
+  "artifact_sha256": "fdf9b1220183907ec132919cebaed6833efcbbc1c8cd0be27173c3a75e5b83fc",
+  "validation": "9/9 showcase, 0 errors, 0 warnings",
+  "visual_review": "passed",
+  "correction_rounds": 1
+}

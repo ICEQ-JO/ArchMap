@@ -128,7 +128,7 @@ export default function OpenCodePanel({
     }
   }
   return (
-    <div className="opencode-panel">
+    <div className="wm-opencode-panel">
       <Cable size={25} />
       <h2>Follow your coding session.</h2>
       <p>
@@ -187,7 +187,7 @@ export default function OpenCodePanel({
               />
             </label>
           </details>
-          <button className="button primary" disabled={pending}>
+          <button className="wm-button wm-primary" disabled={pending}>
             {pending ? <LoaderCircle size={14} className="spinning" /> : <Cable size={14} />}{' '}
             Connect OpenCode
           </button>
@@ -198,8 +198,8 @@ export default function OpenCodePanel({
         </form>
       ) : (
         <>
-          <div className="agent-link-status">
-            <span className="live-dot" /> Connected · {connection.baseUrl}
+          <div className="wm-agent-link-status">
+            <span className="wm-live-dot" /> Connected · {connection.baseUrl}
           </div>
           <label>
             Session
@@ -217,7 +217,7 @@ export default function OpenCodePanel({
             </select>
           </label>
           <button
-            className="text-button"
+            className="wm-text-button"
             disabled={pending}
             onClick={() => void act(refreshSessions)}
           >
@@ -227,7 +227,7 @@ export default function OpenCodePanel({
             <p>No sessions in this repository yet. Create one in OpenCode, then refresh.</p>
           )}
           <button
-            className="button primary"
+            className="wm-button wm-primary"
             disabled={pending || !selected}
             onClick={() =>
               void act(async () => {
@@ -248,8 +248,8 @@ export default function OpenCodePanel({
             {tracking ? 'Capture a new baseline' : 'Track next task'}
           </button>
           {tracking && (
-            <section className="tracked-task" aria-label="Tracked coding task">
-              <span className="change-status">
+            <section className="wm-tracked-task" aria-label="Tracked coding task">
+              <span className="wm-change-status">
                 {tracking.state === 'working'
                   ? 'SESSION WORKING'
                   : tracking.state === 'ready'
@@ -268,7 +268,7 @@ export default function OpenCodePanel({
                 </blockquote>
               )}
               <button
-                className="small-button"
+                className="wm-small-button"
                 disabled={pending || tracking.state === 'working'}
                 onClick={() => void review()}
               >
@@ -281,7 +281,7 @@ export default function OpenCodePanel({
             </section>
           )}
           <button
-            className="text-button"
+            className="wm-text-button"
             disabled={pending}
             onClick={() =>
               void act(async () => {
@@ -300,11 +300,11 @@ export default function OpenCodePanel({
         </>
       )}
       {error && (
-        <p className="error-text" role="alert">
+        <p className="wm-error-text" role="alert">
           {error}
         </p>
       )}
-      <p className="opencode-disclosure">
+      <p className="wm-opencode-disclosure">
         <ShieldCheck size={14} /> Read-only connection. No prompts, tools, or source are sent to
         OpenCode. Credentials and one baseline stay in server memory for up to an hour. Changes from
         other editors are included; session attribution is not proven.
