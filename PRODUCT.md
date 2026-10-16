@@ -28,7 +28,7 @@ First increment: bounded JavaScript/TypeScript static dependency analysis, sourc
 
 ## Brand Commitments
 
-User retains the hacker/pixel layout and lettering inspired by cortad.com, but explicitly rejects green surfaces and accents. Use neutral graphite, warm white, restrained blue, and Anatomy-inspired mechanical explanatory figures. The user named the project ArchMap; its repository is https://github.com/ICEQ-JO/ArchMap. Open source with meaningful feature branches and commits; push and merge when the remote is provided.
+User retains the hacker/pixel identity and lettering inspired by cortad.com, with an original amber-and-ink source atlas, chalk evidence panels, Jersey 10 display, Geist body and Geist Mono source. Green and blue landing themes are explicitly rejected. The working interface stays neutral paper, white and charcoal, with readable source and named task navigation. The user named the project ArchMap; its repository is https://github.com/ICEQ-JO/ArchMap. Open source with meaningful feature branches and commits; push and merge when the remote is provided.
 
 ## Evidence on Hand
 
