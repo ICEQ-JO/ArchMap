@@ -9,18 +9,19 @@ import ArchitectureNode, { type ArchitectureFlowNode } from './ArchitectureNode'
 import './ChangesPanel.css';
 
 const nodeTypes = { architecture: ArchitectureNode };
-export default function ChangesPanel({
-  root,
-  focus,
-  onClose,
-}: {
+type ReviewProps = {
   root: string;
   focus: string;
   onClose: () => void;
-}) {
+  initialReport?: Comparison;
+  sessionTitle?: string;
+  sessionRequest?: string;
+  onRefresh?: () => Promise<Comparison>;
+};
+export default function ChangesPanel(props: ReviewProps) {
   return (
     <ReactFlowProvider>
-      <ChangesReview root={root} focus={focus} onClose={onClose} />
+      <ChangesReview {...props} />
     </ReactFlowProvider>
   );
 }
@@ -28,17 +29,17 @@ function ChangesReview({
   root,
   focus,
   onClose,
-}: {
-  root: string;
-  focus: string;
-  onClose: () => void;
-}) {
+  initialReport,
+  sessionTitle,
+  sessionRequest,
+  onRefresh,
+}: ReviewProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
   const [ref, setRef] = useState('HEAD');
-  const [report, setReport] = useState<Comparison | null>(null);
+  const [report, setReport] = useState<Comparison | null>(initialReport ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
@@ -104,7 +105,7 @@ function ChangesReview({
     setError('');
     try {
       const next = comparisonSchema.parse(
-        await request('/api/compare', { path: root, ref, focus }),
+        onRefresh ? await onRefresh() : await request('/api/compare', { path: root, ref, focus }),
       );
       setReport(next);
       setSelectedFile(null);
@@ -139,34 +140,60 @@ function ChangesReview({
           <X size={15} /> Close
         </button>
       </header>
-      <form
-        className="changes-baseline"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void compare();
-        }}
-      >
-        <label>
-          Baseline revision
-          <input
-            aria-label="Baseline revision"
-            value={ref}
-            onChange={(e) => setRef(e.target.value)}
-            required
-            maxLength={200}
-            placeholder="HEAD, main, or a commit"
-          />
-        </label>
-        <span>→ working tree</span>
-        <button className="small-button" disabled={busy}>
-          {busy ? <LoaderCircle size={14} className="spinning" /> : <GitCompareArrows size={14} />}
-          {busy ? 'Comparing…' : 'Compare changes'}
-        </button>
-        <small title={root}>
-          {root}
-          {focus ? ` · scan focus: ${focus}` : ''}
-        </small>
-      </form>
+      {sessionTitle ? (
+        <div className="session-review-context">
+          <strong>{sessionTitle}</strong>
+          <p>
+            Working-tree baseline captured{' '}
+            {report?.baseline.capturedAt
+              ? new Date(report.baseline.capturedAt).toLocaleString()
+              : 'at tracking start'}
+            . Includes edits from all tools.
+          </p>
+          {sessionRequest && (
+            <details>
+              <summary>Request reported by OpenCode</summary>
+              <p>{sessionRequest}</p>
+            </details>
+          )}
+          <button className="small-button" disabled={busy} onClick={() => void compare()}>
+            {busy ? 'Refreshing…' : 'Refresh session review'}
+          </button>
+        </div>
+      ) : (
+        <form
+          className="changes-baseline"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void compare();
+          }}
+        >
+          <label>
+            Baseline revision
+            <input
+              aria-label="Baseline revision"
+              value={ref}
+              onChange={(e) => setRef(e.target.value)}
+              required
+              maxLength={200}
+              placeholder="HEAD, main, or a commit"
+            />
+          </label>
+          <span>→ working tree</span>
+          <button className="small-button" disabled={busy}>
+            {busy ? (
+              <LoaderCircle size={14} className="spinning" />
+            ) : (
+              <GitCompareArrows size={14} />
+            )}
+            {busy ? 'Comparing…' : 'Compare changes'}
+          </button>
+          <small title={root}>
+            {root}
+            {focus ? ` · scan focus: ${focus}` : ''}
+          </small>
+        </form>
+      )}
       {error && (
         <p role="alert" className="changes-error">
           {error}
@@ -186,8 +213,10 @@ function ChangesReview({
             </span>
             <span>{report.dependencies.length} dependency changes</span>
             <small>
-              {report.baseline.revision.slice(0, 7)} → scanned{' '}
-              {new Date(report.current.analyzedAt).toLocaleTimeString()}
+              {report.baseline.kind === 'working-tree'
+                ? 'Tracking start'
+                : report.baseline.revision.slice(0, 7)}{' '}
+              → scanned {new Date(report.current.analyzedAt).toLocaleTimeString()}
             </small>
           </div>
           <div className="changes-content">
@@ -242,7 +271,7 @@ function ChangesReview({
                       <section key={side} className="changes-source-side">
                         <h3>
                           {side === 'before'
-                            ? `Before · ${report.baseline.revision.slice(0, 7)}`
+                            ? `Before · ${report.baseline.kind === 'working-tree' ? 'tracking start' : report.baseline.revision.slice(0, 7)}`
                             : 'After · working tree'}
                         </h3>
                         {selected[side] ? (

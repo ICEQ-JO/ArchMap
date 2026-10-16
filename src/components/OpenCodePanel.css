@@ -1,0 +1,120 @@
+.workspace .opencode-panel {
+  padding: 24px 20px;
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.opencode-panel > svg {
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+.opencode-panel h2 {
+  font-size: 21px;
+  line-height: 1.4;
+  letter-spacing: -0.4px;
+}
+.opencode-panel p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted);
+  margin: 14px 0;
+}
+.opencode-panel form {
+  margin-top: 24px;
+}
+.opencode-panel label {
+  display: block;
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 18px;
+}
+.opencode-panel input,
+.opencode-panel select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 10px;
+  margin-top: 8px;
+  border: 1px solid #626256;
+  border-radius: 4px;
+  background: #171716;
+  color: var(--text);
+  font: 12px var(--mono);
+}
+.opencode-panel .button {
+  width: 100%;
+  margin-top: 20px;
+  font-size: 12px;
+}
+.opencode-panel details {
+  font-size: 11px;
+  margin-top: 18px;
+}
+.opencode-panel summary {
+  cursor: pointer;
+  color: #d1c5ac;
+}
+.opencode-panel .text-button {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  margin-top: 12px;
+}
+.agent-link-status {
+  color: #d3c7ae;
+  font-size: 11px;
+  border-block: 1px solid var(--line);
+  padding: 14px 0;
+  margin-top: 22px;
+  overflow-wrap: anywhere;
+}
+.agent-link-status .live-dot {
+  display: inline-block;
+  margin-right: 6px;
+}
+.tracked-task {
+  padding: 16px;
+  margin: 22px 0;
+  border: 1px solid #71654d;
+  border-radius: 6px;
+  background: #29271f;
+}
+.tracked-task h3 {
+  font-size: 14px;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+.tracked-task blockquote {
+  font-size: 12px;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-left: 2px solid #a68d60;
+  padding: 0 0 0 12px;
+  margin: 18px 0;
+}
+.tracked-task blockquote span {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.opencode-panel .opencode-disclosure {
+  font-size: 11px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  margin-top: 24px;
+}
+.opencode-disclosure svg {
+  float: left;
+  margin: 4px 7px 0 0;
+}
+@media (max-width: 760px) {
+  .workspace .opencode-panel {
+    padding: 16px;
+  }
+  .opencode-panel h2 {
+    font-size: 18px;
+  }
+}
