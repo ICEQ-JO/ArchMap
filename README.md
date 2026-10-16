@@ -54,7 +54,7 @@ Use **Feature focus** to prioritize matching paths before the scan limit, or cho
 
 The workspace separates **Architecture**, **Flows**, **Changes**, **Sessions**, **Ask**, **Connections**, and **Roadmap**. Browse components or select a card to open its source inspector; the canvas has no permanent empty side panel. Use **Fit map** for an overview, or switch to **Source files** for static import detail. Sparse scans use a compact grid and explicitly report limited connection coverage.
 
-**Roadmap** contains an interactive [product capability map](public/product-map.html), distinguishing current functionality from unimplemented framework understanding, runtime service context, and shared team context. Its editable specification is [here](docs/maps/product.architecture.json).
+**Roadmap** contains an interactive [product capability map](public/product-map.html), distinguishing current functionality from unimplemented framework understanding, runtime service context, and shared team context. Its editable specification is [here](docs/maps/product.v2.architecture.json).
 
 ## Review a coding change
 

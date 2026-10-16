@@ -3,15 +3,15 @@
   "ok": true,
   "command": "deliver",
   "type": "architecture",
-  "input": "/home/iceq/Dev/imagine/docs/maps/product.architecture.json",
+  "input": "/home/iceq/Dev/imagine/docs/maps/product.v2.architecture.json",
   "output": "/home/iceq/Dev/imagine/public/product-map.html",
   "specification": {
-    "sha256": "e2e85b8f2a730abbab599d750fd0ba93eeb23b67b70cdeed79b15c16f441598c",
-    "bytes": 5551
+    "sha256": "18a87fe69030892ec86213663a65fb32a733e6c2c78cd46d0bbde7d8558a3b9b",
+    "bytes": 5698
   },
   "artifact": {
-    "sha256": "3b72ae28bd39e4e992d369a62ae3343627093d3d2eb8777ae177140f6e91dc3d",
-    "bytes": 609076
+    "sha256": "fdf9b1220183907ec132919cebaed6833efcbbc1c8cd0be27173c3a75e5b83fc",
+    "bytes": 608548
   },
   "validation": {
     "checksPassed": 9,
