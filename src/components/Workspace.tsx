@@ -101,8 +101,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [saved, setSaved] = useState(false);
   const [addName, setAddName] = useState('');
   const [adding, setAdding] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const [view, setView] = useState('Architecture');
+  const reviewing = view === 'Changes' && !showOpen;
   const [sessionReview, setSessionReview] = useState<{
     report: Comparison;
     title: string;
@@ -431,7 +431,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         setInspectorOpen(false);
         resetSelection();
         if (reviewing) {
-          setReviewing(false);
           setView('Architecture');
         }
         return;
@@ -531,7 +530,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setView(next);
     setShowOpen(false);
     setSidebarOpen(false);
-    setReviewing(next === 'Changes');
     if (next === 'Changes') setSessionReview(null);
     if (next === 'Flows' && project?.level === 'modules' && project.alternate) switchView();
   }
@@ -1407,7 +1405,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                     root={project.root}
                     focus={project.focus ?? ''}
                     onClose={() => {
-                      setReviewing(false);
                       setView('Architecture');
                     }}
                   />
@@ -1450,7 +1447,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                   focus={project?.focus ?? ''}
                   onReview={(report, title, request) => {
                     setSessionReview({ report, title, request });
-                    setReviewing(true);
                     setView('Changes');
                   }}
                 />
