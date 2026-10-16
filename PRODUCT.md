@@ -28,7 +28,7 @@ First increment: bounded JavaScript/TypeScript static dependency analysis, sourc
 
 ## Brand Commitments
 
-User requested a hacker/pixel direction inspired by cortad.com. The user named the project ArchMap; its repository is https://github.com/ICEQ-JO/ArchMap. Open source with meaningful feature branches and commits; push and merge when the remote is provided.
+User retains the hacker/pixel layout and lettering inspired by cortad.com, but explicitly rejects green surfaces and accents. Use neutral graphite, warm white, restrained blue, and Anatomy-inspired mechanical explanatory figures. The user named the project ArchMap; its repository is https://github.com/ICEQ-JO/ArchMap. Open source with meaningful feature branches and commits; push and merge when the remote is provided.
 
 ## Evidence on Hand
 
