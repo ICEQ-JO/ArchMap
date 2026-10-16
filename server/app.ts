@@ -3,7 +3,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { analyze, resolveRoot } from './analyzer.js';
+import { proposeMap } from './proposals.js';
 import { explain } from './explain.js';
+import { compareWorkingTree } from './comparison.js';
 import type { Project } from '../shared/schema.js';
 
 export function createApp(allowedRoot: string) {
@@ -39,13 +41,48 @@ export function createApp(allowedRoot: string) {
     return project;
   }
   let scanning = false;
-  app.get('/api/status', (_req, res) =>
-    res.json({
-      root: allowedRoot,
-      ai: Boolean(process.env.ARCHMAP_AI_BASE_URL && process.env.ARCHMAP_AI_MODEL),
-      model: process.env.ARCHMAP_AI_MODEL ?? null,
-    }),
-  );
+  const status = () => ({
+    root: allowedRoot,
+    ai: Boolean(process.env.ARCHMAP_AI_BASE_URL && process.env.ARCHMAP_AI_MODEL),
+    model: process.env.ARCHMAP_AI_MODEL ?? null,
+    baseUrl: process.env.ARCHMAP_AI_BASE_URL ?? null,
+  });
+  app.get('/api/status', (_req, res) => res.json(status()));
+  app.post('/api/model', (req, res, next) => {
+    try {
+      const input = z
+        .object({
+          baseUrl: z.string().url().max(2000),
+          model: z.string().trim().min(1).max(200),
+          apiKey: z.string().max(2000).optional(),
+        })
+        .parse(req.body);
+      const url = new URL(input.baseUrl);
+      if (
+        !['http:', 'https:'].includes(url.protocol) ||
+        url.username ||
+        url.password ||
+        url.search ||
+        url.hash
+      )
+        throw new Error(
+          'Use an HTTP(S) API base URL without embedded credentials, a query, or a fragment.',
+        );
+      process.env.ARCHMAP_AI_BASE_URL = input.baseUrl.replace(/\/$/, '');
+      process.env.ARCHMAP_AI_MODEL = input.model;
+      if (input.apiKey) process.env.ARCHMAP_AI_KEY = input.apiKey;
+      else delete process.env.ARCHMAP_AI_KEY;
+      res.json(status());
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.post('/api/model/disconnect', (_req, res) => {
+    delete process.env.ARCHMAP_AI_BASE_URL;
+    delete process.env.ARCHMAP_AI_MODEL;
+    delete process.env.ARCHMAP_AI_KEY;
+    res.json(status());
+  });
   app.post('/api/analyze', async (req, res, next) => {
     if (scanning) {
       res
@@ -54,24 +91,52 @@ export function createApp(allowedRoot: string) {
       return;
     }
     try {
-      const input = z.object({ path: z.string().trim().min(1).max(2000) }).parse(req.body);
+      const input = z
+        .object({
+          path: z.string().trim().min(1).max(2000),
+          view: z.enum(['architecture', 'modules']).optional(),
+          focus: z.string().max(500).optional(),
+        })
+        .parse(req.body);
       scanning = true;
       const root = await resolveRoot(allowedRoot, input.path);
-      res.json(remember(await analyze(root)));
+      res.json(remember(await analyze(root, 'local', input.view === 'architecture', input.focus)));
     } catch (error) {
       next(error);
     } finally {
       scanning = false;
     }
   });
-  app.get('/api/example', async (_req, res, next) => {
+  app.get('/api/example', async (req, res, next) => {
     try {
       const root = fileURLToPath(new URL('../examples/image-studio', import.meta.url));
-      const project = await analyze(root, 'example');
+      const project = await analyze(root, 'example', req.query.view === 'architecture');
       project.name = 'image-studio';
       res.json(remember(project));
     } catch (error) {
       next(error);
+    }
+  });
+  app.post('/api/compare', async (req, res, next) => {
+    if (scanning) {
+      res.status(429).json({ error: 'Another scan is running. Try again when it finishes.' });
+      return;
+    }
+    try {
+      const input = z
+        .object({
+          path: z.string().trim().min(1).max(2000),
+          ref: z.string().trim().min(1).max(200).default('HEAD'),
+          focus: z.string().max(500).default(''),
+        })
+        .parse(req.body);
+      scanning = true;
+      const root = await resolveRoot(allowedRoot, input.path);
+      res.json(await compareWorkingTree(root, input.ref, input.focus));
+    } catch (error) {
+      next(error);
+    } finally {
+      scanning = false;
     }
   });
   app.post('/api/explain', async (req, res, next) => {
@@ -91,6 +156,21 @@ export function createApp(allowedRoot: string) {
         return;
       }
       res.json(await explain(cached.project, input.question, input.selectedId));
+    } catch (error) {
+      next(error);
+    }
+  });
+  app.post('/api/propose', async (req, res, next) => {
+    try {
+      const input = z
+        .object({ projectId: z.string(), prompt: z.string().trim().min(3).max(2000) })
+        .parse(req.body);
+      const cached = projects.get(input.projectId);
+      if (!cached || cached.expires < Date.now()) {
+        res.status(404).json({ error: 'Refresh this repository to start a mapping session.' });
+        return;
+      }
+      res.json(await proposeMap(cached.project, input.prompt));
     } catch (error) {
       next(error);
     }
