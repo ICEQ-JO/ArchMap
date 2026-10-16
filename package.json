@@ -1,0 +1,17 @@
+{
+  "name": "repovox",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Find your way through a codebase. Local architecture maps with source evidence.",
+  "license": "MIT",
+  "engines": { "node": ">=22.12" },
+  "scripts": {
+    "dev": "tsx server/index.ts",
+    "build": "tsc --noEmit && vite build",
+    "start": "NODE_ENV=production tsx server/index.ts",
+    "test": "tsx --test tests/*.test.ts",
+    "check": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  }
+}
