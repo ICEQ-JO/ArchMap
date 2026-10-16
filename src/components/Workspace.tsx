@@ -14,6 +14,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import {
   ArrowLeft,
+  Cable,
   ArrowRight,
   Check,
   ChevronDown,
@@ -44,7 +45,13 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { projectSchema, type Module, type Project, type Proposal } from '../../shared/schema';
+import {
+  projectSchema,
+  type Module,
+  type Project,
+  type Proposal,
+  type Comparison,
+} from '../../shared/schema';
 import { getStatus, loadProject } from '../lib/api';
 import { dependencyWalk, downloadProject, refreshProject, SAVE_KEY } from '../lib/graph';
 import { Brand, Github, Mark } from './Brand';
@@ -54,6 +61,8 @@ import MapAgent from './MapAgent';
 import FlowInspector from './FlowInspector';
 import ModelSettings, { type ServerStatus } from './ModelSettings';
 import ChangesPanel from './ChangesPanel';
+import OpenCodePanel from './OpenCodePanel';
+import { request } from '../lib/api';
 import './Workbench.css';
 
 const nodeTypes = { architecture: ArchitectureNode };
@@ -84,7 +93,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [tab, setTab] = useState<'inspect' | 'ask' | 'settings'>('inspect');
+  const [tab, setTab] = useState<'inspect' | 'ask' | 'settings' | 'opencode'>('inspect');
   const [flowId, setFlowId] = useState<string | null>(null);
   const [flowIndex, setFlowIndex] = useState(0);
   const [walkStart, setWalkStart] = useState<string | undefined>();
@@ -97,8 +106,14 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [addName, setAddName] = useState('');
   const [adding, setAdding] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [sessionReview, setSessionReview] = useState<{
+    report: Comparison;
+    title: string;
+    request: string;
+  } | null>(null);
   const [serverSession, setServerSession] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureFlowNode>([]);
+  const reviewedTurns = useRef(new Set<string>());
   const fileInput = useRef<HTMLInputElement>(null);
   const init = useRef(false);
   const { fitView, setCenter } = useReactFlow<ArchitectureFlowNode>();
@@ -514,6 +529,13 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     <div className="workspace">
       {reviewing && project && (
         <ChangesPanel
+          key={sessionReview?.report.current.analyzedAt ?? 'git-review'}
+          initialReport={sessionReview?.report}
+          sessionTitle={sessionReview?.title}
+          sessionRequest={sessionReview?.request}
+          onRefresh={
+            sessionReview ? () => request<Comparison>('/api/opencode/review', {}) : undefined
+          }
           root={project.root}
           focus={project.focus ?? ''}
           onClose={() => setReviewing(false)}
@@ -670,7 +692,10 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                 className="review-action"
                 aria-label="Review changes"
                 disabled={!project?.root}
-                onClick={() => setReviewing(true)}
+                onClick={() => {
+                  setSessionReview(null);
+                  setReviewing(true);
+                }}
               >
                 <GitCompareArrows size={15} />
                 <span>Changes</span>
@@ -1126,8 +1151,28 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               >
                 <Settings2 size={14} />
               </button>
+              <button
+                className={tab === 'opencode' ? 'active' : ''}
+                aria-label="OpenCode sessions"
+                title="OpenCode sessions"
+                aria-pressed={tab === 'opencode'}
+                onClick={() => setTab('opencode')}
+              >
+                <Cable size={14} />
+              </button>
             </div>
-            {tab === 'inspect' ? (
+            {tab === 'opencode' ? (
+              <OpenCodePanel
+                reviewedTurns={reviewedTurns.current}
+                key={project?.root ?? ''}
+                root={project?.root ?? ''}
+                focus={project?.focus ?? ''}
+                onReview={(report, title, request) => {
+                  setSessionReview({ report, title, request });
+                  setReviewing(true);
+                }}
+              />
+            ) : tab === 'inspect' ? (
               <div className="inspector-scroll">
                 {project?.level === 'architecture' && ((!selected && !selectedEdge) || flowId) && (
                   <FlowInspector

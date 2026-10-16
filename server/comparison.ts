@@ -88,7 +88,11 @@ export function compareProjects(before: Project, after: Project, ref: string): C
       'Incomplete coverage: additions, removals, and dependency changes are withheld. Only modifications to files inspected on both sides are reported.',
     );
   return comparisonSchema.parse({
-    baseline: { ref, revision: before.revision!, filesScanned: before.filesScanned },
+    baseline: {
+      ref,
+      revision: before.revision ?? 'unversioned',
+      filesScanned: before.filesScanned,
+    },
     current: {
       revision: after.revision,
       analyzedAt: after.analyzedAt,
@@ -115,8 +119,15 @@ export async function compareWorkingTree(root: string, ref = 'HEAD', focus = '')
     { ...after, ...after.alternate!, level: 'modules' },
     ref,
   );
+  return addChangeEvidence(report, snapshot.files, currentFiles);
+}
+export function addChangeEvidence(
+  report: Comparison,
+  beforeFiles: Map<string, string>,
+  currentFiles: Map<string, string>,
+) {
   for (const change of report.files) {
-    const old = snapshot.files.get(change.file),
+    const old = beforeFiles.get(change.file),
       current = currentFiles.get(change.file);
     const oldLines = old?.split(/\r?\n/) ?? [],
       newLines = current?.split(/\r?\n/) ?? [];

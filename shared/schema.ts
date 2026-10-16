@@ -127,7 +127,13 @@ export const dependencyChangeSchema = z.object({
   evidence: evidenceSchema,
 });
 export const comparisonSchema = z.object({
-  baseline: z.object({ ref: z.string(), revision: z.string(), filesScanned: z.number() }),
+  baseline: z.object({
+    ref: z.string(),
+    revision: z.string(),
+    filesScanned: z.number(),
+    kind: z.enum(['git', 'working-tree']).optional(),
+    capturedAt: z.string().optional(),
+  }),
   current: z.object({
     revision: z.string().nullable(),
     analyzedAt: z.string(),
@@ -150,3 +156,26 @@ export const comparisonSchema = z.object({
 });
 export type Comparison = z.infer<typeof comparisonSchema>;
 export type FileChange = z.infer<typeof fileChangeSchema>;
+
+export const codingSessionSchema = z.object({
+  id: z.string().max(200),
+  title: z.string().max(500),
+  directory: z.string().max(2000),
+});
+export const agentConnectionSchema = z.object({
+  connected: z.boolean(),
+  baseUrl: z.string().optional(),
+  root: z.string().optional(),
+  tracking: z
+    .object({
+      session: codingSessionSchema,
+      capturedAt: z.string(),
+      expiresAt: z.string(),
+      state: z.enum(['waiting', 'working', 'ready']),
+      request: z.string().max(4000),
+      turnId: z.string().max(200),
+    })
+    .nullable(),
+});
+export type CodingSession = z.infer<typeof codingSessionSchema>;
+export type AgentConnection = z.infer<typeof agentConnectionSchema>;

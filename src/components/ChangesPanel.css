@@ -394,3 +394,39 @@
 .brief-item button:hover {
   text-decoration: underline;
 }
+
+.session-review-context {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  background: #24231e;
+}
+.session-review-context > strong {
+  font-size: 14px;
+}
+.session-review-context p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin: 9px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 120px;
+  overflow: auto;
+}
+.session-review-context summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--accent);
+}
+.session-review-context .small-button {
+  margin-top: 10px;
+}
+.workspace .inspector-tabs {
+  gap: 14px;
+}
+.workspace .inspector-tabs > button[aria-label='Model settings'] {
+  margin-left: auto;
+}
+.workspace .inspector-tabs > button[aria-label='OpenCode sessions'] {
+  min-width: 26px;
+}

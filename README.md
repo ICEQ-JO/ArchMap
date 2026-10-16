@@ -56,6 +56,12 @@ Open a local repository, select **Changes** in the workspace toolbar, choose a b
 
 This review uses no model and makes no checkout or source edits. It covers inspected JS/TS source, not a complete application or runtime trace. When coverage is incomplete, addition/removal and dependency-change claims are withheld. Source excerpts show the first changed area, not a full patch. See [change review and its limits](docs/change-review.md).
 
+## Follow OpenCode tasks
+
+Start OpenCode in your repository with `opencode --port 4096 --hostname 127.0.0.1`. In ArchMap, open the repository and select **OpenCode sessions** (the cable icon in the inspector). Connect, choose an idle session, and select **Track next task** before submitting your task in OpenCode.
+
+ArchMap captures your current source, including existing uncommitted work. Keep the panel open; a source-backed change review opens after observed activity returns to idle. The adapter sends no prompts or code to OpenCode and runs no tools. Reviews cover all changes since capture, including edits from other sources. [Setup, lifecycle, and validation details](docs/opencode.md).
+
 ## Connect a model in the web interface
 
 Open **Model settings** (the controls icon beside Inspect and Ask the map). Enter a chat-completions-compatible API base URL, model ID, and optional API key. For example, a local server can use `http://localhost:11434/v1` with an installed model ID.
@@ -107,7 +113,7 @@ Observed connections include the file, line range, source snippet, and SHA-256 f
 
 **Save** keeps one map in browser local storage. Saving another replaces that slot. **Export** produces an `.archmap.json` containing source snippets, local paths, both graph views where available, and walkthroughs. Review its contents before sharing. Imported/restored maps do not have an active server analysis session; refresh the repository before asking questions.
 
-Refresh reanalyzes source, preserves surviving positions and manual elements, and resets history. Generated display names/descriptions can change. Git change reviews are explicit point-in-time comparisons; there is no automatic file watcher or coding-agent session integration yet.
+Refresh reanalyzes source, preserves surviving positions and manual elements, and resets history. Generated display names/descriptions can change. Git change reviews are explicit point-in-time comparisons; there is no general filesystem watcher. The OpenCode adapter observes selected sessions while its panel is open.
 
 ## Development
 
@@ -142,7 +148,8 @@ tests/        Unit, API, model and browser workflows
 - [ ] Iterative repository exploration by an agent beyond bounded evidence selection
 - [ ] Collapsible custom boundaries and richer C4 levels
 - [x] Read-only Git architecture diffs with before/after source evidence
-- [ ] Automatic source-change detection and coding-agent session integration
+- [x] Read-only local OpenCode session tracking and working-tree baseline reviews
+- [ ] Durable source-change observation and additional coding-agent adapters
 - [ ] More language analyzers and framework-aware behavior
 - [ ] Authenticated self-hosting, GitHub and provider integrations
 
