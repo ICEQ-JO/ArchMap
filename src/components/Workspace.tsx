@@ -22,22 +22,18 @@ import {
   ChevronRight,
   CircleHelp,
   Download,
-  FileCode2,
   FolderOpen,
   GitBranch,
   GitCompareArrows,
+  LayoutGrid,
   LoaderCircle,
-  Menu,
   MessageSquare,
-  MousePointer2,
   Network,
-  PanelRightClose,
   Play,
   Plus,
   RefreshCw,
   Save,
   Search,
-  Send,
   Settings2,
   ShieldCheck,
   Trash2,
@@ -54,7 +50,7 @@ import {
 } from '../../shared/schema';
 import { getStatus, loadProject } from '../lib/api';
 import { dependencyWalk, downloadProject, refreshProject, SAVE_KEY } from '../lib/graph';
-import { Brand, Github, Mark } from './Brand';
+import { Brand, Mark } from './Brand';
 import ArchitectureNode, { kindIcons, type ArchitectureFlowNode } from './ArchitectureNode';
 import EvidenceCard from './EvidenceCard';
 import MapAgent from './MapAgent';
@@ -64,6 +60,7 @@ import ChangesPanel from './ChangesPanel';
 import OpenCodePanel from './OpenCodePanel';
 import { request } from '../lib/api';
 import './Workbench.css';
+import { arrangeSparse } from '../lib/layout';
 
 const nodeTypes = { architecture: ArchitectureNode };
 function readSaved(): Project | null {
@@ -93,7 +90,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
-  const [tab, setTab] = useState<'inspect' | 'ask' | 'settings' | 'opencode'>('inspect');
   const [flowId, setFlowId] = useState<string | null>(null);
   const [flowIndex, setFlowIndex] = useState(0);
   const [walkStart, setWalkStart] = useState<string | undefined>();
@@ -106,6 +102,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [addName, setAddName] = useState('');
   const [adding, setAdding] = useState(false);
   const [reviewing, setReviewing] = useState(false);
+  const [view, setView] = useState('Architecture');
   const [sessionReview, setSessionReview] = useState<{
     report: Comparison;
     title: string;
@@ -185,7 +182,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         refresh && project ? project.root : path,
         refresh ? (project?.focus ?? focus) : focus,
       );
-      setProject(refresh && project ? refreshProject(fresh, project) : fresh);
+      setProject(refresh && project ? refreshProject(fresh, project) : arrangeSparse(fresh));
+      setView('Architecture');
       setHistory([]);
       setDirty(refresh);
       setSaved(false);
@@ -280,7 +278,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setSelectedId(id);
     setSelectedEdgeId(null);
     setFlowId(null);
-    setTab('inspect');
     setInspectorOpen(true);
     setSidebarOpen(false);
     const node = project?.nodes.find((n) => n.id === id);
@@ -306,6 +303,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         throw new Error('Choose an ArchMap JSON file smaller than 8 MB.');
       const imported = projectSchema.parse(JSON.parse(await file.text()));
       setProject(imported);
+      setView('Architecture');
       setHistory([]);
       setDirty(true);
       setServerSession(false);
@@ -371,7 +369,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setSelectedEdgeId(null);
     setFlowId(null);
     setInspectorOpen(true);
-    setTab('inspect');
     setTimeout(() => setCenter(215, -120, { zoom: 1, duration: 250 }), 80);
   }
   function removeSelection() {
@@ -412,28 +409,41 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         style: {
           stroke:
             edge.id === activeWalkEdge?.id || selectedEdgeId === edge.id
-              ? '#e5c796'
+              ? '#282824'
               : edge.origin === 'manual'
-                ? '#c9bba3'
-                : '#94948e',
+                ? '#937b55'
+                : '#8e928d',
           strokeWidth: edge.id === activeWalkEdge?.id ? 2.5 : 1.4,
           strokeDasharray: edge.origin === 'manual' ? '5 5' : undefined,
           opacity: activeWalkEdge && activeWalkEdge.id !== edge.id ? 0.2 : 1,
         },
-        labelStyle: { fill: '#d0d0c9', fontSize: 9 },
-        labelBgStyle: { fill: '#20201e', fillOpacity: 0.95 },
-        markerEnd: { type: MarkerType.ArrowClosed, color: '#b9b9b0', width: 15, height: 15 },
+        labelStyle: { fill: '#42463f', fontSize: 11 },
+        labelBgStyle: { fill: '#ffffff', fillOpacity: 0.95 },
+        markerEnd: { type: MarkerType.ArrowClosed, color: '#777d72', width: 15, height: 15 },
       })) ?? [],
     [project, selectedEdgeId, activeWalkEdge],
   );
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setSidebarOpen(false);
+        setAdding(false);
+        setInspectorOpen(false);
+        resetSelection();
+        if (reviewing) {
+          setReviewing(false);
+          setView('Architecture');
+        }
+        return;
+      }
       if (reviewing) return;
       const target = event.target as HTMLElement;
       const typing = target.matches('input, textarea, select') || target.isContentEditable;
       if (typing) return;
       if (event.key === '/') {
         event.preventDefault();
+        setView('Architecture');
+        setShowOpen(false);
         setSidebarOpen(true);
         setTimeout(
           () =>
@@ -446,10 +456,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
         event.preventDefault();
         undo();
-      } else if (event.key === 'Escape') {
-        setSidebarOpen(false);
-        setAdding(false);
-        setWalkStep(null);
       }
     };
     window.addEventListener('keydown', handleKey);
@@ -487,7 +493,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setWalkStep(null);
     setSelectedId(null);
     setSelectedEdgeId(step.edgeId);
-    setTab('inspect');
     setInspectorOpen(true);
   }
   function switchView() {
@@ -518,871 +523,1013 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     });
     resetSelection();
     setQuery('');
-    setTab('inspect');
+    setView('Architecture');
     setNotice('Proposed map applied. Undo restores your previous view.');
     setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100);
   }
-  const goBack = () => {
-    location.hash = '';
+  function navigate(next: string) {
+    setView(next);
+    setShowOpen(false);
+    setSidebarOpen(false);
+    setReviewing(next === 'Changes');
+    if (next === 'Changes') setSessionReview(null);
+    if (next === 'Flows' && project?.level === 'modules' && project.alternate) switchView();
+  }
+  const destinations = [
+    { name: 'Architecture', icon: Network, hint: 'The big picture' },
+    { name: 'Flows', icon: Play, hint: 'Follow source connections' },
+    { name: 'Changes', icon: GitCompareArrows, hint: 'Review the working tree' },
+    { name: 'Sessions', icon: Cable, hint: 'Follow a coding agent' },
+    { name: 'Ask', icon: MessageSquare, hint: 'Understand a feature' },
+    { name: 'Connections', icon: Settings2, hint: 'Models and integrations' },
+    { name: 'Roadmap', icon: GitBranch, hint: 'What works. What comes next.' },
+  ];
+  const descriptions: Record<string, string> = {
+    Architecture: 'Understand the parts. Follow the evidence.',
+    Flows: 'Explore source-supported journeys, one connection at a time.',
+    Changes: 'See what changed and the surrounding source context.',
+    Sessions: 'Track a local OpenCode task and review its actual changes.',
+    Ask: 'Ask a question. Get an explanation grounded in your source.',
+    Connections: 'Connect a model for understanding, or an agent for change review.',
+    Roadmap: 'A map of ArchMap today, and the direction ahead.',
   };
   return (
-    <div className="workspace">
-      {reviewing && project && (
-        <ChangesPanel
-          key={sessionReview?.report.current.analyzedAt ?? 'git-review'}
-          initialReport={sessionReview?.report}
-          sessionTitle={sessionReview?.title}
-          sessionRequest={sessionReview?.request}
-          onRefresh={
-            sessionReview ? () => request<Comparison>('/api/opencode/review', {}) : undefined
-          }
-          root={project.root}
-          focus={project.focus ?? ''}
-          onClose={() => setReviewing(false)}
-        />
-      )}
-      <header className="workspace-header">
-        <button
-          className="bare-icon mobile-menu"
-          aria-label="Toggle explorer"
-          aria-expanded={sidebarOpen}
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-        >
-          <Menu size={19} />
-        </button>
+    <div className="wm-workspace">
+      <aside className="wm-workspace-nav" aria-label="Workspace navigation">
         <Brand />
-        <span className="header-divider" />
-        <div className="project-breadcrumb">
-          <span>Workspace</span>
-          <ChevronRight size={12} />
-          <strong>{project?.name || 'New map'}</strong>
-          {project?.mode === 'example' && <span className="tag">EXAMPLE</span>}
-        </div>
-        <div className="workspace-header-actions">
-          <span className="local-indicator">
-            <span className="live-dot" /> Local session
-          </span>
-          <a
-            className="bare-icon"
-            href="https://github.com/ICEQ-JO/ArchMap"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="ArchMap on GitHub"
-          >
-            <Github size={17} />
-          </a>
-          <button className="small-button" onClick={goBack}>
-            <ArrowLeft size={13} />
-            <span>Back to site</span>
-          </button>
-        </div>
-      </header>
-      <div className="workspace-body">
-        <aside
-          className={`explorer ${sidebarOpen ? 'is-open' : ''}`}
-          aria-label="Repository explorer"
+        <button
+          className="wm-project-switcher"
+          onClick={() => {
+            setShowOpen(true);
+            setView('Architecture');
+          }}
         >
-          <div className="explorer-heading">
-            <span>EXPLORER</span>
+          <span className="wm-project-avatar">
+            <FolderOpen size={18} />
+          </span>
+          <span>
+            <strong>{project?.name || 'Your workspace'}</strong>
+            <small>
+              {project ? `${project.filesScanned} source files` : 'Open your first project'}
+            </small>
+          </span>
+          <ChevronDown size={14} />
+        </button>
+        <span className="wm-nav-caption">WORKSPACE</span>
+        <nav>
+          {destinations.map(({ name, icon: Icon, hint }) => (
             <button
-              className="bare-icon"
+              key={name}
+              aria-current={view === name && !showOpen ? 'page' : undefined}
+              onClick={() => navigate(name)}
+              title={hint}
+            >
+              <Icon size={18} />
+              <span>{name}</span>
+              {name === 'Flows' && project && <small>{project.flows?.length || 0}</small>}
+            </button>
+          ))}
+        </nav>
+        <div className="wm-nav-bottom">
+          <button onClick={() => fileInput.current?.click()}>
+            <Upload size={16} />
+            Import map
+          </button>
+          <a href="https://github.com/ICEQ-JO/ArchMap#readme" target="_blank" rel="noreferrer">
+            <CircleHelp size={16} />
+            Documentation
+          </a>
+          <a href="#">
+            <ArrowLeft size={16} />
+            Back to site
+          </a>
+          <p>
+            <ShieldCheck size={14} />
+            Local repository access
+          </p>
+        </div>
+      </aside>
+      <div className="wm-workspace-content">
+        <header className="wm-workspace-header">
+          <div>
+            <span className="wm-header-eyebrow">
+              {project?.name || 'ARCHMAP'}
+              {project?.mode === 'example' ? ' / EXAMPLE PROJECT' : ' / LOCAL WORKSPACE'}
+            </span>
+            <h1>{showOpen ? 'Open a project' : view}</h1>
+          </div>
+          <div className="wm-workspace-header-actions">
+            <button
+              className="wm-small-button"
+              aria-label="Open repository"
               onClick={() => {
+                setView('Architecture');
                 setShowOpen(true);
-                setSidebarOpen(false);
               }}
-              aria-label="Open a repository"
             >
               <FolderOpen size={15} />
+              <span>Open repository</span>
+            </button>
+            <button
+              className="wm-small-button"
+              aria-label={saved ? 'Saved' : 'Save'}
+              disabled={!project}
+              onClick={save}
+            >
+              <Save size={15} />
+              <span>{saved ? 'Saved' : dirty ? 'Save changes' : 'Save'}</span>
+            </button>
+            <button
+              className="wm-small-button"
+              aria-label="Export"
+              disabled={!project}
+              onClick={() => project && downloadProject(project)}
+            >
+              <Download size={15} />
+              <span>Export</span>
             </button>
           </div>
-          <button
-            className="project-switcher"
-            onClick={() => {
-              setShowOpen(!showOpen);
-              setSidebarOpen(false);
-            }}
-          >
-            <span className="project-avatar">
-              <Mark size={17} />
-            </span>
-            <span>
-              <strong>{project?.name || 'Open repository'}</strong>
-              <small>
-                {project ? `${project.filesScanned} source files` : 'Start a local analysis'}
-              </small>
-            </span>
-            <ChevronDown size={13} />
-          </button>
-          <label className="component-search">
-            <Search size={13} />
-            <input
-              aria-label="Search components"
-              placeholder="Find a component…"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-            {query ? (
-              <button
-                type="button"
-                className="bare-icon"
-                aria-label="Clear component search"
-                onClick={() => setQuery('')}
-              >
-                <X size={13} />
-              </button>
-            ) : (
-              <kbd>/</kbd>
-            )}
-          </label>
-          <div className="explorer-section-title">
-            <span>COMPONENTS</span>
-            <span>{filteredNodes.length}</span>
-          </div>
-          <div className="component-list">
-            {filteredNodes.map((node) => {
-              const Icon = kindIcons[node.kind];
-              return (
-                <button
-                  key={node.id}
-                  className={selectedId === node.id ? 'active' : ''}
-                  onClick={() => selectNode(node.id)}
-                  title={node.file || node.label}
-                >
-                  <Icon size={14} />
-                  <span>{node.label}</span>
-                  {node.origin === 'manual' && <span className="manual-dot" />}
-                </button>
-              );
-            })}
-            {project && !filteredNodes.length && (
-              <p className="list-empty">No components match “{query}”.</p>
-            )}
-            {!project && <p className="list-empty">Your source files will appear here.</p>}
-          </div>
-          <div className="explorer-bottom">
-            <button onClick={() => fileInput.current?.click()}>
-              <Upload size={14} /> Import map
+        </header>
+        {notice && (
+          <div className="wm-workspace-notice" role="status">
+            <Check size={16} />
+            <span>{notice}</span>
+            <button aria-label="Dismiss notice" onClick={() => setNotice('')}>
+              <X size={16} />
             </button>
-            <button onClick={() => setShowOpen(true)}>
-              <FolderOpen size={14} /> Open repository
-            </button>
-            <a href="https://github.com/ICEQ-JO/ArchMap#readme" target="_blank" rel="noreferrer">
-              <CircleHelp size={14} /> Documentation <ArrowRight size={12} />
-            </a>
-            <div>
-              <ShieldCheck size={13} /> Repository access stays local
-            </div>
           </div>
-        </aside>
-        <main className="map-main">
-          <div className="map-toolbar">
-            <div className="map-view-label">
-              <Network size={15} />
-              <span>{project?.level === 'modules' ? 'Source files' : 'Architecture'}</span>
-              {project?.alternate && (
-                <button className="view-toggle" aria-label="Switch map view" onClick={switchView}>
-                  {project.level === 'architecture' ? 'Source files' : 'Architecture'}{' '}
-                  <ChevronDown size={11} />
-                </button>
-              )}
-            </div>
-            <div className="toolbar-actions">
-              <button
-                title="Compare Git revision with working tree"
-                className="review-action"
-                aria-label="Review changes"
-                disabled={!project?.root}
-                onClick={() => {
-                  setSessionReview(null);
-                  setReviewing(true);
-                }}
-              >
-                <GitCompareArrows size={15} />
-                <span>Changes</span>
-              </button>
-              <button
-                title="Undo last edit"
-                aria-label="Undo last edit"
-                disabled={!history.length}
-                onClick={undo}
-              >
-                <Undo2 size={15} />
-              </button>
-              <span className="toolbar-separator" />
-              <button
-                title="Add component"
-                aria-label="Component"
-                onClick={() => setAdding(!adding)}
-                disabled={!project}
-              >
-                <Plus size={14} />
-                <span>Component</span>
-              </button>
-              <button
-                onClick={() => project && void openProject(project.mode === 'example', true)}
-                disabled={!project || loading || !project.root}
-                aria-label="Refresh"
-                title="Reanalyze source and preserve manual layout"
-              >
-                <RefreshCw size={14} className={loading ? 'spinning' : ''} />
-                <span>Refresh</span>
-              </button>
-              <button
-                title="Save map in this browser"
-                aria-label={saved ? 'Saved' : 'Save'}
-                onClick={save}
-                disabled={!project}
-              >
-                <Save size={14} />
-                <span>
-                  {saved ? 'Saved' : 'Save'}
-                  {dirty ? ' *' : ''}
+        )}
+        {error && !showOpen && (
+          <div className="wm-workspace-error" role="alert">
+            {error}
+            <button aria-label="Dismiss error" onClick={() => setError('')}>
+              <X size={16} />
+            </button>
+          </div>
+        )}
+        {showOpen ? (
+          <main className="wm-open-page">
+            {' '}
+            <div className="wm-open-screen">
+              <div className="wm-open-screen-heading">
+                <span className="open-screen-mark">
+                  <Mark size={35} />
                 </span>
-              </button>
-              <button
-                aria-label="Export"
-                title="Export map as JSON"
-                onClick={() => project && downloadProject(project)}
-                disabled={!project}
-              >
-                <Download size={14} />
-                <span>Export</span>
-              </button>
-              <button
-                aria-expanded={inspectorOpen}
-                title="Toggle inspector"
-                aria-label="Toggle inspector"
-                onClick={() => setInspectorOpen(!inspectorOpen)}
-              >
-                <PanelRightClose size={15} />
-              </button>
-            </div>
-          </div>
-          {adding && (
-            <form className="add-component-form" onSubmit={addComponent}>
-              <input
-                autoFocus
-                aria-label="New component name"
-                placeholder="Name your component"
-                maxLength={120}
-                value={addName}
-                onChange={(e) => setAddName(e.target.value)}
-              />
-              <button className="small-button" disabled={!addName.trim()}>
-                Add component
-              </button>
-              <button
-                className="bare-icon"
-                aria-label="Cancel adding component"
-                type="button"
-                onClick={() => setAdding(false)}
-              >
-                <X size={15} />
-              </button>
-            </form>
-          )}
-          {notice && (
-            <div className="workspace-notice" role="status">
-              <Check size={14} />
-              {notice}
-              <button
-                className="bare-icon"
-                aria-label="Dismiss notice"
-                onClick={() => setNotice('')}
-              >
-                <X size={13} />
-              </button>
-            </div>
-          )}
-          {error && !showOpen && (
-            <div className="workspace-error" role="alert">
-              {error}
-              <button className="bare-icon" aria-label="Dismiss error" onClick={() => setError('')}>
-                <X size={14} />
-              </button>
-            </div>
-          )}
-          {!showOpen && project?.warnings.some((w) => w.includes('Analysis limit')) && (
-            <div className="coverage-notice">
-              <span>
-                <strong>Partial analysis.</strong> {project.filesScanned} files scanned. Focus on a
-                feature or a smaller source folder.
-              </span>
-              <button
-                onClick={() => {
-                  setPath(project.root);
-                  setFocus(project.focus ?? '');
-                  setShowOpen(true);
+                {project && (
+                  <button
+                    className="wm-bare-icon"
+                    onClick={() => setShowOpen(false)}
+                    aria-label="Return to current map"
+                  >
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+              <h1>Find your way in.</h1>
+              <p>Open a repository. Turn its source into a map you can follow.</p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void openProject(false);
                 }}
               >
-                Refine focus <ArrowRight size={12} />
-              </button>
-            </div>
-          )}
-          <div className="canvas-area">
-            {showOpen ? (
-              <div className="open-screen">
-                <div className="open-screen-heading">
-                  <span className="open-screen-mark">
-                    <Mark size={35} />
-                  </span>
-                  {project && (
-                    <button
-                      className="bare-icon"
-                      onClick={() => setShowOpen(false)}
-                      aria-label="Return to current map"
-                    >
-                      <X size={18} />
-                    </button>
-                  )}
-                </div>
-                <h1>Find your way in.</h1>
-                <p>Open a repository. Turn its source into a map you can follow.</p>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void openProject(false);
-                  }}
-                >
-                  <label htmlFor="repo-path">Repository folder</label>
-                  <div className="path-input">
-                    <FolderOpen size={17} />
-                    <input
-                      id="repo-path"
-                      value={path}
-                      onChange={(e) => setPath(e.target.value)}
-                      placeholder="./my-project"
-                      required
-                      maxLength={2000}
-                    />
-                  </div>
-                  <p className="root-hint">
-                    {status ? (
-                      <>
-                        Relative to <code>{status.root}</code>. Set <code>ARCHMAP_ROOT</code> to
-                        open a different parent folder.
-                      </>
-                    ) : (
-                      'Connecting to the local repository service…'
-                    )}
-                  </p>
-                  <label className="source-focus-label" htmlFor="source-focus">
-                    Feature focus <span>(optional)</span>
-                  </label>
+                <label htmlFor="repo-path">Repository folder</label>
+                <div className="wm-path-input">
+                  <FolderOpen size={17} />
                   <input
-                    className="source-focus-input"
-                    id="source-focus"
-                    value={focus}
-                    onChange={(event) => setFocus(event.target.value)}
-                    maxLength={500}
-                    placeholder="e.g. auth, checkout, image generation"
+                    id="repo-path"
+                    value={path}
+                    onChange={(e) => setPath(e.target.value)}
+                    placeholder="./my-project"
+                    required
+                    maxLength={2000}
                   />
-                  <button className="button primary" disabled={loading}>
-                    {loading ? (
-                      <>
-                        <LoaderCircle className="spinning" size={16} /> Analyzing source…
-                      </>
-                    ) : (
-                      <>
-                        Map repository <ArrowRight size={16} />
-                      </>
-                    )}
-                  </button>
-                </form>
-                {error && (
-                  <p className="error-text" role="alert">
-                    {error}
-                  </p>
-                )}
-                <div className="open-or">
-                  <span />
-                  or start exploring
-                  <span />
                 </div>
-                <button
-                  className="example-choice"
-                  disabled={loading}
-                  onClick={() => void openProject(true)}
-                >
-                  <span className="project-avatar">
-                    <Network size={18} />
-                  </span>
-                  <span>
-                    <strong>Image Studio</strong>
-                    <small>An illustrative image-generation project · 10 source files</small>
-                  </span>
-                  <ArrowRight size={17} />
-                </button>
-                <button className="import-choice" onClick={() => fileInput.current?.click()}>
-                  <Upload size={14} /> Import a saved .archmap.json
-                </button>
-                <button className="blank-choice" onClick={startSketch}>
-                  <Plus size={14} /> Start a blank architecture map
-                </button>
-                <p className="scan-disclosure">
-                  <ShieldCheck size={14} /> Reads source files. Never executes repository code.
-                  <br />
-                  JavaScript & TypeScript · up to 400 files / 8 MB
+                <p className="wm-root-hint">
+                  {status ? (
+                    <>
+                      Relative to <code>{status.root}</code>. Set <code>ARCHMAP_ROOT</code> to open
+                      a different parent folder.
+                    </>
+                  ) : (
+                    'Connecting to the local repository service…'
+                  )}
                 </p>
-              </div>
-            ) : loading && !project ? (
-              <div className="map-loading">
-                <LoaderCircle size={28} className="spinning" />
-                <h2>Reading the connections.</h2>
-                <p>Parsing imports and collecting source evidence…</p>
-              </div>
-            ) : project ? (
-              <>
-                <ReactFlow
-                  nodes={nodes}
-                  edges={edges}
-                  nodeTypes={nodeTypes}
-                  onNodesChange={onNodesChange}
-                  onNodeDragStop={(_, node) => {
-                    const old = project.nodes.find((n) => n.id === node.id);
-                    if (
-                      old &&
-                      (old.position.x !== node.position.x || old.position.y !== node.position.y)
-                    )
-                      edit({
-                        ...project,
-                        nodes: project.nodes.map((n) =>
-                          n.id === node.id ? { ...n, position: node.position } : n,
-                        ),
-                      });
-                  }}
-                  onConnect={connect}
-                  onNodeClick={(_, node) => {
-                    setFlowId(null);
-                    setSelectedId(node.id);
-                    setSelectedEdgeId(null);
-                    setTab('inspect');
-                    setInspectorOpen(true);
-                  }}
-                  onEdgeClick={(_, edge) => {
-                    setFlowId(null);
-                    setSelectedEdgeId(edge.id);
-                    setSelectedId(null);
-                    setTab('inspect');
-                    setInspectorOpen(true);
-                  }}
-                  onPaneClick={() => {
-                    setSelectedId(null);
-                    setSelectedEdgeId(null);
-                  }}
-                  fitView
-                  fitViewOptions={{ padding: 0.22, maxZoom: 1 }}
-                  minZoom={0.1}
-                  maxZoom={2}
-                  deleteKeyCode={null}
-                  colorMode="dark"
-                  proOptions={{ hideAttribution: false }}
-                >
-                  <Background variant={BackgroundVariant.Dots} color="#363634" gap={22} size={1} />
-                  <Controls showInteractive={false} />
-                  <MiniMap<ArchitectureFlowNode>
-                    nodeColor={(n) => (n.data.module?.origin === 'manual' ? '#c9bba3' : '#a6a69e')}
-                    maskColor="#181818c9"
-                    pannable
-                    zoomable
-                  />
-                </ReactFlow>
-                <div className="canvas-title">
-                  <span className="live-dot" />
-                  <span>{project.name}</span>
-                  <span>
-                    {project.nodes.length} components · {project.edges.length} connections
-                  </span>
-                </div>
-                <div className="canvas-legend">
-                  <span>
-                    <i /> Source-backed connection
-                  </span>
-                  <span>
-                    <i /> Manual connection
-                  </span>
-                </div>
-                {flowId ? null : walkStep === null ? (
-                  <button
-                    className="walk-launcher"
-                    onClick={() => {
-                      if (project.level === 'architecture' && project.flows?.length)
-                        pickFlow(project.flows[0].id, 0);
-                      else {
-                        setWalkStart(selectedId ?? undefined);
-                        setWalkStep(0);
-                      }
-                    }}
-                    disabled={
-                      project.level === 'architecture' ? !project.flows?.length : !walk.length
-                    }
-                  >
-                    <Play size={13} />
-                    <span>
-                      {project.level === 'architecture'
-                        ? 'Explore guided flows'
-                        : 'Walk dependencies'}
-                    </span>
-                    <span>
-                      {project.level === 'architecture' ? project.flows?.length : walk.length}{' '}
-                      {project.level === 'architecture' ? 'flows' : 'steps'}
-                    </span>
-                  </button>
-                ) : activeWalkEdge ? (
-                  <div className="walk-player">
-                    <div className="walk-player-top">
-                      <Play size={12} />
-                      <strong>Dependency walk</strong>
-                      <span>
-                        {walkStep + 1} / {walk.length}
-                      </span>
-                      <button
-                        className="bare-icon"
-                        aria-label="Close dependency walk"
-                        onClick={() => {
-                          setWalkStep(null);
-                          void fitView({ padding: 0.2, duration: 300 });
-                        }}
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <div className="walk-player-main">
-                      <button
-                        className="icon-button"
-                        aria-label="Previous walk step"
-                        disabled={walkStep === 0}
-                        onClick={() => setWalkStep(walkStep - 1)}
-                      >
-                        <ChevronLeft />
-                      </button>
-                      <div>
-                        <strong>
-                          {project.nodes.find((n) => n.id === activeWalkEdge.source)?.label}{' '}
-                          <ArrowRight size={12} />{' '}
-                          {project.nodes.find((n) => n.id === activeWalkEdge.target)?.label}
-                        </strong>
-                        <p>
-                          {activeWalkEdge.label} ·{' '}
-                          {activeWalkEdge.origin === 'manual'
-                            ? 'User-authored relationship'
-                            : `Source: ${activeWalkEdge.evidence?.file}:${activeWalkEdge.evidence?.line}`}
-                        </p>
-                      </div>
-                      <button
-                        className="icon-button"
-                        aria-label="Next walk step"
-                        disabled={walkStep === walk.length - 1}
-                        onClick={() => setWalkStep(walkStep + 1)}
-                      >
-                        <ChevronRight />
-                      </button>
-                    </div>
-                    <div className="walk-progress">
-                      <span style={{ width: `${((walkStep + 1) / walk.length) * 100}%` }} />
-                    </div>
-                    <p className="walk-disclaimer">
-                      Static dependency traversal. Does not establish runtime order.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="walk-player">
-                    <p>No outgoing dependencies from this component.</p>
-                    <button className="text-button" onClick={() => setWalkStep(null)}>
-                      Close walk
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="map-loading">
-                <p>Open a repository to begin.</p>
-                <button className="button primary" onClick={() => setShowOpen(true)}>
-                  Open repository
+                <label className="wm-source-focus-label" htmlFor="source-focus">
+                  Feature focus <span>(optional)</span>
+                </label>
+                <input
+                  className="wm-source-focus-input"
+                  id="source-focus"
+                  value={focus}
+                  onChange={(event) => setFocus(event.target.value)}
+                  maxLength={500}
+                  placeholder="e.g. auth, checkout, image generation"
+                />
+                <button className="wm-button wm-primary" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <LoaderCircle className="spinning" size={16} /> Analyzing source…
+                    </>
+                  ) : (
+                    <>
+                      Map repository <ArrowRight size={16} />
+                    </>
+                  )}
                 </button>
+              </form>
+              {error && (
+                <p className="wm-error-text" role="alert">
+                  {error}
+                </p>
+              )}
+              <div className="wm-open-or">
+                <span />
+                or start exploring
+                <span />
+              </div>
+              <button
+                className="wm-example-choice"
+                disabled={loading}
+                onClick={() => void openProject(true)}
+              >
+                <span className="wm-project-avatar">
+                  <Network size={18} />
+                </span>
+                <span>
+                  <strong>Image Studio</strong>
+                  <small>An illustrative image-generation project · 10 source files</small>
+                </span>
+                <ArrowRight size={17} />
+              </button>
+              <button className="wm-import-choice" onClick={() => fileInput.current?.click()}>
+                <Upload size={14} /> Import a saved .archmap.json
+              </button>
+              <button className="wm-blank-choice" onClick={startSketch}>
+                <Plus size={14} /> Start a blank architecture map
+              </button>
+              <p className="wm-scan-disclosure">
+                <ShieldCheck size={14} /> Reads source files. Never executes repository code.
+                <br />
+                JavaScript & TypeScript · up to 400 files / 8 MB
+              </p>
+            </div>
+          </main>
+        ) : (
+          <>
+            {view !== 'Changes' && (
+              <div className="wm-page-intro">
+                <p>{descriptions[view]}</p>
+                {view === 'Roadmap' && (
+                  <a href="/product-map.html" target="_blank" rel="noreferrer">
+                    Open standalone map <ArrowRight size={14} />
+                  </a>
+                )}
               </div>
             )}
-          </div>
-          <footer className="map-statusbar">
-            <span>
-              <GitBranch size={11} />
-              {project?.revision ? project.revision.slice(0, 7) : 'Unversioned'}
-              {project && (
-                <span title={project.analyzedAt}>
-                  Analyzed{' '}
-                  {new Date(project.analyzedAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              )}
-            </span>
-            <span>
-              <MousePointer2 size={11} /> Drag to pan · scroll to zoom
-            </span>
-            <span>
-              {status?.ai ? 'Model configured' : 'Local analysis'}
-              <span className="live-dot" />
-            </span>
-          </footer>
-        </main>
-        {inspectorOpen && (
-          <aside className="inspector" aria-label="Source inspector">
-            <div className="inspector-tabs">
-              <button
-                aria-pressed={tab === 'inspect'}
-                className={tab === 'inspect' ? 'active' : ''}
-                onClick={() => setTab('inspect')}
-              >
-                <ScanIcon /> Inspect
-              </button>
-              <button
-                aria-pressed={tab === 'ask'}
-                className={tab === 'ask' ? 'active' : ''}
-                onClick={() => setTab('ask')}
-              >
-                <MessageSquare size={13} /> Ask the map
-              </button>
-              <button
-                className={tab === 'settings' ? 'active' : ''}
-                aria-label="Model settings"
-                title="Model settings"
-                onClick={() => setTab('settings')}
-              >
-                <Settings2 size={14} />
-              </button>
-              <button
-                className={tab === 'opencode' ? 'active' : ''}
-                aria-label="OpenCode sessions"
-                title="OpenCode sessions"
-                aria-pressed={tab === 'opencode'}
-                onClick={() => setTab('opencode')}
-              >
-                <Cable size={14} />
-              </button>
-            </div>
-            {tab === 'opencode' ? (
-              <OpenCodePanel
-                reviewedTurns={reviewedTurns.current}
-                key={project?.root ?? ''}
-                root={project?.root ?? ''}
-                focus={project?.focus ?? ''}
-                onReview={(report, title, request) => {
-                  setSessionReview({ report, title, request });
-                  setReviewing(true);
-                }}
-              />
-            ) : tab === 'inspect' ? (
-              <div className="inspector-scroll">
-                {project?.level === 'architecture' && ((!selected && !selectedEdge) || flowId) && (
-                  <FlowInspector
-                    flows={project.flows ?? []}
-                    activeId={flowId}
-                    index={flowIndex}
-                    onSelect={pickFlow}
-                    onClose={() => {
-                      setFlowId(null);
-                      setSelectedEdgeId(null);
-                    }}
-                  />
-                )}
-                {project?.level === 'architecture' && (selected || selectedEdge) && !flowId && (
-                  <button
-                    className="back-to-flows"
-                    onClick={() => {
-                      setSelectedId(null);
-                      setSelectedEdgeId(null);
-                    }}
-                  >
-                    <ChevronLeft size={12} /> Guided flows & overview
-                  </button>
-                )}
-                {selected || selectedEdge ? (
+            {view === 'Architecture' && (
+              <main className="wm-architecture-page">
+                {project ? (
                   <>
-                    <div className="inspector-detail-heading">
-                      <span className="detail-kind">{selected?.kind || 'connection'}</span>
-                      <span
-                        className={`origin-tag ${selected?.origin === 'manual' || selectedEdge?.origin === 'manual' ? 'manual' : ''}`}
-                      >
-                        {(selected?.origin || selectedEdge?.origin) === 'manual'
-                          ? 'MANUAL'
-                          : (selected?.origin || selectedEdge?.origin) === 'inferred'
-                            ? 'INFERRED'
-                            : 'OBSERVED'}
+                    <div className="wm-project-facts">
+                      <span>
+                        <strong>{project.filesScanned}</strong> source files
+                      </span>
+                      <span>
+                        <strong>{project.nodes.length}</strong>{' '}
+                        {project.level === 'modules' ? 'files on map' : 'components'}
+                      </span>
+                      <span>
+                        <strong>
+                          {project.edges.filter((e) => e.origin === 'observed').length}
+                        </strong>{' '}
+                        observed connections
+                      </span>
+                      <span className="wm-map-origin">
+                        {project.level === 'architecture'
+                          ? 'Inferred responsibilities · verify against source'
+                          : 'Static dependencies · not runtime order'}
                       </span>
                     </div>
-                    <h2>
-                      {selected?.label ||
-                        `${project?.nodes.find((n) => n.id === selectedEdge?.source)?.label} → ${project?.nodes.find((n) => n.id === selectedEdge?.target)?.label}`}
-                    </h2>
-                    {selected?.file && <p className="detail-path">{selected.file}</p>}
-                    <p className="detail-description">
-                      {selected?.description ||
-                        (selectedEdge?.origin === 'manual'
-                          ? 'A user-authored relationship. No source evidence is attached.'
-                          : selectedEdge?.origin === 'inferred'
-                            ? 'A proposed architectural relationship. Check this interpretation against the supporting source.'
-                            : 'The supporting source for this connection is shown below.')}
-                    </p>
-                    {selected && (
-                      <>
-                        <div className="detail-stats">
-                          <span>{selected.lines} lines</span>
-                          <span>{selected.members?.length ?? 1} files</span>
+                    {project.edges.length < project.nodes.length / 2 &&
+                      project.nodes.length > 2 && (
+                        <div className="wm-coverage-notice">
+                          <CircleHelp size={16} />
                           <span>
-                            {project?.edges.filter((e) => e.source === selected.id).length}{' '}
-                            dependencies
+                            <strong>Limited connection coverage.</strong> These areas are inferred
+                            from source. Unconnected cards do not prove isolation. Try source files
+                            or ask about a feature.
                           </span>
                         </div>
-                        {selected.members && (
-                          <details className="member-files">
-                            <summary>Source files ({selected.members.length})</summary>
-                            {selected.members.map((file) => (
-                              <code key={file}>{file}</code>
-                            ))}
-                          </details>
-                        )}
-                        <label className="edit-field">
-                          Display name
-                          <input
-                            key={`${project?.id}-${selected.id}`}
-                            defaultValue={selected.label}
-                            maxLength={120}
-                            onBlur={(e) => {
-                              if (
-                                project &&
-                                e.target.value.trim() &&
-                                e.target.value.trim() !== selected.label
-                              )
-                                edit({
-                                  ...project,
-                                  nodes: project.nodes.map((n) =>
-                                    n.id === selected.id
-                                      ? { ...n, label: e.target.value.trim() }
-                                      : n,
-                                  ),
-                                });
-                            }}
-                          />
-                        </label>
-                        <label className="edit-field">
-                          Responsibility
-                          <textarea
-                            key={`description-${selected.id}`}
-                            defaultValue={selected.description}
-                            rows={3}
-                            maxLength={2000}
-                            onBlur={(event) => {
-                              if (project && event.target.value !== selected.description)
-                                edit({
-                                  ...project,
-                                  nodes: project.nodes.map((n) =>
-                                    n.id === selected.id
-                                      ? { ...n, description: event.target.value }
-                                      : n,
-                                  ),
-                                });
-                            }}
-                          />
-                        </label>
-                        {selected.exports.length > 0 && (
-                          <div className="export-symbols">
-                            <h3>Exported symbols</h3>
-                            {selected.exports.map((name) => (
-                              <code key={name}>{name}</code>
-                            ))}
-                          </div>
+                      )}
+                    {project.warnings.some((w) => w.includes('Analysis limit')) && (
+                      <div className="wm-coverage-notice">
+                        Partial analysis. {project.filesScanned} files scanned. Open a smaller
+                        folder or add a feature focus.
+                      </div>
+                    )}
+                    <div className="wm-map-toolbar">
+                      <div className="wm-toolbar-actions">
+                        <button
+                          aria-expanded={sidebarOpen}
+                          onClick={() => setSidebarOpen(!sidebarOpen)}
+                        >
+                          <Search size={15} />
+                          Browse components
+                        </button>
+                        {project.alternate && (
+                          <button aria-label="Switch map view" onClick={switchView}>
+                            <Network size={15} />
+                            {project.level === 'architecture' ? 'Source files' : 'Responsibilities'}
+                          </button>
                         )}
                         <button
-                          className="inspect-walk text-button"
-                          onClick={() => {
-                            setWalkStart(selected.id);
-                            setWalkStep(0);
-                          }}
+                          onClick={() => void fitView({ padding: 0.22, maxZoom: 1, duration: 250 })}
                         >
-                          <Play size={12} /> Walk from this component <ArrowRight size={12} />
+                          Fit map
                         </button>
-                      </>
-                    )}
-                    <div className="evidence-section-heading">
-                      <h3>Source evidence</h3>
-                      <span>{selectedEvidence.length}</span>
+                        {project.nodes.length > 2 &&
+                          project.edges.length < project.nodes.length / 2 && (
+                            <button
+                              aria-label="Arrange map"
+                              title="Arrange sparse components in a grid. Undo restores your layout."
+                              onClick={() => {
+                                edit(arrangeSparse(project));
+                                setTimeout(
+                                  () => void fitView({ padding: 0.22, maxZoom: 1, duration: 250 }),
+                                  100,
+                                );
+                              }}
+                            >
+                              <LayoutGrid size={15} />
+                              <span>Arrange</span>
+                            </button>
+                          )}
+                      </div>
+                      <div className="wm-toolbar-actions">
+                        <button
+                          aria-label="Undo last edit"
+                          disabled={!history.length}
+                          onClick={undo}
+                        >
+                          <Undo2 size={15} />
+                          <span>Undo</span>
+                        </button>
+                        <button aria-label="Component" onClick={() => setAdding(!adding)}>
+                          <Plus size={15} />
+                          <span>Component</span>
+                        </button>
+                        <button
+                          aria-label="Refresh"
+                          disabled={loading || !project.root}
+                          onClick={() => void openProject(project.mode === 'example', true)}
+                        >
+                          <RefreshCw size={15} />
+                          <span>Refresh</span>
+                        </button>
+                      </div>
                     </div>
-                    {selectedEvidence.length ? (
-                      selectedEvidence.map((e) => <EvidenceCard key={e.id} evidence={e} />)
-                    ) : (
-                      <p className="inspector-help">
-                        No source evidence is attached to this manual component or connection.
-                      </p>
+                    {adding && (
+                      <form className="wm-add-component-form" onSubmit={addComponent}>
+                        <input
+                          autoFocus
+                          aria-label="New component name"
+                          placeholder="Name your component"
+                          maxLength={120}
+                          value={addName}
+                          onChange={(e) => setAddName(e.target.value)}
+                        />
+                        <button className="wm-small-button" disabled={!addName.trim()}>
+                          Add component
+                        </button>
+                        <button
+                          className="wm-bare-icon"
+                          aria-label="Cancel adding component"
+                          type="button"
+                          onClick={() => setAdding(false)}
+                        >
+                          <X size={15} />
+                        </button>
+                      </form>
                     )}
-                    <button className="delete-selection" onClick={removeSelection}>
-                      <Trash2 size={13} /> Remove {selected ? 'component' : 'connection'}
-                      <span>Undo available</span>
-                    </button>
+
+                    <div className="wm-map-stage">
+                      {sidebarOpen && (
+                        <aside className="wm-explorer" aria-label="Repository explorer">
+                          <div className="wm-drawer-heading">
+                            <strong>Components</strong>
+                            <button
+                              aria-label="Close component browser"
+                              onClick={() => setSidebarOpen(false)}
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                          <label className="wm-component-search">
+                            <Search size={16} />
+                            <input
+                              aria-label="Search components"
+                              placeholder="Search name, file or symbol"
+                              value={query}
+                              onChange={(e) => setQuery(e.target.value)}
+                            />
+                            {query && (
+                              <button
+                                aria-label="Clear component search"
+                                onClick={() => setQuery('')}
+                              >
+                                <X size={14} />
+                              </button>
+                            )}
+                          </label>
+                          <div className="wm-component-list">
+                            {filteredNodes.map((node) => {
+                              const Icon = kindIcons[node.kind];
+                              return (
+                                <button
+                                  key={node.id}
+                                  className={selectedId === node.id ? 'wm-active' : ''}
+                                  onClick={() => selectNode(node.id)}
+                                >
+                                  <Icon size={16} />
+                                  <span>{node.label}</span>
+                                </button>
+                              );
+                            })}
+                            {!filteredNodes.length && <p>No components match “{query}”.</p>}
+                          </div>
+                        </aside>
+                      )}
+                      <div className="wm-canvas-area">
+                        {' '}
+                        <ReactFlow
+                          nodes={nodes}
+                          edges={edges}
+                          nodeTypes={nodeTypes}
+                          onNodesChange={onNodesChange}
+                          onNodeDragStop={(_, node) => {
+                            const old = project.nodes.find((n) => n.id === node.id);
+                            if (
+                              old &&
+                              (old.position.x !== node.position.x ||
+                                old.position.y !== node.position.y)
+                            )
+                              edit({
+                                ...project,
+                                nodes: project.nodes.map((n) =>
+                                  n.id === node.id ? { ...n, position: node.position } : n,
+                                ),
+                              });
+                          }}
+                          onConnect={connect}
+                          onNodeClick={(_, node) => {
+                            setFlowId(null);
+                            setSelectedId(node.id);
+                            setSelectedEdgeId(null);
+                            setInspectorOpen(true);
+                          }}
+                          onEdgeClick={(_, edge) => {
+                            setFlowId(null);
+                            setSelectedEdgeId(edge.id);
+                            setSelectedId(null);
+                            setInspectorOpen(true);
+                          }}
+                          onPaneClick={() => {
+                            setSelectedId(null);
+                            setSelectedEdgeId(null);
+                          }}
+                          onInit={(instance) => {
+                            if (window.innerWidth < 640 && project.nodes[0]) {
+                              const first = project.nodes[0].position;
+                              setTimeout(
+                                () =>
+                                  void instance.setCenter(first.x + 122, first.y + 65, {
+                                    zoom: 0.85,
+                                  }),
+                                180,
+                              );
+                            }
+                          }}
+                          fitView
+                          fitViewOptions={{ padding: 0.22, maxZoom: 1 }}
+                          minZoom={0.1}
+                          maxZoom={2}
+                          deleteKeyCode={null}
+                          colorMode="light"
+                          proOptions={{ hideAttribution: false }}
+                        >
+                          <Background
+                            variant={BackgroundVariant.Dots}
+                            color="#d9ddd4"
+                            gap={22}
+                            size={1}
+                          />
+                          <Controls showInteractive={false} />
+                          <MiniMap<ArchitectureFlowNode>
+                            nodeColor={(n) =>
+                              n.data.module?.origin === 'manual' ? '#c9bba3' : '#a6a69e'
+                            }
+                            maskColor="#f7f8f2bb"
+                            pannable
+                            zoomable
+                          />
+                        </ReactFlow>
+                        {flowId ||
+                        (walkStep === null &&
+                          project.level === 'architecture' &&
+                          !project.flows?.length) ? null : walkStep === null ? (
+                          <button
+                            className="wm-walk-launcher"
+                            onClick={() => {
+                              if (project.level === 'architecture' && project.flows?.length) {
+                                pickFlow(project.flows[0].id, 0);
+                                setView('Flows');
+                              } else {
+                                setWalkStart(selectedId ?? undefined);
+                                setWalkStep(0);
+                              }
+                            }}
+                            disabled={
+                              project.level === 'architecture'
+                                ? !project.flows?.length
+                                : !walk.length
+                            }
+                          >
+                            <Play size={13} />
+                            <span>
+                              {project.level === 'architecture'
+                                ? 'Explore guided flows'
+                                : 'Walk dependencies'}
+                            </span>
+                            <span>
+                              {project.level === 'architecture'
+                                ? project.flows?.length
+                                : walk.length}{' '}
+                              {project.level === 'architecture' ? 'flows' : 'steps'}
+                            </span>
+                          </button>
+                        ) : activeWalkEdge ? (
+                          <div className="wm-walk-player">
+                            <div className="wm-walk-player-top">
+                              <Play size={12} />
+                              <strong>Dependency walk</strong>
+                              <span>
+                                {walkStep + 1} / {walk.length}
+                              </span>
+                              <button
+                                className="wm-bare-icon"
+                                aria-label="Close dependency walk"
+                                onClick={() => {
+                                  setWalkStep(null);
+                                  void fitView({ padding: 0.2, duration: 300 });
+                                }}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                            <div className="wm-walk-player-main">
+                              <button
+                                className="wm-icon-button"
+                                aria-label="Previous walk step"
+                                disabled={walkStep === 0}
+                                onClick={() => setWalkStep(walkStep - 1)}
+                              >
+                                <ChevronLeft />
+                              </button>
+                              <div>
+                                <strong>
+                                  {project.nodes.find((n) => n.id === activeWalkEdge.source)?.label}{' '}
+                                  <ArrowRight size={12} />{' '}
+                                  {project.nodes.find((n) => n.id === activeWalkEdge.target)?.label}
+                                </strong>
+                                <p>
+                                  {activeWalkEdge.label} ·{' '}
+                                  {activeWalkEdge.origin === 'manual'
+                                    ? 'User-authored relationship'
+                                    : `Source: ${activeWalkEdge.evidence?.file}:${activeWalkEdge.evidence?.line}`}
+                                </p>
+                              </div>
+                              <button
+                                className="wm-icon-button"
+                                aria-label="Next walk step"
+                                disabled={walkStep === walk.length - 1}
+                                onClick={() => setWalkStep(walkStep + 1)}
+                              >
+                                <ChevronRight />
+                              </button>
+                            </div>
+                            <div className="wm-walk-progress">
+                              <span style={{ width: `${((walkStep + 1) / walk.length) * 100}%` }} />
+                            </div>
+                            <p className="wm-walk-disclaimer">
+                              Static dependency traversal. Does not establish runtime order.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="wm-walk-player">
+                            <p>No outgoing dependencies from this component.</p>
+                            <button className="wm-text-button" onClick={() => setWalkStep(null)}>
+                              Close walk
+                            </button>
+                          </div>
+                        )}
+                        <div className="wm-canvas-legend">
+                          <span>
+                            <i />
+                            Source-supported
+                          </span>
+                          <span>
+                            <i />
+                            Manual
+                          </span>
+                        </div>
+                      </div>
+                      {inspectorOpen && (selected || selectedEdge) && (
+                        <aside className="wm-inspector" aria-label="Source inspector">
+                          <div className="wm-drawer-heading">
+                            <strong>Source inspector</strong>
+                            <button
+                              aria-label="Close source inspector"
+                              onClick={() => {
+                                resetSelection();
+                                setInspectorOpen(false);
+                              }}
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                          <div className="wm-inspector-scroll">
+                            {' '}
+                            <div className="wm-inspector-detail-heading">
+                              <span className="wm-detail-kind">
+                                {selected?.kind || 'connection'}
+                              </span>
+                              <span
+                                className={`wm-origin-tag ${selected?.origin === 'manual' || selectedEdge?.origin === 'manual' ? 'manual' : ''}`}
+                              >
+                                {(selected?.origin || selectedEdge?.origin) === 'manual'
+                                  ? 'MANUAL'
+                                  : (selected?.origin || selectedEdge?.origin) === 'inferred'
+                                    ? 'INFERRED'
+                                    : 'OBSERVED'}
+                              </span>
+                            </div>
+                            <h2>
+                              {selected?.label ||
+                                `${project?.nodes.find((n) => n.id === selectedEdge?.source)?.label} → ${project?.nodes.find((n) => n.id === selectedEdge?.target)?.label}`}
+                            </h2>
+                            {selected?.file && <p className="wm-detail-path">{selected.file}</p>}
+                            <p className="wm-detail-description">
+                              {selected?.description ||
+                                (selectedEdge?.origin === 'manual'
+                                  ? 'A user-authored relationship. No source evidence is attached.'
+                                  : selectedEdge?.origin === 'inferred'
+                                    ? 'A proposed architectural relationship. Check this interpretation against the supporting source.'
+                                    : 'The supporting source for this connection is shown below.')}
+                            </p>
+                            {selected && (
+                              <>
+                                <div className="wm-detail-stats">
+                                  <span>{selected.lines} lines</span>
+                                  <span>{selected.members?.length ?? 1} files</span>
+                                  <span>
+                                    {project?.edges.filter((e) => e.source === selected.id).length}{' '}
+                                    dependencies
+                                  </span>
+                                </div>
+                                {selected.members && (
+                                  <details className="wm-member-files">
+                                    <summary>Source files ({selected.members.length})</summary>
+                                    {selected.members.map((file) => (
+                                      <code key={file}>{file}</code>
+                                    ))}
+                                  </details>
+                                )}
+                                <label className="wm-edit-field">
+                                  Display name
+                                  <input
+                                    key={`${project?.id}-${selected.id}`}
+                                    defaultValue={selected.label}
+                                    maxLength={120}
+                                    onBlur={(e) => {
+                                      if (
+                                        project &&
+                                        e.target.value.trim() &&
+                                        e.target.value.trim() !== selected.label
+                                      )
+                                        edit({
+                                          ...project,
+                                          nodes: project.nodes.map((n) =>
+                                            n.id === selected.id
+                                              ? { ...n, label: e.target.value.trim() }
+                                              : n,
+                                          ),
+                                        });
+                                    }}
+                                  />
+                                </label>
+                                <label className="wm-edit-field">
+                                  Responsibility
+                                  <textarea
+                                    key={`description-${selected.id}`}
+                                    defaultValue={selected.description}
+                                    rows={3}
+                                    maxLength={2000}
+                                    onBlur={(event) => {
+                                      if (project && event.target.value !== selected.description)
+                                        edit({
+                                          ...project,
+                                          nodes: project.nodes.map((n) =>
+                                            n.id === selected.id
+                                              ? { ...n, description: event.target.value }
+                                              : n,
+                                          ),
+                                        });
+                                    }}
+                                  />
+                                </label>
+                                {selected.exports.length > 0 && (
+                                  <div className="wm-export-symbols">
+                                    <h3>Exported symbols</h3>
+                                    {selected.exports.map((name) => (
+                                      <code key={name}>{name}</code>
+                                    ))}
+                                  </div>
+                                )}
+                                <button
+                                  className="inspect-walk wm-text-button"
+                                  onClick={() => {
+                                    setWalkStart(selected.id);
+                                    setWalkStep(0);
+                                  }}
+                                >
+                                  <Play size={12} /> Walk from this component{' '}
+                                  <ArrowRight size={12} />
+                                </button>
+                              </>
+                            )}
+                            <div className="wm-evidence-section-heading">
+                              <h3>Source evidence</h3>
+                              <span>{selectedEvidence.length}</span>
+                            </div>
+                            {selectedEvidence.length ? (
+                              selectedEvidence.map((e) => <EvidenceCard key={e.id} evidence={e} />)
+                            ) : (
+                              <p className="wm-inspector-help">
+                                No source evidence is attached to this manual component or
+                                connection.
+                              </p>
+                            )}
+                            <button className="wm-delete-selection" onClick={removeSelection}>
+                              <Trash2 size={13} /> Remove {selected ? 'component' : 'connection'}
+                              <span>Undo available</span>
+                            </button>
+                          </div>
+                        </aside>
+                      )}
+                    </div>
+                    <footer className="wm-map-statusbar">
+                      <span>
+                        {project.revision?.slice(0, 7) || 'Unversioned'} ·{' '}
+                        {dirty ? 'Unsaved edits' : 'Source snapshot'}
+                      </span>
+                      <span>Drag to pan · select a card for source</span>
+                      <span>Repository code is never executed</span>
+                    </footer>
                   </>
                 ) : (
-                  <>
-                    <div className="inspector-empty">
-                      <div className="inspector-empty-art">
-                        <MousePointer2 size={27} />
-                        <span />
-                        <span />
-                        <span />
-                      </div>
-                      <h2>Follow your curiosity.</h2>
-                      <p>
-                        Select a component or a connection to see what it does and where it comes
-                        from.
-                      </p>
-                      <div>
-                        <FileCode2 size={14} />
-                        <span>File paths & exported symbols</span>
-                      </div>
-                      <div>
-                        <GitBranch size={14} />
-                        <span>Connections backed by source</span>
-                      </div>
-                      <div>
-                        <Play size={14} />
-                        <span>Step-by-step dependency walks</span>
-                      </div>
-                    </div>
-                    {project && (
-                      <div className="analysis-summary">
-                        <h3>About this map</h3>
-                        <p>
-                          {project.mode === 'example'
-                            ? 'Illustrative project, analyzed from the included source files.'
-                            : project.summary ||
-                              'Observed imports between source files in your local repository.'}
-                        </p>
-                        <p>
-                          External packages and runtime calls are outside this scan. Component
-                          categories are filename-based hints.
-                        </p>
-                        {project.warnings.map((w, i) => (
-                          <p className="scan-warning" key={i}>
-                            {w}
-                          </p>
-                        ))}
-                      </div>
-                    )}
-                  </>
+                  <div className="wm-page-empty">
+                    <Network size={32} />
+                    <h2>Your system, in context.</h2>
+                    <p>
+                      Open a local JavaScript or TypeScript repository to begin, or explore a
+                      working example.
+                    </p>
+                    <button className="wm-button wm-primary" onClick={() => setShowOpen(true)}>
+                      Open repository
+                    </button>
+                    <button onClick={() => void openProject(true)}>
+                      Explore Image Studio <ArrowRight size={16} />
+                    </button>
+                  </div>
                 )}
-              </div>
-            ) : tab === 'settings' ? (
-              <ModelSettings status={status} onChange={setStatus} />
-            ) : (
-              <MapAgent
-                project={project}
-                available={Boolean(status?.ai)}
-                model={status?.model ?? null}
-                live={serverSession}
-                selectedId={selectedId ?? undefined}
-                onApply={applyProposal}
-              />
+              </main>
             )}
-          </aside>
+            {view === 'Flows' && (
+              <main className="wm-flows-page">
+                <aside className="wm-flow-library">
+                  <span className="wm-nav-caption">SOURCE-SUPPORTED FLOWS</span>
+                  {project?.flows?.length ? (
+                    project.flows.map((f) => (
+                      <button
+                        key={f.id}
+                        aria-current={flowId === f.id ? 'step' : undefined}
+                        onClick={() => pickFlow(f.id, 0)}
+                      >
+                        <Play size={16} />
+                        <span>
+                          <strong>{f.title}</strong>
+                          <small>{f.steps.length} source connections</small>
+                        </span>
+                        <ChevronRight size={16} />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="wm-empty-copy">
+                      <h2>No supported flows resolved.</h2>
+                      <p>
+                        This scan found no named source-call journeys. Framework routing and runtime
+                        behavior may be missing from static analysis.
+                      </p>
+                      <button onClick={() => navigate('Architecture')}>
+                        Explore the source map
+                      </button>
+                      <button onClick={() => navigate('Ask')}>Ask about a feature</button>
+                    </div>
+                  )}
+                </aside>
+                <section className="wm-flow-detail">
+                  {activeFlow ? (
+                    <>
+                      <FlowInspector
+                        flows={project?.flows ?? []}
+                        activeId={flowId}
+                        index={flowIndex}
+                        onSelect={pickFlow}
+                        onClose={() => {
+                          setFlowId(null);
+                          setSelectedEdgeId(null);
+                        }}
+                      />
+                      <div className="wm-flow-source">
+                        <h3>Source evidence</h3>
+                        {selectedEvidence.map((e) => (
+                          <EvidenceCard key={e.id} evidence={e} />
+                        ))}
+                        <button
+                          className="wm-small-button"
+                          onClick={() => {
+                            setView('Architecture');
+                            setInspectorOpen(true);
+                          }}
+                        >
+                          Show this connection on the map <ArrowRight size={15} />
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="wm-page-empty">
+                      <Play size={32} />
+                      <h2>Follow the connections.</h2>
+                      <p>
+                        Choose a flow to read its steps alongside the supporting source. Static
+                        source order does not establish runtime execution order.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              </main>
+            )}
+            {view === 'Changes' && (
+              <main className="wm-review-page">
+                {project?.root ? (
+                  <ChangesPanel
+                    embedded
+                    key={sessionReview?.report.current.analyzedAt ?? 'git-review'}
+                    initialReport={sessionReview?.report}
+                    sessionTitle={sessionReview?.title}
+                    sessionRequest={sessionReview?.request}
+                    onRefresh={
+                      sessionReview
+                        ? () => request<Comparison>('/api/opencode/review', {})
+                        : undefined
+                    }
+                    root={project.root}
+                    focus={project.focus ?? ''}
+                    onClose={() => {
+                      setReviewing(false);
+                      setView('Architecture');
+                    }}
+                  />
+                ) : (
+                  <div className="wm-page-empty">
+                    <GitCompareArrows size={32} />
+                    <h2>Review a real repository.</h2>
+                    <p>Open a local Git repository to compare a revision with your working tree.</p>
+                    <button className="wm-button wm-primary" onClick={() => setShowOpen(true)}>
+                      Open repository
+                    </button>
+                  </div>
+                )}
+              </main>
+            )}
+            {view === 'Sessions' && (
+              <main className="wm-task-page">
+                <div className="wm-task-context">
+                  <span className="wm-nav-caption">CODING AGENT</span>
+                  <h2>Keep up with your agent.</h2>
+                  <p>
+                    Connect your local OpenCode server, capture a baseline, then work in OpenCode.
+                    ArchMap reviews the source changes when the task finishes.
+                  </p>
+                  <div className="wm-process-strip">
+                    <span>01 Connect</span>
+                    <ArrowRight size={14} />
+                    <span>02 Track a task</span>
+                    <ArrowRight size={14} />
+                    <span>03 Review changes</span>
+                  </div>
+                  <p className="wm-subtle">
+                    Read-only session access. This connection does not send prompts to your agent.
+                  </p>
+                </div>
+                <OpenCodePanel
+                  reviewedTurns={reviewedTurns.current}
+                  key={project?.root ?? ''}
+                  root={project?.root ?? ''}
+                  focus={project?.focus ?? ''}
+                  onReview={(report, title, request) => {
+                    setSessionReview({ report, title, request });
+                    setReviewing(true);
+                    setView('Changes');
+                  }}
+                />
+              </main>
+            )}
+            {
+              <main className="wm-ask-page" hidden={view !== 'Ask'}>
+                <div className="wm-ask-context">
+                  <span className="wm-nav-caption">
+                    {status?.ai ? 'MODEL CONNECTED' : 'LOCAL SOURCE SEARCH'}
+                  </span>
+                  <span>
+                    {status?.ai
+                      ? status.model
+                      : 'Connect a model for AI explanations and feature proposals.'}
+                  </span>
+                  <button onClick={() => navigate('Connections')}>
+                    Connections <ArrowRight size={14} />
+                  </button>
+                </div>
+                <MapAgent
+                  key={project?.id ?? 'empty'}
+                  project={project}
+                  available={Boolean(status?.ai)}
+                  model={status?.model ?? null}
+                  live={serverSession}
+                  selectedId={selectedId ?? undefined}
+                  onApply={applyProposal}
+                />
+              </main>
+            }
+            {view === 'Connections' && (
+              <main className="wm-connections-page">
+                <section className="wm-connection-card">
+                  <div className="wm-connection-label">
+                    <Settings2 size={22} />
+                    <span>
+                      <strong>Understanding model</strong>
+                      <small>Explain source and propose feature maps</small>
+                    </span>
+                    <span className="wm-connection-state">
+                      {status?.ai ? 'Connected' : 'Optional'}
+                    </span>
+                  </div>
+                  <ModelSettings status={status} onChange={setStatus} />
+                </section>
+                <div className="wm-connection-secondary">
+                  <section className="wm-connection-card">
+                    <Cable size={24} />
+                    <h2>Coding agent</h2>
+                    <p>
+                      OpenCode has its own connection. Use Sessions to track a task and review the
+                      resulting source changes.
+                    </p>
+                    <button className="wm-small-button" onClick={() => navigate('Sessions')}>
+                      Open sessions <ArrowRight size={15} />
+                    </button>
+                  </section>
+                  <section className="wm-connection-card">
+                    <Network size={24} />
+                    <span className="wm-planned-label">PLANNED</span>
+                    <h2>Live services</h2>
+                    <p>
+                      Runtime service connections and traces are on the roadmap. Current maps
+                      describe static source relationships.
+                    </p>
+                    <button className="wm-small-button" onClick={() => navigate('Roadmap')}>
+                      View roadmap <ArrowRight size={15} />
+                    </button>
+                  </section>
+                </div>
+              </main>
+            )}
+            {view === 'Roadmap' && (
+              <main className="wm-roadmap-page">
+                <iframe title="ArchMap capability roadmap" src="/product-map.html" />
+              </main>
+            )}
+          </>
         )}
       </div>
       <input
@@ -1395,7 +1542,4 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       />
     </div>
   );
-}
-function ScanIcon() {
-  return <Search size={13} />;
 }

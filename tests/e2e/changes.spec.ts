@@ -56,8 +56,8 @@ for (const width of [1440, 390, 320]) {
     await page.getByLabel('New component name').fill('My sketch');
     await page.getByRole('button', { name: 'Add component', exact: true }).click();
     await expect(page.locator('.react-flow__node')).toHaveCount(4);
-    await page.getByRole('button', { name: 'Review changes', exact: true }).click();
-    const dialog = page.getByRole('dialog', { name: 'Review architecture changes' });
+    await page.getByRole('button', { name: 'Changes', exact: true }).click();
+    const dialog = page.getByRole('region', { name: 'Review architecture changes' });
     await expect(dialog).toBeVisible();
     await page.getByLabel('Baseline revision').fill('missing-ref');
     await page.getByRole('button', { name: 'Compare changes', exact: true }).click();
@@ -67,15 +67,15 @@ for (const width of [1440, 390, 320]) {
     await expect(dialog.getByRole('status')).toContainText('2 dependency changes');
     await expect(dialog.locator('.react-flow__node')).toHaveCount(3);
     await page.getByLabel('Filter changed files').fill('What changed in authentication?');
-    await expect(dialog.locator('.changes-file-list button')).toHaveCount(1);
+    await expect(dialog.locator('.wm-changes-file-list button')).toHaveCount(1);
     await dialog.getByText('Read change brief', { exact: true }).click();
     await expect(dialog.getByRole('region', { name: 'Source change brief' })).toContainText(
       'Exported names are unchanged',
     );
-    await dialog.locator('.changes-file-list button').click();
+    await dialog.locator('.wm-changes-file-list button').click();
     await expect(dialog.getByRole('heading', { name: 'src/main.ts' })).toBeVisible();
-    await expect(dialog.locator('.changes-source-side').first()).toContainText('authenticate');
-    await expect(dialog.locator('.changes-source-side').last()).toContainText('enqueue');
+    await expect(dialog.locator('.wm-changes-source-side').first()).toContainText('authenticate');
+    await expect(dialog.locator('.wm-changes-source-side').last()).toContainText('enqueue');
     expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: `test-results/change-review-${width}.png`, fullPage: true });
     await page.keyboard.press('Escape');

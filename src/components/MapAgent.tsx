@@ -74,9 +74,9 @@ export default function MapAgent({ project, available, model, live, selectedId, 
     }
   }
   return (
-    <div className="map-agent">
-      <div className="agent-scroll">
-        <div className="agent-mode-switch" role="group" aria-label="Agent task">
+    <div className="wm-map-agent">
+      <div className="wm-agent-scroll">
+        <div className="wm-agent-mode-switch" role="group" aria-label="Agent task">
           <button aria-pressed={mode === 'map'} onClick={() => setMode('map')}>
             <GitCompareArrows size={13} /> Map a feature
           </button>
@@ -85,7 +85,7 @@ export default function MapAgent({ project, available, model, live, selectedId, 
           </button>
         </div>
         {!proposal && !answer && !pending && (
-          <div className="agent-intro">
+          <div className="wm-agent-intro">
             <Sparkles size={23} />
             <h2>
               Start with a question.
@@ -97,7 +97,7 @@ export default function MapAgent({ project, available, model, live, selectedId, 
                 ? 'Ask the model to inspect a feature and propose a map. You review every change before applying it.'
                 : 'Focus a map on the source you care about. Add a model for deeper architectural interpretation.'}
             </p>
-            <div className="agent-suggestions">
+            <div className="wm-agent-suggestions">
               {[
                 'Map authentication and permissions',
                 'Show image generation and storage',
@@ -111,9 +111,9 @@ export default function MapAgent({ project, available, model, live, selectedId, 
             </div>
           </div>
         )}
-        {(proposal || answer || pending) && <p className="asked-question">{asked}</p>}
+        {(proposal || answer || pending) && <p className="wm-asked-question">{asked}</p>}
         {pending && (
-          <div className="agent-thinking" role="status">
+          <div className="wm-agent-thinking" role="status">
             <LoaderCircle size={16} className="spinning" />
             <div>
               <strong>
@@ -126,14 +126,14 @@ export default function MapAgent({ project, available, model, live, selectedId, 
           </div>
         )}
         {proposal && (
-          <section className="proposal-review" aria-label="Map proposal">
-            <div className="proposal-badge">
+          <section className="wm-proposal-review" aria-label="Map proposal">
+            <div className="wm-proposal-badge">
               <GitCompareArrows size={13} />
               {proposal.engine === 'model' ? 'MODEL PROPOSAL' : 'SOURCE-BASED PROPOSAL'}
             </div>
             <h3>{proposal.title}</h3>
             <p>{proposal.summary}</p>
-            <div className="proposal-counts">
+            <div className="wm-proposal-counts">
               <span>
                 <strong>{proposal.graph.nodes.length}</strong>components
               </span>
@@ -146,7 +146,7 @@ export default function MapAgent({ project, available, model, live, selectedId, 
             </div>
             <h4>Proposed responsibilities</h4>
             {proposal.graph.nodes.map((node) => (
-              <details className="proposal-component" key={node.id}>
+              <details className="wm-proposal-component" key={node.id}>
                 <summary>
                   <FileCode2 size={12} />
                   {node.label}
@@ -171,17 +171,17 @@ export default function MapAgent({ project, available, model, live, selectedId, 
               </details>
             ))}
             {stale && (
-              <p className="error-text">
+              <p className="wm-error-text">
                 The map changed while this proposal was open. Generate it again before applying.
               </p>
             )}
-            <p className="proposal-warning">
+            <p className="wm-proposal-warning">
               Applying replaces the current view. Your original source graph stays available. Undo
               restores this map.
             </p>
-            <div className="proposal-actions">
+            <div className="wm-proposal-actions">
               <button
-                className="button primary"
+                className="wm-button wm-primary"
                 disabled={stale}
                 onClick={() => {
                   onApply(proposal);
@@ -191,7 +191,7 @@ export default function MapAgent({ project, available, model, live, selectedId, 
                 <Check size={14} />
                 Apply proposed map
               </button>
-              <button className="small-button" onClick={() => setProposal(null)}>
+              <button className="wm-small-button" onClick={() => setProposal(null)}>
                 <X size={13} />
                 Discard
               </button>
@@ -200,27 +200,27 @@ export default function MapAgent({ project, available, model, live, selectedId, 
         )}
         {answer && (
           <>
-            <span className="answer-mode">
+            <span className="wm-answer-mode">
               {answer.mode === 'ai'
                 ? 'MODEL EXPLANATION · CHECK THE SOURCE'
                 : 'LOCAL EVIDENCE SEARCH'}
             </span>
-            <p className="answer-text">{answer.text}</p>
+            <p className="wm-answer-text">{answer.text}</p>
             {answer.evidence.map((e, i) => (
               <EvidenceCard key={e.id} evidence={e} index={i} />
             ))}
           </>
         )}
         {error && (
-          <p className="error-text" role="alert">
+          <p className="wm-error-text" role="alert">
             {error}
           </p>
         )}
         {!live && project && (
-          <p className="session-note">Refresh this saved map to start an inspection session.</p>
+          <p className="wm-session-note">Refresh this saved map to start an inspection session.</p>
         )}
       </div>
-      <form className="agent-composer" onSubmit={submit}>
+      <form className="wm-agent-composer" onSubmit={submit}>
         <label htmlFor="agent-question">
           {mode === 'map' ? 'What would you like to map?' : 'What would you like to understand?'}
         </label>
@@ -240,15 +240,16 @@ export default function MapAgent({ project, available, model, live, selectedId, 
             disabled={!project || !live}
           />
           <button
-            className="send-button"
+            className="wm-send-button"
             aria-label={mode === 'map' ? 'Propose map' : 'Ask question'}
             disabled={!prompt.trim() || pending || !live || !project}
           >
             <Send size={15} />
+            <span>{mode === 'map' ? 'Propose map' : 'Ask question'}</span>
           </button>
         </div>
         <p>
-          <span className="live-dot" />
+          <span className="wm-live-dot" />
           {available
             ? `${model} · relevant snippets sent when you submit`
             : 'Source-based analysis · no model connected'}

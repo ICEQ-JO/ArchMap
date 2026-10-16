@@ -1,6 +1,6 @@
 # Review architecture changes
 
-Open a local JS/TS repository in the workspace and select **Changes** in the toolbar. Enter a local Git commit, branch, or tag as the baseline; `HEAD` is the default. Select **Compare changes** to read the baseline and rescan source on disk.
+Open a local JS/TS repository in the workspace and select **Changes** in the workspace navigation. Enter a local Git commit, branch, or tag as the baseline; `HEAD` is the default. Select **Compare changes** to read the baseline and rescan source on disk.
 
 The comparison includes staged, unstaged, and untracked source files permitted by the reader's ignore rules. It does not change the checkout, index, editable map, or saved map. Git objects are read directly: no checkout, external diff/text-conversion commands, model request, project execution, or dependency installation is involved. External Git filesystem-monitor hooks are disabled during source discovery.
 

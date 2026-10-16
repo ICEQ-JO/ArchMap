@@ -13,7 +13,7 @@ ArchMap can connect to an existing local OpenCode server, capture source before 
    Alternatively, start `opencode serve --port 4096 --hostname 127.0.0.1` and attach your terminal client to that server. Create the session in OpenCode.
 
 2. Run ArchMap with a configured root containing that repository, and open its map.
-3. Select **OpenCode sessions**, the cable icon beside the inspector's model-settings control.
+3. Select **Sessions** in the workspace navigation.
 4. Enter `http://127.0.0.1:4096`. If OpenCode uses HTTP Basic authentication, expand the authentication section and enter its username and password. OpenCode's default username is `opencode`.
 5. Connect, select an idle session, then choose **Track next task**. ArchMap captures the current working source, including uncommitted changes.
 6. Submit the task in OpenCode. Keep ArchMap's session panel open. After activity returns to idle, a read-only change review opens automatically. You can also choose **Review changes since baseline** while the session is idle.
@@ -36,7 +36,7 @@ The source reader's JS/TS support, exclusions, configured-root and symlink bound
 
 - Only loopback HTTP origins are accepted. `localhost` is pinned to `127.0.0.1`; redirects and embedded URL credentials are rejected. Remote/cloud OpenCode servers and TLS termination are outside this first adapter.
 - The OpenCode directory and session directory must match the selected map's canonical root. Sessions from other folders are excluded. ArchMap checks the existing server project without a directory override; it does not ask OpenCode to initialize a different project. Start/connect the intended OpenCode project instance if folders differ.
-- Polling occurs every 2.5 seconds while the session panel is mounted and the page is visible. Switching inspector tabs, closing the page, or hiding it pauses observation. Reopening resumes it. This is status/message polling, not an SSE event history or a durable background watcher.
+- Polling occurs every 2.5 seconds while the session panel is mounted and the page is visible. Leaving Sessions, closing the page, or hiding it pauses observation. Reopening resumes it. This is status/message polling, not an SSE event history or a durable background watcher.
 - Completion is inferred from observed busy/retry → idle status, or a completed assistant response associated with a new user message. Fast tasks can be recognized through message completion even if their busy status was missed. Unsupported metadata/status shapes produce errors rather than a fabricated completion signal.
 - The selected session's last 20 messages provide request/completion context. Text is treated as data, not instructions. Responses are limited to 1 MB, session lists to 500 records, and requests time out after eight seconds. Large or incompatible histories can require a newer session or manual Git review.
 - One connection and one baseline are held per local ArchMap server. They expire after one hour and are cleared on restart/disconnect. Credentials never enter map exports, browser storage, or project files. Connecting another repository replaces the prior baseline.

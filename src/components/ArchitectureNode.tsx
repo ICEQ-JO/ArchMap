@@ -18,10 +18,10 @@ export default function ArchitectureNode({ data, selected }: NodeProps<Architect
   const Icon = kindIcons[module.kind];
   return (
     <div
-      className={`architecture-node kind-${module.kind} ${selected ? 'is-selected' : ''} ${focused ? 'is-traced' : ''} ${dimmed ? 'is-dimmed' : ''}`}
+      className={`wm-architecture-node kind-${module.kind} ${selected ? 'is-selected' : ''} ${focused ? 'is-traced' : ''} ${dimmed ? 'is-dimmed' : ''}`}
     >
       <Handle type="target" position={Position.Left} />
-      <div className="node-meta">
+      <div className="wm-node-meta">
         <span>
           <Icon size={12} />
           {module.kind}

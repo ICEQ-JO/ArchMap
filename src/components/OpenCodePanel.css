@@ -1,120 +1,120 @@
-.workspace .opencode-panel {
+.wm-workspace .wm-opencode-panel {
   padding: 24px 20px;
   overflow: auto;
   flex: 1;
   min-height: 0;
 }
-.opencode-panel > svg {
+.wm-opencode-panel > svg {
   color: var(--accent);
   margin-bottom: 20px;
 }
-.opencode-panel h2 {
+.wm-opencode-panel h2 {
   font-size: 21px;
   line-height: 1.4;
   letter-spacing: -0.4px;
 }
-.opencode-panel p {
+.wm-opencode-panel p {
   font-size: 12px;
   line-height: 1.8;
   color: var(--muted);
   margin: 14px 0;
 }
-.opencode-panel form {
+.wm-opencode-panel form {
   margin-top: 24px;
 }
-.opencode-panel label {
+.wm-opencode-panel label {
   display: block;
   font-size: 12px;
   color: var(--text);
   margin-top: 18px;
 }
-.opencode-panel input,
-.opencode-panel select {
+.wm-opencode-panel input,
+.wm-opencode-panel select {
   display: block;
   width: 100%;
   min-width: 0;
   padding: 11px 10px;
   margin-top: 8px;
-  border: 1px solid #626256;
+  border: 1px solid var(--line);
   border-radius: 4px;
-  background: #171716;
+  background: var(--surface);
   color: var(--text);
   font: 12px var(--mono);
 }
-.opencode-panel .button {
+.wm-opencode-panel .wm-button {
   width: 100%;
   margin-top: 20px;
   font-size: 12px;
 }
-.opencode-panel details {
+.wm-opencode-panel details {
   font-size: 11px;
   margin-top: 18px;
 }
-.opencode-panel summary {
+.wm-opencode-panel summary {
   cursor: pointer;
-  color: #d1c5ac;
+  color: var(--muted);
 }
-.opencode-panel .text-button {
+.wm-opencode-panel .wm-text-button {
   display: flex;
   align-items: center;
   gap: 7px;
   font-size: 11px;
   margin-top: 12px;
 }
-.agent-link-status {
-  color: #d3c7ae;
+.wm-agent-link-status {
+  color: var(--muted);
   font-size: 11px;
   border-block: 1px solid var(--line);
   padding: 14px 0;
   margin-top: 22px;
   overflow-wrap: anywhere;
 }
-.agent-link-status .live-dot {
+.wm-agent-link-status .wm-live-dot {
   display: inline-block;
   margin-right: 6px;
 }
-.tracked-task {
+.wm-tracked-task {
   padding: 16px;
   margin: 22px 0;
-  border: 1px solid #71654d;
+  border: 1px solid var(--line);
   border-radius: 6px;
-  background: #29271f;
+  background: var(--bg);
 }
-.tracked-task h3 {
+.wm-tracked-task h3 {
   font-size: 14px;
   margin-top: 12px;
   overflow-wrap: anywhere;
 }
-.tracked-task blockquote {
+.wm-tracked-task blockquote {
   font-size: 12px;
   line-height: 1.8;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  border-left: 2px solid #a68d60;
+  border-left: 2px solid var(--muted);
   padding: 0 0 0 12px;
   margin: 18px 0;
 }
-.tracked-task blockquote span {
+.wm-tracked-task blockquote span {
   display: block;
   font-size: 10px;
   color: var(--muted);
   margin-bottom: 8px;
 }
-.opencode-panel .opencode-disclosure {
+.wm-opencode-panel .wm-opencode-disclosure {
   font-size: 11px;
   border-top: 1px solid var(--line);
   padding-top: 18px;
   margin-top: 24px;
 }
-.opencode-disclosure svg {
+.wm-opencode-disclosure svg {
   float: left;
   margin: 4px 7px 0 0;
 }
 @media (max-width: 760px) {
-  .workspace .opencode-panel {
+  .wm-workspace .wm-opencode-panel {
     padding: 16px;
   }
-  .opencode-panel h2 {
+  .wm-opencode-panel h2 {
     font-size: 18px;
   }
 }

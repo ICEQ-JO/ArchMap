@@ -13,10 +13,10 @@ colors:
   accent-hover: '#cbd7f5'
   manual: '#c4b4f1'
   error: '#f8b7a8'
-  workspace-bg: '#181818'
-  workspace-surface: '#202020'
-  workspace-line: '#3a3a3a'
-  workspace-focus: '#e5c796'
+  workspace-bg: '#f7f7f5'
+  workspace-surface: '#ffffff'
+  workspace-line: '#deded8'
+  workspace-focus: '#5e5e55'
 typography:
   display:
     fontFamily: 'Jersey 10, sans-serif'
@@ -77,12 +77,12 @@ components:
   button-text:
     padding: '10px 0'
   architecture-node:
-    backgroundColor: '#232323'
+    backgroundColor: '#ffffff'
     rounded: '{rounded.node}'
     padding: '13px 15px'
-    width: '226px'
+    width: '245px'
   evidence-card:
-    backgroundColor: '#161616'
+    backgroundColor: '#fbfcf8'
     rounded: '{rounded.control}'
   tag:
     backgroundColor: '#2e2e2e'
@@ -129,7 +129,7 @@ Graphite (`bg`), surface (`surface`), and raised surface (`surface-raised`) orga
 
 Display and section headlines use the frontmatter roles. The hero headline keeps one line per sentence at desktop widths and steps to `clamp(44px, 10vw, 62px)` below 820px, then 44px below 520px. Section-specific headline sizes remain intentionally varied.
 
-Functional headings use Geist at medium weight. Landing introduction copy uses the body role; workspace explanations use (12px), falling to (11px) on mobile. Evidence uses the evidence role at all widths, with (10px) filenames, footers, and line numbers. Compact metadata uses smaller mono labels; do not apply those sizes to source content.
+Functional headings use Geist at medium weight. Landing introduction copy uses the body role; workspace explanations use 13–14px, with 11–12px reserved for secondary labels. Evidence uses the evidence role at all widths, with (10px) filenames, footers, and line numbers. Compact metadata uses smaller mono labels; do not apply those sizes to source content.
 
 **The Reading Surface Rule.** Use pixel lettering for display emphasis, Geist for interaction and prose, and Geist Mono for source and technical identifiers. Keep evidence at (12px).
 
@@ -137,9 +137,13 @@ Functional headings use Geist at medium weight. Landing introduction copy uses t
 
 The landing container is capped at (1280px), initially with (56px) side gutters. Gutters become (32px) below (1100px) and (20px) below (520px). The desktop hero is a two-card band: headline and module skyline left, introduction and actions right; it stacks below (900px). Feature rows alternate their art side and stack below (900px); the capability grid ends at one column below (520px). Sections use generous vertical intervals while technical readouts stay compact.
 
-The workspace occupies (100svh), with a fixed header, explorer, flexible map, and inspector. At the base desktop size, explorer and inspector widths are (224px) and (310px). They expand to (250px)/(350px) above (1500px), contract at (1200px), and contract again at (900px). Independent panel scrolling keeps controls in place.
+The workspace uses a neutral paper palette independent of the landing: `#f7f7f5` canvas, white panels, `#292927` text, `#676761` secondary text, `#deded8` borders, and charcoal primary actions. Geist carries 13–14px interactions and prose; source remains 12px Geist Mono. No blue or green surface tint.
 
-Below (760px), the explorer becomes a (245px) overlay opened by the menu control. The map and inspector stack vertically; the map has a (230px) minimum height and the inspector a (190px) minimum. Toolbar text yields to icons and the minimap is removed at narrower desktop widths. The mobile question panel places its composer alongside its content. These are actual responsive behaviors, not a universal spacing scale.
+A 216px left navigation exposes Architecture, Flows, Changes, Sessions, Ask, Connections, and Roadmap. The project header preserves Open, Save, and Export across destinations. Architecture gives the graph the full remaining area. Browse components opens a drawer; selecting a node or edge opens a dismissible source inspector. Sparse fresh scans use a grid and a coverage notice, without fabricating edges. Saved and manually positioned maps keep their layout.
+
+Flows is a dedicated step reader with source evidence and a link back to the highlighted connection. Changes embeds the existing read-only review beneath the shared navigation. Sessions explains the connect → track → review lifecycle. Connections explicitly separates model APIs from coding agents and labels live services as planned. Ask gives proposals and explanations a full reading surface. Roadmap embeds the checked standalone product map.
+
+Below 640px the navigation becomes a seven-destination bottom bar. Source inspection overlays the canvas. The graph initially focuses a readable first component; Fit map still shows the whole graph. Flow lists stack above the source reader; settings and sessions use one column. Each task scrolls independently. The composer remains available below its scrollable answer region. New component styles are prefixed `wm-` to isolate them from legacy landing styles.
 
 ## Elevation & Depth
 
@@ -159,11 +163,11 @@ Primary buttons use the accent colour with dark ink, semibold (13px) Geist, and 
 
 ### Inputs / Fields
 
-Fields use dark inset surfaces and fine borders. Search, repository-path, and question containers change their border to the accent on focus-within. Repository paths use mono type; the composer uses readable Geist. Label-edit fields use the shared focus outline. Preserve descriptive labels alongside placeholders.
+Landing fields use dark inset surfaces; workspace fields use white surfaces with visible neutral borders. Search, repository-path, and question containers change their border to the accent on focus-within. Repository paths use mono type; the composer uses readable Geist. Label-edit fields use the shared focus outline. Preserve descriptive labels alongside placeholders.
 
 ### Navigation
 
-Header links start muted and turn accent on hover. Inspector tabs use an accent underline and text for the active section. Explorer rows use a subtle tinted fill and accent text when selected, and a darker hover fill. Compact breakpoints hide supplementary labels while retaining interactive icons and accessible names.
+Header links start muted and turn accent on hover. Workspace destinations use named navigation with a filled neutral active state. Explorer rows use a subtle tinted fill and accent text when selected, and a darker hover fill. Compact breakpoints hide supplementary labels while retaining interactive icons and accessible names.
 
 ### Chips
 
@@ -171,9 +175,9 @@ Small rectilinear tags use mono labels, a neutral fill, and a fine border. Prove
 
 ### Cards / Containers
 
-Architecture nodes have a fine border, compact padding, small corners, and semantic tonal variations for entry, data, and UI kinds. Hover brightens the border; selection adds an accent border and outline; traced nodes gain a raised surface; unrelated nodes dim to (0.25) opacity.
+Workspace architecture nodes share a white reading surface, a fine border, 18px padding, and 10px corners. Kind icons and provenance labels carry meaning without colored fills. Hover brightens the border; selection adds an accent border and outline; traced nodes gain a raised surface; unrelated nodes dim to (0.25) opacity.
 
-Evidence cards group a filename header, real selectable source with line numbers, and a range/hash footer. Their source area scrolls, with a (220px) maximum height. Keep source formatting intact. The copy control reports success or failure.
+Evidence cards group a filename header, real selectable source with line numbers, and a range/hash footer. Their source area scrolls horizontally without changing code formatting. Keep source formatting intact. The copy control reports success or failure.
 
 ### Pixel Figures
 
@@ -189,8 +193,8 @@ Evidence cards group a filename header, real selectable source with line numbers
 
 - **Do** preserve the pixel display, functional sans, and source mono roles.
 - **Do** keep source evidence readable at (12px), selectable, and connected to its filename and range.
-- **Do** use `accent` blue for action, focus, selection, and trace emphasis with clear state labels.
-- **Do** retain the stacked mobile workspace and accessible explorer toggle.
+- **Do** reserve the landing accent for landing; use charcoal controls and neutral focus in the workspace.
+- **Do** retain named mobile destinations, readable source inspection, and a persistent question composer.
 - **Do** honor reduced motion across trace animation and interface transitions.
 
 ### Don't:
@@ -202,6 +206,6 @@ Evidence cards group a filename header, real selectable source with line numbers
 
 ## Workspace direction — October 2026
 
-The workspace uses a reading-first charcoal palette independently of landing-page styling. `src/components/Workbench.css` owns this interface; keep landing work in its own files. Workspace surfaces are neutral (#181818, #202020), text is warm near-white (#f0efe9), secondary text is #b7b7ad, and restrained amber (#e5c796) marks focus, selection, and the change-review action. Avoid blue-tinted source surfaces or colored component fills. Source, inferred, and manual labels remain explicit; change status also uses words and line styles.
+`src/components/Workbench.css` owns the neutral paper workspace. Landing styles and figures remain in their own files. Use the named task navigation and contextual inspector described above; avoid a permanent empty panel or icon-only settings destinations. Static connections, model interpretations, and manual edits must remain distinguishable. Source and snapshot hashes stay inspectable.
 
-Use 12px source text with generous line height, readable functional labels, clearly bordered fields, and visible keyboard focus. Component kinds share neutral cards and retain their icons. Selected nodes use a warm border and subtle fill. On mobile, the question composer spans the inspector width beneath scrollable answers. Preserve the responsive explorer and separate read-only change-review dialog.
+Change review is embedded in the shared workspace, with its own source/evidence scrolling. Sessions pauses observation when left; returning resumes the read-only polling lifecycle. Keep question drafts when moving between task pages, and reset them when a different project is opened. The capability map and interface must label unimplemented features as planned.

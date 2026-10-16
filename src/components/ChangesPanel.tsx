@@ -10,6 +10,7 @@ import './ChangesPanel.css';
 
 const nodeTypes = { architecture: ArchitectureNode };
 type ReviewProps = {
+  embedded?: boolean;
   root: string;
   focus: string;
   onClose: () => void;
@@ -26,6 +27,7 @@ export default function ChangesPanel(props: ReviewProps) {
   );
 }
 function ChangesReview({
+  embedded = false,
   root,
   focus,
   onClose,
@@ -36,8 +38,8 @@ function ChangesReview({
 }: ReviewProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+    if (!embedded) dialog.current?.showModal();
+  }, [embedded]);
   const [ref, setRef] = useState('HEAD');
   const [report, setReport] = useState<Comparison | null>(initialReport ?? null);
   const [busy, setBusy] = useState(false);
@@ -63,7 +65,9 @@ function ChangesReview({
             type: 'architecture',
             position: module.position,
             selected: module.id === selectedArea,
-            className: area ? `review-node review-${area.status}` : 'review-node review-unchanged',
+            className: area
+              ? `review-node wm-review-${area.status}`
+              : 'review-node review-unchanged',
             data: {
               module: {
                 ...module,
@@ -88,14 +92,14 @@ function ChangesReview({
         .map((edge) => {
           const status = report?.relationships.find((r) => r.id === edge.id)?.status;
           const color =
-            status === 'added' ? '#9acbba' : status === 'removed' ? '#e0a8a1' : '#999990';
+            status === 'added' ? '#4a7757' : status === 'removed' ? '#a54735' : '#77776e';
           return {
             ...edge,
             label: status ? `${status}: ${edge.label}` : edge.label,
             markerEnd: { type: MarkerType.ArrowClosed, color },
             style: { stroke: color, strokeDasharray: status === 'removed' ? '6 4' : undefined },
             labelStyle: { fill: color, fontSize: 11 },
-            labelBgStyle: { fill: '#20201e' },
+            labelBgStyle: { fill: '#ffffff' },
           };
         }),
     [report, scoped, focused],
@@ -118,14 +122,9 @@ function ChangesReview({
   }
   const counts = (status: FileChange['status']) =>
     report?.files.filter((f) => f.status === status).length ?? 0;
-  return (
-    <dialog
-      ref={dialog}
-      className="changes-review"
-      aria-label="Review architecture changes"
-      onCancel={onClose}
-    >
-      <header className="changes-header">
+  const content = (
+    <>
+      <header className="wm-changes-header">
         <div>
           <GitCompareArrows size={18} />
           <strong>Review changes</strong>
@@ -133,7 +132,7 @@ function ChangesReview({
         </div>
         <button
           autoFocus
-          className="small-button"
+          className="wm-small-button"
           onClick={onClose}
           aria-label="Close change review"
         >
@@ -141,7 +140,7 @@ function ChangesReview({
         </button>
       </header>
       {sessionTitle ? (
-        <div className="session-review-context">
+        <div className="wm-session-review-context">
           <strong>{sessionTitle}</strong>
           <p>
             Working-tree baseline captured{' '}
@@ -156,13 +155,13 @@ function ChangesReview({
               <p>{sessionRequest}</p>
             </details>
           )}
-          <button className="small-button" disabled={busy} onClick={() => void compare()}>
+          <button className="wm-small-button" disabled={busy} onClick={() => void compare()}>
             {busy ? 'Refreshing…' : 'Refresh session review'}
           </button>
         </div>
       ) : (
         <form
-          className="changes-baseline"
+          className="wm-changes-baseline"
           onSubmit={(e) => {
             e.preventDefault();
             void compare();
@@ -180,7 +179,7 @@ function ChangesReview({
             />
           </label>
           <span>→ working tree</span>
-          <button className="small-button" disabled={busy}>
+          <button className="wm-small-button" disabled={busy}>
             {busy ? (
               <LoaderCircle size={14} className="spinning" />
             ) : (
@@ -195,13 +194,13 @@ function ChangesReview({
         </form>
       )}
       {error && (
-        <p role="alert" className="changes-error">
+        <p role="alert" className="wm-changes-error">
           {error}
         </p>
       )}
       {report ? (
         <>
-          <div className="changes-summary" role="status">
+          <div className="wm-changes-summary" role="status">
             <span>
               <b>{counts('added')}</b> added
             </span>
@@ -219,8 +218,8 @@ function ChangesReview({
               → scanned {new Date(report.current.analyzedAt).toLocaleTimeString()}
             </small>
           </div>
-          <div className="changes-content">
-            <div className="changes-canvas">
+          <div className="wm-changes-content">
+            <div className="wm-changes-canvas">
               <ReactFlow
                 key={report.current.analyzedAt + filter + (selectedArea ?? '')}
                 nodes={nodes}
@@ -236,30 +235,30 @@ function ChangesReview({
                 fitView
                 fitViewOptions={{ padding: 0.25, maxZoom: 0.9 }}
                 minZoom={0.08}
-                colorMode="dark"
+                colorMode="light"
               >
-                <Background color="#383834" gap={24} />
+                <Background color="#deded8" gap={24} />
                 <Controls showInteractive={false} />
               </ReactFlow>
-              <div className="changes-legend">
+              <div className="wm-changes-legend">
                 <span>+ Added</span>
                 <span>± Modified</span>
                 <span>− Removed</span>
                 <span>Unmarked: context</span>
               </div>
             </div>
-            <aside className="changes-details" aria-label="Change evidence">
-              <div className="changes-detail-scroll">
+            <aside className="wm-changes-details" aria-label="Change evidence">
+              <div className="wm-changes-detail-scroll">
                 {selected ? (
                   <>
-                    <button className="changes-back" onClick={() => setSelectedFile(null)}>
+                    <button className="wm-changes-back" onClick={() => setSelectedFile(null)}>
                       <ArrowLeft size={13} /> All changes
                     </button>
-                    <span className={`change-status status-${selected.status}`}>
+                    <span className={`wm-change-status wm-status-${selected.status}`}>
                       {selected.status}
                     </span>
                     <h2>{selected.file}</h2>
-                    <div className="changes-export-diff">
+                    <div className="wm-changes-export-diff">
                       <span>Exports before: {selected.before?.exports.join(', ') || 'none'}</span>
                       <span>Exports after: {selected.after?.exports.join(', ') || 'none'}</span>
                     </div>
@@ -268,7 +267,7 @@ function ChangesReview({
                       excerpts are not a complete patch.
                     </p>
                     {(['before', 'after'] as const).map((side) => (
-                      <section key={side} className="changes-source-side">
+                      <section key={side} className="wm-changes-source-side">
                         <h3>
                           {side === 'before'
                             ? `Before · ${report.baseline.kind === 'working-tree' ? 'tracking start' : report.baseline.revision.slice(0, 7)}`
@@ -306,11 +305,11 @@ function ChangesReview({
                       before-and-after source.
                     </p>
                     {selectedArea && (
-                      <button className="changes-back" onClick={() => setSelectedArea(null)}>
+                      <button className="wm-changes-back" onClick={() => setSelectedArea(null)}>
                         Clear area filter
                       </button>
                     )}
-                    <label className="changes-filter">
+                    <label className="wm-changes-filter">
                       Focus this review
                       <input
                         aria-label="Filter changed files"
@@ -319,8 +318,8 @@ function ChangesReview({
                         placeholder="What changed in authentication?"
                       />
                     </label>
-                    <section className="changes-brief" aria-label="Source change brief">
-                      <span className="change-status">LOCAL SOURCE SUMMARY</span>
+                    <section className="wm-changes-brief" aria-label="Source change brief">
+                      <span className="wm-change-status">LOCAL SOURCE SUMMARY</span>
                       <h3>
                         {files.length} matching {files.length === 1 ? 'file' : 'files'} ·{' '}
                         {focused?.dependencies.length ?? 0} dependency changes
@@ -332,7 +331,7 @@ function ChangesReview({
                       <details>
                         <summary>Read change brief</summary>
                         {focused?.brief.map((item, index) => (
-                          <div key={item.file} className="brief-item">
+                          <div key={item.file} className="wm-brief-item">
                             <button
                               onClick={() => setSelectedFile(item.file)}
                               aria-label={`Inspect change evidence for ${item.file}`}
@@ -361,10 +360,10 @@ function ChangesReview({
                         </p>
                       </details>
                     </section>
-                    <div className="changes-file-list">
+                    <div className="wm-changes-file-list">
                       {files.map((file) => (
                         <button key={file.file} onClick={() => setSelectedFile(file.file)}>
-                          <span className={`change-status status-${file.status}`}>
+                          <span className={`wm-change-status wm-status-${file.status}`}>
                             {file.status}
                           </span>
                           <span>{file.file}</span>
@@ -381,12 +380,14 @@ function ChangesReview({
                       </p>
                     )}
                     {report.dependencies.length > 0 && (
-                      <section className="changes-dependencies">
+                      <section className="wm-changes-dependencies">
                         <h3>Static dependencies</h3>
                         {(focused?.dependencies ?? []).map((d, i) => (
                           <details key={i}>
                             <summary>
-                              <span className={`change-status status-${d.status}`}>{d.status}</span>
+                              <span className={`wm-change-status wm-status-${d.status}`}>
+                                {d.status}
+                              </span>
                               {d.source} → {d.target}
                             </summary>
                             <p>
@@ -400,7 +401,7 @@ function ChangesReview({
                     )}
                   </>
                 )}
-                <details className="changes-coverage" open={report.partial}>
+                <details className="wm-changes-coverage" open={report.partial}>
                   <summary>
                     {report.partial
                       ? 'Incomplete coverage — read before reviewing'
@@ -419,7 +420,7 @@ function ChangesReview({
           </div>
         </>
       ) : (
-        <div className="changes-start">
+        <div className="wm-changes-start">
           <GitCompareArrows size={30} />
           <h2>Understand the change.</h2>
           <p>
@@ -432,6 +433,20 @@ function ChangesReview({
           </p>
         </div>
       )}
+    </>
+  );
+  return embedded ? (
+    <section className="wm-changes-review wm-is-embedded" aria-label="Review architecture changes">
+      {content}
+    </section>
+  ) : (
+    <dialog
+      ref={dialog}
+      className="wm-changes-review"
+      aria-label="Review architecture changes"
+      onCancel={onClose}
+    >
+      {content}
     </dialog>
   );
 }

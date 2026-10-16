@@ -50,21 +50,27 @@ Use **Feature focus** to prioritize matching paths before the scan limit, or cho
 - **Sketch first:** start a blank map, add components, describe responsibilities, connect them, and save it without a repository connection.
 - **Own the result:** move and rename components, edit descriptions, add manual connections, undo changes, save locally, and import/export readable project JSON.
 
+## Workspace
+
+The workspace separates **Architecture**, **Flows**, **Changes**, **Sessions**, **Ask**, **Connections**, and **Roadmap**. Browse components or select a card to open its source inspector; the canvas has no permanent empty side panel. Use **Fit map** for an overview, or switch to **Source files** for static import detail. Sparse scans use a compact grid and explicitly report limited connection coverage.
+
+**Roadmap** contains an interactive [product capability map](public/product-map.html), distinguishing current functionality from unimplemented framework understanding, runtime service context, and shared team context. Its editable specification is [here](docs/maps/product.architecture.json).
+
 ## Review a coding change
 
-Open a local repository, select **Changes** in the workspace toolbar, choose a baseline (`HEAD`, a local branch, tag, or commit), then select **Compare changes**. Focus the review with a feature question, symbol, or path; read a source-cited change brief and select an affected responsibility to inspect before/after evidence. `HEAD` includes staged, unstaged, and untracked source changes.
+Open a local repository, select **Changes** in the workspace navigation, choose a baseline (`HEAD`, a local branch, tag, or commit), then select **Compare changes**. Focus the review with a feature question, symbol, or path; read a source-cited change brief and select an affected responsibility to inspect before/after evidence. `HEAD` includes staged, unstaged, and untracked source changes.
 
 This review uses no model and makes no checkout or source edits. It covers inspected JS/TS source, not a complete application or runtime trace. When coverage is incomplete, addition/removal and dependency-change claims are withheld. Source excerpts show the first changed area, not a full patch. See [change review and its limits](docs/change-review.md).
 
 ## Follow OpenCode tasks
 
-Start OpenCode in your repository with `opencode --port 4096 --hostname 127.0.0.1`. In ArchMap, open the repository and select **OpenCode sessions** (the cable icon in the inspector). Connect, choose an idle session, and select **Track next task** before submitting your task in OpenCode.
+Start OpenCode in your repository with `opencode --port 4096 --hostname 127.0.0.1`. In ArchMap, open the repository and select **Sessions** in the workspace navigation. Connect, choose an idle session, and select **Track next task** before submitting your task in OpenCode.
 
 ArchMap captures your current source, including existing uncommitted work. Keep the panel open; a source-backed change review opens after observed activity returns to idle. The adapter sends no prompts or code to OpenCode and runs no tools. Reviews cover all changes since capture, including edits from other sources. [Setup, lifecycle, and validation details](docs/opencode.md).
 
 ## Connect a model in the web interface
 
-Open **Model settings** (the controls icon beside Inspect and Ask the map). Enter a chat-completions-compatible API base URL, model ID, and optional API key. For example, a local server can use `http://localhost:11434/v1` with an installed model ID.
+Open **Connections**, then the **Understanding model** card. Enter a chat-completions-compatible API base URL, model ID, and optional API key. For example, a local server can use `http://localhost:11434/v1` with an installed model ID.
 
 Settings are kept in the local server's memory. They do not enter map exports or browser storage. Saving settings makes no model request and sends no source; the next explicit question checks provider connectivity. Clear the configuration with **Use source analysis without a model**. Restarting restores any persistent `.env` configuration instead of session settings.
 
