@@ -1,4 +1,16 @@
-import { ArrowDown, ArrowRight, Check, CheckCheck, Copy, FolderOpen, GitBranch, Network, ScanLine, Terminal, Waypoints } from 'lucide-react';
+import {
+  ArrowDown,
+  ArrowRight,
+  Check,
+  CheckCheck,
+  Copy,
+  FolderOpen,
+  GitBranch,
+  Network,
+  ScanLine,
+  Terminal,
+  Waypoints,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Brand, Mark, Github } from './Brand';
 import PixelTerrain from './PixelTerrain';
@@ -8,23 +20,262 @@ export default function Landing({ open }: { open: (example: boolean) => void }) 
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
   async function copy() {
-    try { await navigator.clipboard.writeText('git clone https://github.com/ICEQ-JO/ArchMap.git\ncd ArchMap && npm install && npm run dev'); setCopied(true); setTimeout(() => setCopied(false), 2000); }
-    catch { setCopyError(true); }
+    try {
+      await navigator.clipboard.writeText(
+        'git clone https://github.com/ICEQ-JO/ArchMap.git\ncd ArchMap && npm install && npm run dev',
+      );
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyError(true);
+    }
   }
-  return <div className="landing">
-    <a className="skip-link" href="#main">Skip to content</a>
-    <header className="site-header wrap"><Brand /><nav aria-label="Main navigation"><a href="#how-it-works">How it works</a><a href="#under-the-hood">Under the hood</a><a href={github} target="_blank" rel="noreferrer"><Github size={15} /> GitHub <ArrowRight size={13} /></a></nav><button className="small-button" onClick={() => open(false)}>Open workspace <ArrowRight size={14} /></button></header>
-    <main id="main">
-      <section className="hero wrap">
-        <div className="hero-copy"><h1>Less digging.<br />More <span>understanding.</span></h1><p>Your codebase has a story.<br />See the connections. Follow the logic.<br />Find your way through.</p><div className="hero-actions"><button className="button primary" onClick={() => open(true)}>Explore a live example <ArrowRight size={18} /></button><button className="text-button" onClick={() => open(false)}><FolderOpen size={17} /> Open your repository</button></div><div className="hero-notes"><span><Check size={13} /> Open source</span><span><Check size={13} /> Runs locally</span><span><Check size={13} /> No API key needed</span></div></div>
-        <PixelTerrain />
-        <div className="hero-bottom"><span><GitBranch size={14} /> CODE → CONNECTIONS → CONTEXT</span><a href="#how-it-works">Scroll to explore <ArrowDown size={14} /></a></div>
-      </section>
-      <section id="how-it-works" className="how-section"><div className="wrap"><div className="section-heading"><h2>A codebase.<br />A little less unknown.</h2><p>Go from “where do I even start?” to a map you can follow, question, and make your own.</p></div><div className="workflow"><article><span className="step-index">01 / OPEN</span><FolderOpen /><h3>Bring the source.</h3><p>Point ArchMap at a local JavaScript or TypeScript project. No uploads. No account to create.</p></article><article><span className="step-index">02 / EXPLORE</span><Network /><h3>Find the connections.</h3><p>Explore an editable dependency map. Follow imports from the entry point into the details.</p></article><article><span className="step-index">03 / VERIFY</span><ScanLine /><h3>Go straight to the code.</h3><p>Inspect the file, line, and source behind each connection. Keep the explanation close to the evidence.</p></article></div></div></section>
-      <section className="proof-section wrap"><div className="proof-copy"><h2>No mysterious arrows.<br /><span>Show me the source.</span></h2><p>A useful map earns your trust one connection at a time. Click an edge and see the import that put it there.</p><button className="text-button" onClick={() => open(true)}>Inspect the example <ArrowRight size={16} /></button></div><div className="source-window"><div className="source-title"><span><GitBranch size={14} /> api/generate.ts</span><span>OBSERVED IMPORT</span></div><pre><code><span className="line-number">1</span><span className="syntax-purple">import</span> {'{ authenticate }'} <span className="syntax-purple">from</span> <span className="syntax-green">'../services/auth.js'</span>;{'\n'}<span className="line-number">2</span><span className="syntax-purple">import</span> {'{ reserveCredits }'} <span className="syntax-purple">from</span> <span className="syntax-green">'../services/credits.js'</span>;{'\n'}<span className="source-highlight"><span className="line-number">3</span><span className="syntax-purple">import</span> {'{ enqueue }'} <span className="syntax-purple">from</span> <span className="syntax-green">'../services/queue.js'</span>;</span></code></pre><div className="source-foot"><CheckCheck size={15} /><span>Source file + line range + content hash</span><span>STATIC ANALYSIS</span></div></div></section>
-      <section id="under-the-hood" className="under-section wrap"><div><h2>Your code.<br />Your machine.<br /><span>Your map.</span></h2><p>Built to be opened up, taken apart,<br />and made better by you.</p><a className="text-button" href={github}><Github size={17} /> Build with us <ArrowRight size={15} /></a></div><div className="principles"><article><Terminal /><div><h3>Local by default</h3><p>The repository reader runs on your machine. Static analysis works entirely offline.</p></div></article><article><Waypoints /><div><h3>AI when you choose</h3><p>Bring a compatible model for written explanations. Relevant code is sent only when you ask.</p></div></article><article><GitBranch /><div><h3>Nothing locked away</h3><p>Export the map as readable JSON. Keep it with your code. MIT licensed, from the first commit.</p></div></article></div></section>
-      <section className="start-section wrap"><div className="start-mark"><Mark size={46} /></div><h2>Meet your codebase.<br />Again, properly.</h2><p>Start with the example, or run ArchMap on your own machine.</p><div className="hero-actions"><button className="button primary" onClick={() => open(true)}>Take the example for a spin <ArrowRight size={18} /></button></div><div className="install-command"><Terminal size={16} /><code>git clone https://github.com/ICEQ-JO/ArchMap.git</code><button aria-label="Copy installation commands" onClick={copy}>{copied ? <Check size={17} /> : <Copy size={17} />}</button></div><span className="copy-status" role="status">{copied ? 'Copied installation commands.' : copyError ? 'Copy unavailable. Select the command above.' : 'Then: cd ArchMap · npm install · npm run dev'}</span></section>
-    </main>
-    <footer className="site-footer wrap"><Brand /><span>Find your way through.</span><div><a href={github}>Source code <ArrowRight size={13} /></a><a href={`${github}/blob/main/LICENSE`}>MIT License</a><span>Made to be understood.</span></div></footer>
-  </div>;
+  return (
+    <div className="landing">
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <header className="site-header wrap">
+        <Brand />
+        <nav aria-label="Main navigation">
+          <a href="#how-it-works">How it works</a>
+          <a href="#under-the-hood">Under the hood</a>
+          <a href={github} target="_blank" rel="noreferrer">
+            <Github size={15} /> GitHub <ArrowRight size={13} />
+          </a>
+        </nav>
+        <button className="small-button" onClick={() => open(false)}>
+          Open workspace <ArrowRight size={14} />
+        </button>
+      </header>
+      <main id="main">
+        <section className="hero wrap">
+          <div className="hero-copy">
+            <h1>
+              Less digging.
+              <br />
+              More <span>understanding.</span>
+            </h1>
+            <p>
+              Your codebase has a story.
+              <br />
+              See the connections. Follow the logic.
+              <br />
+              Find your way through.
+            </p>
+            <div className="hero-actions">
+              <button className="button primary" onClick={() => open(true)}>
+                Explore a live example <ArrowRight size={18} />
+              </button>
+              <button className="text-button" onClick={() => open(false)}>
+                <FolderOpen size={17} /> Open your repository
+              </button>
+            </div>
+            <div className="hero-notes">
+              <span>
+                <Check size={13} /> Open source
+              </span>
+              <span>
+                <Check size={13} /> Runs locally
+              </span>
+              <span>
+                <Check size={13} /> No API key needed
+              </span>
+            </div>
+          </div>
+          <PixelTerrain />
+          <div className="hero-bottom">
+            <span>
+              <GitBranch size={14} /> CODE → CONNECTIONS → CONTEXT
+            </span>
+            <a href="#how-it-works">
+              Scroll to explore <ArrowDown size={14} />
+            </a>
+          </div>
+        </section>
+        <section id="how-it-works" className="how-section">
+          <div className="wrap">
+            <div className="section-heading">
+              <h2>
+                A codebase.
+                <br />A little less unknown.
+              </h2>
+              <p>
+                Go from “where do I even start?” to a map you can follow, question, and make your
+                own.
+              </p>
+            </div>
+            <div className="workflow">
+              <article>
+                <span className="step-index">01 / OPEN</span>
+                <FolderOpen />
+                <h3>Bring the source.</h3>
+                <p>
+                  Point ArchMap at a local JavaScript or TypeScript project. No uploads. No account
+                  to create.
+                </p>
+              </article>
+              <article>
+                <span className="step-index">02 / EXPLORE</span>
+                <Network />
+                <h3>Find the connections.</h3>
+                <p>
+                  Explore an editable dependency map. Follow imports from the entry point into the
+                  details.
+                </p>
+              </article>
+              <article>
+                <span className="step-index">03 / VERIFY</span>
+                <ScanLine />
+                <h3>Go straight to the code.</h3>
+                <p>
+                  Inspect the file, line, and source behind each connection. Keep the explanation
+                  close to the evidence.
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+        <section className="proof-section wrap">
+          <div className="proof-copy">
+            <h2>
+              No mysterious arrows.
+              <br />
+              <span>Show me the source.</span>
+            </h2>
+            <p>
+              A useful map earns your trust one connection at a time. Click an edge and see the
+              import that put it there.
+            </p>
+            <button className="text-button" onClick={() => open(true)}>
+              Inspect the example <ArrowRight size={16} />
+            </button>
+          </div>
+          <div className="source-window">
+            <div className="source-title">
+              <span>
+                <GitBranch size={14} /> api/generate.ts
+              </span>
+              <span>OBSERVED IMPORT</span>
+            </div>
+            <pre>
+              <code>
+                <span className="line-number">1</span>
+                <span className="syntax-purple">import</span> {'{ authenticate }'}{' '}
+                <span className="syntax-purple">from</span>{' '}
+                <span className="syntax-green">'../services/auth.js'</span>;{'\n'}
+                <span className="line-number">2</span>
+                <span className="syntax-purple">import</span> {'{ reserveCredits }'}{' '}
+                <span className="syntax-purple">from</span>{' '}
+                <span className="syntax-green">'../services/credits.js'</span>;{'\n'}
+                <span className="source-highlight">
+                  <span className="line-number">3</span>
+                  <span className="syntax-purple">import</span> {'{ enqueue }'}{' '}
+                  <span className="syntax-purple">from</span>{' '}
+                  <span className="syntax-green">'../services/queue.js'</span>;
+                </span>
+              </code>
+            </pre>
+            <div className="source-foot">
+              <CheckCheck size={15} />
+              <span>Source file + line range + content hash</span>
+              <span>STATIC ANALYSIS</span>
+            </div>
+          </div>
+        </section>
+        <section id="under-the-hood" className="under-section wrap">
+          <div>
+            <h2>
+              Your code.
+              <br />
+              Your machine.
+              <br />
+              <span>Your map.</span>
+            </h2>
+            <p>
+              Built to be opened up, taken apart,
+              <br />
+              and made better by you.
+            </p>
+            <a className="text-button" href={github}>
+              <Github size={17} /> Build with us <ArrowRight size={15} />
+            </a>
+          </div>
+          <div className="principles">
+            <article>
+              <Terminal />
+              <div>
+                <h3>Local by default</h3>
+                <p>
+                  The repository reader runs on your machine. Static analysis works entirely
+                  offline.
+                </p>
+              </div>
+            </article>
+            <article>
+              <Waypoints />
+              <div>
+                <h3>AI when you choose</h3>
+                <p>
+                  Bring a compatible model for written explanations. Relevant code is sent only when
+                  you ask.
+                </p>
+              </div>
+            </article>
+            <article>
+              <GitBranch />
+              <div>
+                <h3>Nothing locked away</h3>
+                <p>
+                  Export the map as readable JSON. Keep it with your code. MIT licensed, from the
+                  first commit.
+                </p>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section className="start-section wrap">
+          <div className="start-mark">
+            <Mark size={46} />
+          </div>
+          <h2>
+            Meet your codebase.
+            <br />
+            Again, properly.
+          </h2>
+          <p>Start with the example, or run ArchMap on your own machine.</p>
+          <div className="hero-actions">
+            <button className="button primary" onClick={() => open(true)}>
+              Take the example for a spin <ArrowRight size={18} />
+            </button>
+          </div>
+          <div className="install-command">
+            <Terminal size={16} />
+            <code>git clone https://github.com/ICEQ-JO/ArchMap.git</code>
+            <button aria-label="Copy installation commands" onClick={copy}>
+              {copied ? <Check size={17} /> : <Copy size={17} />}
+            </button>
+          </div>
+          <span className="copy-status" role="status">
+            {copied
+              ? 'Copied installation commands.'
+              : copyError
+                ? 'Copy unavailable. Select the command above.'
+                : 'Then: cd ArchMap · npm install · npm run dev'}
+          </span>
+        </section>
+      </main>
+      <footer className="site-footer wrap">
+        <Brand />
+        <span>Find your way through.</span>
+        <div>
+          <a href={github}>
+            Source code <ArrowRight size={13} />
+          </a>
+          <a href={`${github}/blob/main/LICENSE`}>MIT License</a>
+          <span>Made to be understood.</span>
+        </div>
+      </footer>
+    </div>
+  );
 }
