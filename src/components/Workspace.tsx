@@ -1209,12 +1209,54 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                               <>
                                 <div className="wm-detail-stats">
                                   <span>{selected.lines} lines</span>
-                                  <span>{selected.members?.length ?? 1} files</span>
+                                  <span>
+                                    {selected.members?.length ?? 1}{' '}
+                                    {(selected.members?.length ?? 1) === 1 ? 'file' : 'files'}
+                                  </span>
                                   <span>
                                     {project?.edges.filter((e) => e.source === selected.id).length}{' '}
                                     dependencies
                                   </span>
                                 </div>
+                                {project &&
+                                  (
+                                    [
+                                      ['Depends on', 'target'],
+                                      ['Used by', 'source'],
+                                    ] as const
+                                  ).map(([title, end]) => {
+                                    const ids = [
+                                      ...new Set(
+                                        project.edges
+                                          .filter(
+                                            (e) =>
+                                              e[end === 'target' ? 'source' : 'target'] ===
+                                              selected.id,
+                                          )
+                                          .map((e) => e[end]),
+                                      ),
+                                    ].filter((id) => id !== selected.id);
+                                    if (!ids.length) return null;
+                                    return (
+                                      <div className="wm-detail-links" key={title}>
+                                        <h3>
+                                          {title} <span>{ids.length}</span>
+                                        </h3>
+                                        <ul>
+                                          {ids.map((id) => {
+                                            const target = project.nodes.find((n) => n.id === id);
+                                            return (
+                                              <li key={id}>
+                                                <button onClick={() => selectNode(id)}>
+                                                  {target?.label ?? id}
+                                                </button>
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
+                                      </div>
+                                    );
+                                  })}
                                 {selected.members && (
                                   <details className="wm-member-files">
                                     <summary>Source files ({selected.members.length})</summary>

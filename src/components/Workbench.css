@@ -606,6 +606,39 @@
   margin: 15px 0;
   font-size: 12px;
 }
+.wm-detail-links {
+  margin: 18px 0;
+}
+.wm-detail-links h3 {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.wm-detail-links ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.wm-detail-links button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  margin-bottom: 5px;
+  font: 13px var(--sans);
+  color: var(--fg);
+  cursor: pointer;
+}
+.wm-detail-links button:hover {
+  border-color: var(--focus);
+}
 .wm-member-files code {
   display: block;
   overflow-wrap: anywhere;
