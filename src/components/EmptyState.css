@@ -1,0 +1,45 @@
+.wm-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+  width: 100%;
+}
+
+.wm-empty-icon-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #f0f0ec;
+  border: 1px solid var(--line, #deded8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted, #676761);
+  margin-bottom: 18px;
+}
+
+.wm-empty-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--text, #292927);
+  margin: 0 0 8px;
+}
+
+.wm-empty-desc {
+  font-size: 14px;
+  color: var(--muted, #676761);
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 0 20px;
+}
+
+.wm-empty-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}

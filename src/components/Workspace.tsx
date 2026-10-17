@@ -26,7 +26,6 @@ import {
   GitBranch,
   GitCompareArrows,
   LayoutGrid,
-  LoaderCircle,
   MessageSquare,
   Network,
   Play,
@@ -50,7 +49,7 @@ import {
 } from '../../shared/schema';
 import { getStatus, loadProject } from '../lib/api';
 import { dependencyWalk, downloadProject, refreshProject, SAVE_KEY } from '../lib/graph';
-import { Brand, Mark } from './Brand';
+import { Brand } from './Brand';
 import ArchitectureNode, { kindIcons, type ArchitectureFlowNode } from './ArchitectureNode';
 import EvidenceCard from './EvidenceCard';
 import MapAgent from './MapAgent';
@@ -58,11 +57,16 @@ import FlowInspector from './FlowInspector';
 import ModelSettings, { type ServerStatus } from './ModelSettings';
 import ChangesPanel from './ChangesPanel';
 import OpenCodePanel from './OpenCodePanel';
+import SettingsPanel from './SettingsPanel';
+import CommandPalette, { type Command } from './CommandPalette';
+import ProjectSetup from './ProjectSetup';
+import EmptyState from './EmptyState';
 import { request } from '../lib/api';
 import './Workbench.css';
 import { arrangeSparse } from '../lib/layout';
 
 const nodeTypes = { architecture: ArchitectureNode };
+
 function readSaved(): Project | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -71,14 +75,28 @@ function readSaved(): Project | null {
     return null;
   }
 }
-export default function Workspace({ initialExample }: { initialExample: boolean }) {
+
+export default function Workspace({
+  initialExample,
+  onDashboard,
+}: {
+  initialExample: boolean;
+  onDashboard?: () => void;
+}) {
   return (
     <ReactFlowProvider>
-      <WorkspaceInner initialExample={initialExample} />
+      <WorkspaceInner initialExample={initialExample} onDashboard={onDashboard} />
     </ReactFlowProvider>
   );
 }
-function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
+
+function WorkspaceInner({
+  initialExample,
+  onDashboard,
+}: {
+  initialExample: boolean;
+  onDashboard?: () => void;
+}) {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -96,6 +114,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const [walkStep, setWalkStep] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [history, setHistory] = useState<Project[]>([]);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -114,15 +134,19 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const fileInput = useRef<HTMLInputElement>(null);
   const init = useRef(false);
   const { fitView, setCenter, getViewport } = useReactFlow<ArchitectureFlowNode>();
+
   const selected = project?.nodes.find((n) => n.id === selectedId);
   const selectedEdge = project?.edges.find((e) => e.id === selectedEdgeId);
+
   const walk = useMemo(
     () => (project ? dependencyWalk(project, walkStart) : []),
     [project, walkStart],
   );
+
   const activeFlow = project?.flows?.find((f) => f.id === flowId);
   const activeFlowStep = activeFlow?.steps[flowIndex];
   const flowEdge = project?.edges.find((e) => e.id === activeFlowStep?.edgeId);
+
   const activeWalkEdge = useMemo(
     () =>
       flowEdge && activeFlowStep
@@ -132,6 +156,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           : walk[walkStep],
     [flowEdge, activeFlowStep, walkStep, walk],
   );
+
   const selectedEvidence = activeFlowStep
     ? [activeFlowStep.evidence]
     : selectedEdge?.evidence
@@ -148,6 +173,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             ).values(),
           ]
         : [];
+
   const filteredNodes = useMemo(
     () =>
       project?.nodes.filter((n) =>
@@ -163,6 +189,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       .then(setStatus)
       .catch(() => setStatus(null));
   }, []);
+
   const resetSelection = () => {
     setSelectedId(null);
     setSelectedEdgeId(null);
@@ -171,8 +198,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setFlowId(null);
     setFlowIndex(0);
   };
-  // Fitting a large graph makes every card unreadable. Show a legible cluster
-  // instead, and leave Fit map for the whole picture.
+
   function focusLegible(target: Project, duration = 350) {
     const hub = [...target.nodes].sort(
       (a, b) =>
@@ -187,17 +213,21 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       }
     }, 120);
   }
-  async function openProject(example: boolean, refresh = false) {
+
+  async function openProject(
+    example: boolean,
+    refresh = false,
+    customPath?: string,
+    customFocus?: string,
+  ) {
     if (loading) return;
     setLoading(true);
     setError('');
     setNotice('');
     try {
-      const fresh = await loadProject(
-        example,
-        refresh && project ? project.root : path,
-        refresh ? (project?.focus ?? focus) : focus,
-      );
+      const targetPath = customPath ?? (refresh && project ? project.root : path);
+      const targetFocus = customFocus ?? (refresh ? (project?.focus ?? focus) : focus);
+      const fresh = await loadProject(example, targetPath, targetFocus);
       const next = refresh && project ? refreshProject(fresh, project) : arrangeSparse(fresh);
       setProject(next);
       setView('Architecture');
@@ -216,6 +246,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       setLoading(false);
     }
   }
+
   useEffect(() => {
     if (init.current) return;
     init.current = true;
@@ -230,7 +261,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         );
       }
     }
-  }, []); // Initial route is intentionally consumed once.
+  }, []);
+
   useEffect(() => {
     if (!project) return;
     const highlighted = activeWalkEdge
@@ -253,11 +285,13 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       })),
     );
   }, [project, selectedId, activeWalkEdge, query, filteredNodes, setNodes]);
+
   useEffect(() => {
     if (!notice) return;
     const timeout = setTimeout(() => setNotice(''), 6000);
     return () => clearTimeout(timeout);
   }, [notice]);
+
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (dirty) event.preventDefault();
@@ -265,6 +299,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     window.addEventListener('beforeunload', beforeUnload);
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [dirty]);
+
   useEffect(() => {
     if (!activeWalkEdge || !project) return;
     const from = project.nodes.find((n) => n.id === activeWalkEdge.source);
@@ -277,12 +312,14 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         maxZoom: 1,
       });
   }, [activeWalkEdge?.id]);
+
   function edit(next: Project) {
     if (project) setHistory((h) => [...h.slice(-19), project]);
     setProject(next);
     setDirty(true);
     setSaved(false);
   }
+
   function undo() {
     if (!history.length) return;
     setProject(history[history.length - 1]);
@@ -291,6 +328,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setSaved(false);
     resetSelection();
   }
+
   function selectNode(id: string) {
     setSelectedId(id);
     setSelectedEdgeId(null);
@@ -301,10 +339,12 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     if (node)
       void setCenter(node.position.x + 115, node.position.y + 53, { zoom: 0.95, duration: 250 });
   }
+
   function save() {
     if (!project) return;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(project));
+      localStorage.setItem(`archmap.project.${project.id}`, JSON.stringify(project));
       setDirty(false);
       setSaved(true);
       setNotice('Map saved in this browser. Export JSON to keep a portable copy.');
@@ -312,6 +352,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       setError('Browser storage is full or unavailable. Export your map as JSON to save it.');
     }
   }
+
   async function importFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -334,6 +375,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     }
     event.target.value = '';
   }
+
   function connect(connection: Connection) {
     if (
       !project ||
@@ -363,6 +405,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     });
     setNotice('Manual connection added. It has no observed source evidence.');
   }
+
   function addComponent(event: FormEvent) {
     event.preventDefault();
     if (!project || !addName.trim()) return;
@@ -388,6 +431,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setInspectorOpen(true);
     setTimeout(() => setCenter(215, -120, { zoom: 1, duration: 250 }), 80);
   }
+
   function removeSelection() {
     if (!project) return;
     edit({
@@ -413,6 +457,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     });
     resetSelection();
   }
+
   const edges = useMemo(
     () =>
       project?.edges.map((edge) => ({
@@ -441,19 +486,27 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       })) ?? [],
     [project, selectedEdgeId, activeWalkEdge],
   );
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSidebarOpen(false);
         setAdding(false);
         setInspectorOpen(false);
+        setSettingsOpen(false);
+        setPaletteOpen(false);
         resetSelection();
         if (reviewing) {
           setView('Architecture');
         }
         return;
       }
-      if (reviewing) return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen((prev) => !prev);
+        return;
+      }
+      if (reviewing || paletteOpen || settingsOpen) return;
       const target = event.target as HTMLElement;
       const typing = target.matches('input, textarea, select') || target.isContentEditable;
       if (typing) return;
@@ -477,7 +530,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [project, history, reviewing]);
+  }, [project, history, reviewing, paletteOpen, settingsOpen]);
+
   function startSketch() {
     setProject({
       version: 1,
@@ -502,6 +556,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     resetSelection();
     setAdding(true);
   }
+
   function pickFlow(id: string, index: number) {
     const step = project?.flows?.find((f) => f.id === id)?.steps[index];
     if (!step) return;
@@ -512,6 +567,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setSelectedEdgeId(step.edgeId);
     setInspectorOpen(true);
   }
+
   function switchView() {
     if (!project?.alternate) return;
     const { nodes, edges, flows } = project;
@@ -526,6 +582,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setQuery('');
     focusLegible(next, 300);
   }
+
   function applyProposal(proposal: Proposal) {
     if (!project || proposal.projectId !== project.id) return;
     const original =
@@ -546,6 +603,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setNotice('Proposed map applied. Undo restores your previous view.');
     focusLegible(next, 300);
   }
+
   function navigate(next: string) {
     setView(next);
     setShowOpen(false);
@@ -553,12 +611,14 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     if (next === 'Changes') setSessionReview(null);
     if (next === 'Flows' && project?.level === 'modules' && project.alternate) switchView();
   }
+
   const destinations = [
     { name: 'Architecture', icon: Network, hint: 'The big picture' },
     { name: 'Flows', icon: Play, hint: 'Follow source connections' },
     { name: 'Changes', icon: GitCompareArrows, hint: 'Review the working tree' },
     { name: 'Ask', icon: MessageSquare, hint: 'Understand a feature' },
   ];
+
   const descriptions: Record<string, string> = {
     Architecture: 'Understand the parts. Follow the evidence.',
     Flows: 'Explore source-supported journeys, one connection at a time.',
@@ -567,6 +627,125 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     Ask: 'Ask a question. Get an explanation grounded in your source.',
     Connections: 'Connect a model for understanding, or an agent for change review.',
   };
+
+  const paletteCommands: Command[] = useMemo(
+    () => [
+      {
+        id: 'view-arch',
+        label: 'Go to Architecture overview',
+        section: 'NAVIGATION',
+        icon: Network,
+        shortcut: '1',
+        action: () => navigate('Architecture'),
+      },
+      {
+        id: 'view-flows',
+        label: 'Go to Feature flows',
+        section: 'NAVIGATION',
+        icon: Play,
+        shortcut: '2',
+        action: () => navigate('Flows'),
+      },
+      {
+        id: 'view-changes',
+        label: 'Go to Working-tree change review',
+        section: 'NAVIGATION',
+        icon: GitCompareArrows,
+        shortcut: '3',
+        action: () => navigate('Changes'),
+      },
+      {
+        id: 'view-ask',
+        label: 'Ask a feature question',
+        section: 'NAVIGATION',
+        icon: MessageSquare,
+        shortcut: '4',
+        action: () => navigate('Ask'),
+      },
+      {
+        id: 'fit-map',
+        label: 'Fit architecture map to viewport',
+        section: 'ACTIONS',
+        icon: Network,
+        action: () => void fitView({ padding: 0.22, maxZoom: 1, duration: 250 }),
+      },
+      {
+        id: 'switch-view',
+        label:
+          project?.level === 'architecture'
+            ? 'Switch to source files view'
+            : 'Switch to responsibilities view',
+        section: 'ACTIONS',
+        icon: Network,
+        disabled: !project?.alternate,
+        action: switchView,
+      },
+      {
+        id: 'add-comp',
+        label: 'Add custom architecture component',
+        section: 'ACTIONS',
+        icon: Plus,
+        action: () => {
+          setView('Architecture');
+          setAdding(true);
+        },
+      },
+      {
+        id: 'undo',
+        label: 'Undo last edit',
+        section: 'ACTIONS',
+        icon: Undo2,
+        shortcut: '⌘Z',
+        disabled: !history.length,
+        action: undo,
+      },
+      {
+        id: 'save',
+        label: 'Save map to browser storage',
+        section: 'ACTIONS',
+        icon: Save,
+        shortcut: '⌘S',
+        action: save,
+      },
+      {
+        id: 'export',
+        label: 'Export portable .archmap.json',
+        section: 'ACTIONS',
+        icon: Download,
+        action: () => project && downloadProject(project),
+      },
+      {
+        id: 'open-repo',
+        label: 'Open a local repository',
+        section: 'PROJECT',
+        icon: FolderOpen,
+        action: () => {
+          setView('Architecture');
+          setShowOpen(true);
+        },
+      },
+      {
+        id: 'open-settings',
+        label: 'Open Model & Agent Settings',
+        section: 'PROJECT',
+        icon: Settings2,
+        action: () => setSettingsOpen(true),
+      },
+    ],
+    [project, history.length],
+  );
+
+  const paletteComponents = useMemo(
+    () =>
+      project?.nodes.map((n) => ({
+        id: n.id,
+        label: n.label,
+        file: n.file,
+        kind: n.kind,
+      })) ?? [],
+    [project],
+  );
+
   return (
     <div className="wm-workspace">
       <aside className="wm-workspace-nav" aria-label="Workspace navigation">
@@ -605,7 +784,13 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           ))}
         </nav>
         <div className="wm-nav-bottom">
-          <button onClick={() => fileInput.current?.click()}>
+          {onDashboard && (
+            <button onClick={() => onDashboard()} type="button" title="Return to project dashboard">
+              <LayoutGrid size={16} />
+              All projects
+            </button>
+          )}
+          <button onClick={() => fileInput.current?.click()} type="button">
             <Upload size={16} />
             Import map
           </button>
@@ -627,6 +812,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           </p>
         </div>
       </aside>
+
       <div className="wm-workspace-content">
         <header className="wm-workspace-header">
           <div>
@@ -639,8 +825,18 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           <div className="wm-workspace-header-actions">
             <button
               className="wm-small-button"
+              onClick={() => setPaletteOpen(true)}
+              title="Command palette (⌘K)"
+              type="button"
+            >
+              <Search size={15} />
+              <span>⌘K</span>
+            </button>
+            <button
+              className="wm-small-button"
               aria-label="Model and agent settings"
               onClick={() => navigate('Connections')}
+              type="button"
             >
               <Settings2 size={15} />
               <span>Settings</span>
@@ -652,6 +848,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                 setView('Architecture');
                 setShowOpen(true);
               }}
+              type="button"
             >
               <FolderOpen size={15} />
               <span>Open repository</span>
@@ -661,6 +858,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               aria-label={saved ? 'Saved' : 'Save'}
               disabled={!project}
               onClick={save}
+              type="button"
             >
               <Save size={15} />
               <span>{saved ? 'Saved' : dirty ? 'Save changes' : 'Save'}</span>
@@ -670,17 +868,19 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
               aria-label="Export"
               disabled={!project}
               onClick={() => project && downloadProject(project)}
+              type="button"
             >
               <Download size={15} />
               <span>Export</span>
             </button>
           </div>
         </header>
+
         {notice && (
           <div className="wm-workspace-notice" role="status">
             <Check size={16} />
             <span>{notice}</span>
-            <button aria-label="Dismiss notice" onClick={() => setNotice('')}>
+            <button aria-label="Dismiss notice" onClick={() => setNotice('')} type="button">
               <X size={16} />
             </button>
           </div>
@@ -688,122 +888,31 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         {error && !showOpen && (
           <div className="wm-workspace-error" role="alert">
             {error}
-            <button aria-label="Dismiss error" onClick={() => setError('')}>
+            <button aria-label="Dismiss error" onClick={() => setError('')} type="button">
               <X size={16} />
             </button>
           </div>
         )}
+
         {showOpen ? (
-          <main className="wm-open-page">
-            {' '}
-            <div className="wm-open-screen">
-              <div className="wm-open-screen-heading">
-                <span className="open-screen-mark">
-                  <Mark size={35} />
-                </span>
-                {project && (
-                  <button
-                    className="wm-bare-icon"
-                    onClick={() => setShowOpen(false)}
-                    aria-label="Return to current map"
-                  >
-                    <X size={18} />
-                  </button>
-                )}
-              </div>
-              <h1>Find your way in.</h1>
-              <p>Open a repository. Turn its source into a map you can follow.</p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void openProject(false);
-                }}
-              >
-                <label htmlFor="repo-path">Repository folder</label>
-                <div className="wm-path-input">
-                  <FolderOpen size={17} />
-                  <input
-                    id="repo-path"
-                    value={path}
-                    onChange={(e) => setPath(e.target.value)}
-                    placeholder="./my-project"
-                    required
-                    maxLength={2000}
-                  />
-                </div>
-                <p className="wm-root-hint">
-                  {status ? (
-                    <>
-                      Relative to <code>{status.root}</code>. Set <code>ARCHMAP_ROOT</code> to open
-                      a different parent folder.
-                    </>
-                  ) : (
-                    'Connecting to the local repository service…'
-                  )}
-                </p>
-                <label className="wm-source-focus-label" htmlFor="source-focus">
-                  Feature focus <span>(optional)</span>
-                </label>
-                <input
-                  className="wm-source-focus-input"
-                  id="source-focus"
-                  value={focus}
-                  onChange={(event) => setFocus(event.target.value)}
-                  maxLength={500}
-                  placeholder="e.g. auth, checkout, image generation"
-                />
-                <button className="wm-button wm-primary" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <LoaderCircle className="spinning" size={16} /> Analyzing source…
-                    </>
-                  ) : (
-                    <>
-                      Map repository <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </form>
-              {error && (
-                <p className="wm-error-text" role="alert">
-                  {error}
-                </p>
-              )}
-              <div className="wm-open-or">
-                <span />
-                or start exploring
-                <span />
-              </div>
-              <button
-                className="wm-example-choice"
-                disabled={loading}
-                onClick={() => void openProject(true)}
-              >
-                <span className="wm-project-avatar">
-                  <Network size={18} />
-                </span>
-                <span>
-                  <strong>Image Studio</strong>
-                  <small>An illustrative image-generation project · 10 source files</small>
-                </span>
-                <ArrowRight size={17} />
-              </button>
-              <button className="wm-import-choice" onClick={() => fileInput.current?.click()}>
-                <Upload size={14} /> Import a saved .archmap.json
-              </button>
-              <button className="wm-blank-choice" onClick={startSketch}>
-                <Plus size={14} /> Start a blank architecture map
-              </button>
-              <p className="wm-scan-disclosure">
-                <ShieldCheck size={14} /> Reads source files. Never executes repository code.
-                <br />
-                JavaScript & TypeScript · up to 400 files / 8 MB
-              </p>
-            </div>
-          </main>
+          <ProjectSetup
+            status={status}
+            loading={loading}
+            error={error}
+            hasProject={Boolean(project)}
+            onOpen={(p, f) => {
+              setPath(p);
+              setFocus(f);
+              void openProject(false, false, p, f);
+            }}
+            onExample={() => void openProject(true)}
+            onImport={() => fileInput.current?.click()}
+            onSketch={startSketch}
+            onClose={() => setShowOpen(false)}
+          />
         ) : (
           <>
-            {view !== 'Changes' && (
+            {view !== 'Changes' && view !== 'Connections' && (
               <div className="wm-page-intro">
                 <p>{descriptions[view]}</p>
               </div>
@@ -853,18 +962,20 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         <button
                           aria-expanded={sidebarOpen}
                           onClick={() => setSidebarOpen(!sidebarOpen)}
+                          type="button"
                         >
                           <Search size={15} />
                           Browse components
                         </button>
                         {project.alternate && (
-                          <button aria-label="Switch map view" onClick={switchView}>
+                          <button aria-label="Switch map view" onClick={switchView} type="button">
                             <Network size={15} />
                             {project.level === 'architecture' ? 'Source files' : 'Responsibilities'}
                           </button>
                         )}
                         <button
                           onClick={() => void fitView({ padding: 0.22, maxZoom: 1, duration: 250 })}
+                          type="button"
                         >
                           Fit map
                         </button>
@@ -880,6 +991,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                   100,
                                 );
                               }}
+                              type="button"
                             >
                               <LayoutGrid size={15} />
                               <span>Arrange</span>
@@ -891,11 +1003,16 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                           aria-label="Undo last edit"
                           disabled={!history.length}
                           onClick={undo}
+                          type="button"
                         >
                           <Undo2 size={15} />
                           <span>Undo</span>
                         </button>
-                        <button aria-label="Component" onClick={() => setAdding(!adding)}>
+                        <button
+                          aria-label="Component"
+                          onClick={() => setAdding(!adding)}
+                          type="button"
+                        >
                           <Plus size={15} />
                           <span>Component</span>
                         </button>
@@ -903,6 +1020,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                           aria-label="Refresh"
                           disabled={loading || !project.root}
                           onClick={() => void openProject(project.mode === 'example', true)}
+                          type="button"
                         >
                           <RefreshCw size={15} />
                           <span>Refresh</span>
@@ -919,7 +1037,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                           value={addName}
                           onChange={(e) => setAddName(e.target.value)}
                         />
-                        <button className="wm-small-button" disabled={!addName.trim()}>
+                        <button
+                          className="wm-small-button"
+                          disabled={!addName.trim()}
+                          type="submit"
+                        >
                           Add component
                         </button>
                         <button
@@ -941,6 +1063,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                             <button
                               aria-label="Close component browser"
                               onClick={() => setSidebarOpen(false)}
+                              type="button"
                             >
                               <X size={16} />
                             </button>
@@ -957,6 +1080,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                               <button
                                 aria-label="Clear component search"
                                 onClick={() => setQuery('')}
+                                type="button"
                               >
                                 <X size={14} />
                               </button>
@@ -970,6 +1094,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                   key={node.id}
                                   className={selectedId === node.id ? 'wm-active' : ''}
                                   onClick={() => selectNode(node.id)}
+                                  type="button"
                                 >
                                   <Icon size={16} />
                                   <span>{node.label}</span>
@@ -981,7 +1106,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         </aside>
                       )}
                       <div className="wm-canvas-area">
-                        {' '}
                         <ReactFlow
                           nodes={nodes}
                           edges={edges}
@@ -1074,6 +1198,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                 ? !project.flows?.length
                                 : !walk.length
                             }
+                            type="button"
                           >
                             <Play size={13} />
                             <span>
@@ -1103,6 +1228,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                   setWalkStep(null);
                                   void fitView({ padding: 0.2, duration: 300 });
                                 }}
+                                type="button"
                               >
                                 <X size={14} />
                               </button>
@@ -1113,6 +1239,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                 aria-label="Previous walk step"
                                 disabled={walkStep === 0}
                                 onClick={() => setWalkStep(walkStep - 1)}
+                                type="button"
                               >
                                 <ChevronLeft />
                               </button>
@@ -1134,6 +1261,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                 aria-label="Next walk step"
                                 disabled={walkStep === walk.length - 1}
                                 onClick={() => setWalkStep(walkStep + 1)}
+                                type="button"
                               >
                                 <ChevronRight />
                               </button>
@@ -1146,7 +1274,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         ) : (
                           <div className="wm-walk-player">
                             <p>No outgoing dependencies from this component.</p>
-                            <button className="wm-text-button" onClick={() => setWalkStep(null)}>
+                            <button
+                              className="wm-text-button"
+                              onClick={() => setWalkStep(null)}
+                              type="button"
+                            >
                               Close walk
                             </button>
                           </div>
@@ -1172,12 +1304,12 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                 resetSelection();
                                 setInspectorOpen(false);
                               }}
+                              type="button"
                             >
                               <X size={16} />
                             </button>
                           </div>
                           <div className="wm-inspector-scroll">
-                            {' '}
                             <div className="wm-inspector-detail-heading">
                               <span className="wm-detail-kind">
                                 {selected?.kind || 'connection'}
@@ -1247,7 +1379,10 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                             const target = project.nodes.find((n) => n.id === id);
                                             return (
                                               <li key={id}>
-                                                <button onClick={() => selectNode(id)}>
+                                                <button
+                                                  onClick={() => selectNode(id)}
+                                                  type="button"
+                                                >
                                                   {target?.label ?? id}
                                                 </button>
                                               </li>
@@ -1322,6 +1457,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                     setWalkStart(selected.id);
                                     setWalkStep(0);
                                   }}
+                                  type="button"
                                 >
                                   <Play size={12} /> Walk from this component{' '}
                                   <ArrowRight size={12} />
@@ -1340,7 +1476,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                                 connection.
                               </p>
                             )}
-                            <button className="wm-delete-selection" onClick={removeSelection}>
+                            <button
+                              className="wm-delete-selection"
+                              onClick={removeSelection}
+                              type="button"
+                            >
                               <Trash2 size={13} /> Remove {selected ? 'component' : 'connection'}
                               <span>Undo available</span>
                             </button>
@@ -1357,20 +1497,26 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                     </footer>
                   </>
                 ) : (
-                  <div className="wm-page-empty">
-                    <Network size={32} />
-                    <h2>Your system, in context.</h2>
-                    <p>
-                      Open a local JavaScript or TypeScript repository to begin, or explore a
-                      working example.
-                    </p>
-                    <button className="wm-button wm-primary" onClick={() => setShowOpen(true)}>
+                  <EmptyState
+                    icon={Network}
+                    title="Your system, in context."
+                    description="Open a local JavaScript or TypeScript repository to begin, or explore a working example."
+                  >
+                    <button
+                      className="wm-button wm-primary"
+                      onClick={() => setShowOpen(true)}
+                      type="button"
+                    >
                       Open repository
                     </button>
-                    <button onClick={() => void openProject(true)}>
+                    <button
+                      className="wm-button"
+                      onClick={() => void openProject(true)}
+                      type="button"
+                    >
                       Explore Image Studio <ArrowRight size={16} />
                     </button>
-                  </div>
+                  </EmptyState>
                 )}
               </main>
             )}
@@ -1384,6 +1530,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         key={f.id}
                         aria-current={flowId === f.id ? 'step' : undefined}
                         onClick={() => pickFlow(f.id, 0)}
+                        type="button"
                       >
                         <Play size={16} />
                         <span>
@@ -1400,10 +1547,12 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         This scan found no named source-call journeys. Framework routing and runtime
                         behavior may be missing from static analysis.
                       </p>
-                      <button onClick={() => navigate('Architecture')}>
+                      <button onClick={() => navigate('Architecture')} type="button">
                         Explore the source map
                       </button>
-                      <button onClick={() => navigate('Ask')}>Ask about a feature</button>
+                      <button onClick={() => navigate('Ask')} type="button">
+                        Ask about a feature
+                      </button>
                     </div>
                   )}
                 </aside>
@@ -1431,17 +1580,18 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                             setView('Architecture');
                             setInspectorOpen(true);
                           }}
+                          type="button"
                         >
                           Show this connection on the map <ArrowRight size={15} />
                         </button>
                       </div>
                     </>
                   ) : (
-                    <div className="wm-page-empty">
-                      <Play size={32} />
-                      <h2>Follow the connections.</h2>
-                      <p>Choose a flow to read its steps alongside the supporting source.</p>
-                    </div>
+                    <EmptyState
+                      icon={Play}
+                      title="Follow the connections."
+                      description="Choose a flow from the library to read its steps alongside supporting source evidence."
+                    />
                   )}
                 </section>
               </main>
@@ -1454,7 +1604,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       <span>
                         <Cable size={15} /> Following a coding agent?
                       </span>
-                      <button className="wm-small-button" onClick={() => navigate('Sessions')}>
+                      <button
+                        className="wm-small-button"
+                        onClick={() => navigate('Sessions')}
+                        type="button"
+                      >
                         Track an agent task <ArrowRight size={14} />
                       </button>
                     </div>
@@ -1477,21 +1631,30 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                     />
                   </>
                 ) : (
-                  <div className="wm-page-empty">
-                    <GitCompareArrows size={32} />
-                    <h2>Review a real repository.</h2>
-                    <p>Open a local Git repository to compare a revision with your working tree.</p>
-                    <button className="wm-button wm-primary" onClick={() => setShowOpen(true)}>
+                  <EmptyState
+                    icon={GitCompareArrows}
+                    title="Review a real repository."
+                    description="Open a local Git repository to compare any commit, tag, or branch with your active working tree."
+                  >
+                    <button
+                      className="wm-button wm-primary"
+                      onClick={() => setShowOpen(true)}
+                      type="button"
+                    >
                       Open repository
                     </button>
-                  </div>
+                  </EmptyState>
                 )}
               </main>
             )}
             {view === 'Sessions' && (
               <main className="wm-task-page">
                 <div className="wm-task-context">
-                  <button className="wm-text-button" onClick={() => navigate('Changes')}>
+                  <button
+                    className="wm-text-button"
+                    onClick={() => navigate('Changes')}
+                    type="button"
+                  >
                     <ArrowLeft size={14} /> Back to changes
                   </button>
                   <span className="wm-nav-caption">CODING AGENT</span>
@@ -1534,7 +1697,13 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       ? status.model
                       : 'Connect a model for AI explanations and feature proposals.'}
                   </span>
-                  <button onClick={() => navigate('Connections')}>
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(true);
+                      navigate('Connections');
+                    }}
+                    type="button"
+                  >
                     Connections <ArrowRight size={14} />
                   </button>
                 </div>
@@ -1551,7 +1720,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             }
             {view === 'Connections' && (
               <main className="wm-connections-page">
-                <button className="wm-text-button" onClick={() => navigate('Architecture')}>
+                <button
+                  className="wm-text-button"
+                  onClick={() => navigate('Architecture')}
+                  type="button"
+                >
                   <ArrowLeft size={14} /> Back to architecture
                 </button>
                 <section className="wm-connection-card">
@@ -1575,7 +1748,11 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       OpenCode has its own connection. Use Sessions to track a task and review the
                       resulting source changes.
                     </p>
-                    <button className="wm-small-button" onClick={() => navigate('Sessions')}>
+                    <button
+                      className="wm-small-button"
+                      onClick={() => navigate('Sessions')}
+                      type="button"
+                    >
                       Open sessions <ArrowRight size={15} />
                     </button>
                   </section>
@@ -1602,6 +1779,28 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
           </>
         )}
       </div>
+
+      {/* Slide-over Settings panel */}
+      <SettingsPanel
+        open={settingsOpen && view !== 'Connections'}
+        onClose={() => setSettingsOpen(false)}
+        status={status}
+        onStatusChange={setStatus}
+        onOpenAgent={() => navigate('Sessions')}
+      />
+
+      {/* Command Palette (⌘K) */}
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        commands={paletteCommands}
+        components={paletteComponents}
+        onSelectComponent={(id) => {
+          setView('Architecture');
+          selectNode(id);
+        }}
+      />
+
       <input
         type="file"
         ref={fileInput}

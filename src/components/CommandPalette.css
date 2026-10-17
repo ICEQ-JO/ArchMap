@@ -1,0 +1,206 @@
+.wm-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 18, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: min(15vh, 120px);
+}
+
+.wm-palette-dialog {
+  width: 90vw;
+  max-width: 580px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--line, #deded8);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: wm-palette-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes wm-palette-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-palette-dialog {
+    animation: none;
+  }
+}
+
+.wm-palette-search {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line, #deded8);
+  gap: 10px;
+}
+
+.wm-palette-search-icon {
+  color: var(--muted, #676761);
+  flex-shrink: 0;
+}
+
+.wm-palette-input {
+  flex: 1;
+  border: none !important;
+  outline: none !important;
+  font-size: 15px;
+  padding: 4px 0 !important;
+  background: transparent !important;
+  color: var(--text, #292927);
+}
+
+.wm-palette-esc-hint {
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  padding: 2px 6px;
+  border: 1px solid var(--line, #deded8);
+  border-radius: 4px;
+  color: var(--muted, #676761);
+  background: #f7f7f5;
+}
+
+.wm-palette-results {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.wm-palette-empty {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted, #676761);
+}
+
+.wm-palette-group {
+  margin-bottom: 8px;
+}
+
+.wm-palette-group-title {
+  font-size: 10px;
+  font-family: var(--mono, monospace);
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  color: var(--muted, #676761);
+  padding: 6px 10px 4px;
+}
+
+.wm-palette-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: var(--text, #292927);
+  transition: background 0.1s ease;
+}
+
+.wm-palette-item.is-selected {
+  background: #f2f2ee;
+}
+
+.wm-palette-item.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wm-palette-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #55554f;
+  flex-shrink: 0;
+}
+
+.wm-palette-kind-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: #eaeae5;
+  font-size: 10px;
+  font-family: var(--mono, monospace);
+  font-weight: 600;
+  color: #44443f;
+}
+
+.wm-palette-item-label {
+  flex: 1;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wm-palette-comp-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wm-palette-comp-file {
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  color: var(--muted, #676761);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wm-palette-shortcut {
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  color: var(--muted, #676761);
+  padding: 2px 6px;
+  background: #f7f7f5;
+  border: 1px solid var(--line, #deded8);
+  border-radius: 4px;
+}
+
+.wm-palette-enter-icon {
+  color: var(--muted, #676761);
+  flex-shrink: 0;
+}
+
+.wm-palette-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #fafaf8;
+  border-top: 1px solid var(--line, #deded8);
+  font-size: 11px;
+  color: var(--muted, #676761);
+}
+
+.wm-palette-footer kbd {
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  padding: 1px 4px;
+  background: #ffffff;
+  border: 1px solid var(--line, #deded8);
+  border-radius: 3px;
+  color: #44443f;
+}

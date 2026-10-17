@@ -399,7 +399,13 @@ function ProductPreview({ view }: { view: number }) {
   );
 }
 
-export default function Landing({ open }: { open: (example: boolean) => void }) {
+export default function Landing({
+  open,
+  onDashboard,
+}: {
+  open: (example: boolean) => void;
+  onDashboard?: () => void;
+}) {
   const [menu, setMenu] = useState(false);
   const [view, setView] = useState(0);
   const [copied, setCopied] = useState(false);
@@ -437,6 +443,16 @@ export default function Landing({ open }: { open: (example: boolean) => void }) 
         <nav aria-label="Main navigation">
           <a href="#inside">The product</a>
           <a href="#workflow">How it works</a>
+          <a
+            href="#dashboard"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onDashboard) onDashboard();
+              else location.hash = 'dashboard';
+            }}
+          >
+            Dashboard
+          </a>
           <a href={`${github}#readme`} target="_blank" rel="noreferrer">
             Documentation <ArrowUpRight size={12} />
           </a>
@@ -474,6 +490,17 @@ export default function Landing({ open }: { open: (example: boolean) => void }) 
           </a>
           <a href="#workflow" onClick={() => setMenu(false)}>
             How it works
+          </a>
+          <a
+            href="#dashboard"
+            onClick={(e) => {
+              e.preventDefault();
+              setMenu(false);
+              if (onDashboard) onDashboard();
+              else location.hash = 'dashboard';
+            }}
+          >
+            Dashboard
           </a>
           <a href={`${github}#readme`}>
             Documentation <ArrowUpRight size={15} />
