@@ -64,6 +64,14 @@ export function createApp(allowedRoot: string) {
     }
   });
   app.post('/api/opencode/disconnect', (_req, res) => res.json(opencode.disconnect()));
+  app.post('/api/opencode/auto', async (req, res, next) => {
+    try {
+      const input = z.object({ path: z.string().trim().min(1).max(2000) }).parse(req.body);
+      res.json(await opencode.autoConnect(input));
+    } catch (error) {
+      next(error);
+    }
+  });
   app.get('/api/opencode/sessions', async (_req, res, next) => {
     try {
       res.json(await opencode.sessions());

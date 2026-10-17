@@ -276,3 +276,41 @@ test('connecting verifies the server existing project without initializing a dir
     await f.close();
   }
 });
+
+async function withEnv(url: string, run: () => Promise<void>) {
+  const previous = process.env.ARCHMAP_OPENCODE_URL;
+  process.env.ARCHMAP_OPENCODE_URL = url;
+  try {
+    await run();
+  } finally {
+    if (previous === undefined) delete process.env.ARCHMAP_OPENCODE_URL;
+    else process.env.ARCHMAP_OPENCODE_URL = previous;
+  }
+}
+
+test('auto-connects to a local OpenCode server scoped to the repository', async () => {
+  const f = await fixture();
+  try {
+    await withEnv(f.input.baseUrl, async () => {
+      const state = await f.bridge.autoConnect({ path: '.' });
+      assert.equal(state.connected, true);
+      assert.equal(state.root, f.root);
+      assert.equal(state.baseUrl, `http://127.0.0.1:${new URL(f.input.baseUrl).port}`);
+      assert.equal((await f.bridge.sessions()).length, 1);
+    });
+  } finally {
+    await f.close();
+  }
+});
+
+test('auto-connect reports when no local server matches the repository', async () => {
+  const f = await fixture();
+  try {
+    await withEnv('http://127.0.0.1:1', async () => {
+      await assert.rejects(f.bridge.autoConnect({ path: '.' }), /No local OpenCode server/);
+      assert.equal(f.bridge.status().connected, false);
+    });
+  } finally {
+    await f.close();
+  }
+});

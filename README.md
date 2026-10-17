@@ -64,7 +64,7 @@ This review uses no model and makes no checkout or source edits. It covers inspe
 
 ## Follow OpenCode tasks
 
-Start OpenCode in your repository with `opencode --port 4096 --hostname 127.0.0.1`. In ArchMap, open the repository, select **Changes**, then **Track an agent task**. Connect, choose an idle session, and select **Track next task** before submitting your task in OpenCode.
+Start OpenCode in your repository with `opencode --port 4096 --hostname 127.0.0.1`. In ArchMap, open the repository, select **Changes**, then **Track an agent task**. ArchMap finds the local OpenCode server scoped to this repository and lists its sessions automatically; if none is found, enter its address. Choose an idle session and select **Track next task** before submitting your task in OpenCode.
 
 ArchMap captures your current source, including existing uncommitted work. Keep the panel open; a source-backed change review opens after observed activity returns to idle. The adapter sends no prompts or code to OpenCode and runs no tools. Reviews cover all changes since capture, including edits from other sources. [Setup, lifecycle, and validation details](docs/opencode.md).
 

@@ -100,6 +100,11 @@
   color: var(--muted);
   margin-bottom: 8px;
 }
+.wm-opencode-panel .wm-opencode-discovering {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
 .wm-opencode-panel .wm-opencode-disclosure {
   font-size: 11px;
   border-top: 1px solid var(--line);

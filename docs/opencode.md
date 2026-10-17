@@ -13,10 +13,11 @@ ArchMap can connect to an existing local OpenCode server, capture source before 
    Alternatively, start `opencode serve --port 4096 --hostname 127.0.0.1` and attach your terminal client to that server. Create the session in OpenCode.
 
 2. Run ArchMap with a configured root containing that repository, and open its map.
-3. Select **Sessions** in the workspace navigation.
-4. Enter `http://127.0.0.1:4096`. If OpenCode uses HTTP Basic authentication, expand the authentication section and enter its username and password. OpenCode's default username is `opencode`.
-5. Connect, select an idle session, then choose **Track next task**. ArchMap captures the current working source, including uncommitted changes.
-6. Submit the task in OpenCode. Keep ArchMap's session panel open. After activity returns to idle, a read-only change review opens automatically. You can also choose **Review changes since baseline** while the session is idle.
+3. Select **Changes**, then **Track an agent task**.
+4. ArchMap looks for a local OpenCode server already scoped to this repository. It checks `ARCHMAP_OPENCODE_URL`/`OPENCODE_URL`, an `OPENCODE_PORT` override, then the loopback ports 4095–4100 (OpenCode's default is 4096). When it finds one, it connects and lists sessions automatically.
+5. If no server is found, enter `http://127.0.0.1:4096` and connect. If OpenCode uses HTTP Basic authentication, expand the authentication section and enter its username and password. OpenCode's default username is `opencode`.
+6. Select an idle session, then choose **Track next task**. ArchMap captures the current working source, including uncommitted changes.
+7. Submit the task in OpenCode. Keep ArchMap's session panel open. After activity returns to idle, a read-only change review opens automatically. You can also choose **Review changes since baseline** while the session is idle.
 
 Use **Capture a new baseline** before the next task if you want a separate review. Otherwise reviews remain cumulative from the original capture. Closing a review preserves your editable map. **Disconnect and clear baseline** removes the connection credentials and snapshot from server memory.
 
@@ -35,6 +36,7 @@ The source reader's JS/TS support, exclusions, configured-root and symlink bound
 ## Lifecycle and limitations
 
 - Only loopback HTTP origins are accepted. `localhost` is pinned to `127.0.0.1`; redirects and embedded URL credentials are rejected. Remote/cloud OpenCode servers and TLS termination are outside this first adapter.
+- Auto-discovery probes loopback candidates only and accepts a server solely when its reported `/path` directory is the selected map's canonical root. A server scoped to another folder is left alone and the manual address form is shown.
 - The OpenCode directory and session directory must match the selected map's canonical root. Sessions from other folders are excluded. ArchMap checks the existing server project without a directory override; it does not ask OpenCode to initialize a different project. Start/connect the intended OpenCode project instance if folders differ.
 - Polling occurs every 2.5 seconds while the session panel is mounted and the page is visible. Leaving Sessions, closing the page, or hiding it pauses observation. Reopening resumes it. This is status/message polling, not an SSE event history or a durable background watcher.
 - Completion is inferred from observed busy/retry → idle status, or a completed assistant response associated with a new user message. Fast tasks can be recognized through message completion even if their busy status was missed. Unsupported metadata/status shapes produce errors rather than a fabricated completion signal.
@@ -44,8 +46,8 @@ The source reader's JS/TS support, exclusions, configured-root and symlink bound
 
 ## Implementation and validation
 
-`server/opencode.ts` is a small HTTP adapter over documented GET endpoints; it has no SDK process launcher. `server/app.ts` exposes narrowly scoped connect/list/track/poll/review/disconnect routes under `/api/opencode`, using the same Host/Origin and repository-root boundaries as analysis. Capture/review shares the source-scan concurrency guard. Shared schemas describe connection metadata and working-tree baseline provenance.
+`server/opencode.ts` is a small HTTP adapter over documented GET endpoints; it has no SDK process launcher. `server/app.ts` exposes narrowly scoped auto/connect/list/track/poll/review/disconnect routes under `/api/opencode`, using the same Host/Origin and repository-root boundaries as analysis. Capture/review shares the source-scan concurrency guard. Shared schemas describe connection metadata and working-tree baseline provenance.
 
-Tests use a local HTTP fixture to cover task completion, pre-existing dirty source, auth, URL/redirect restrictions, foreign sessions, invalid status data, root/symlink boundaries, and exclusively GET requests to OpenCode. Browser tests cover automatic review and preservation of editable maps at desktop and phone widths.
+Tests use a local HTTP fixture to cover task completion, pre-existing dirty source, auth, URL/redirect restrictions, foreign sessions, invalid status data, root/symlink boundaries, auto-discovery, and exclusively GET requests to OpenCode. Browser tests cover automatic review and preservation of editable maps at desktop and phone widths.
 
 An isolated smoke test against installed OpenCode **1.19.3** verified real connection, session listing, baseline capture, and source review. It created session metadata and changed a synthetic source fixture; it did not run an actual model task. Automatic completion is covered by the protocol fixture and browser tests. Broader OpenCode-version compatibility is not established.

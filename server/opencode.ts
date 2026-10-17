@@ -60,10 +60,26 @@ export function localOpenCodeUrl(input: string) {
   if (url.hostname === 'localhost') url.hostname = '127.0.0.1';
   return url.origin;
 }
+export function openCodeCandidates() {
+  const urls: string[] = [];
+  const env = process.env.ARCHMAP_OPENCODE_URL || process.env.OPENCODE_URL;
+  if (env) {
+    try {
+      urls.push(localOpenCodeUrl(env));
+    } catch {
+      // Ignore a malformed env override and fall back to the default ports.
+    }
+  }
+  const port = Number(process.env.OPENCODE_PORT || process.env.ARCHMAP_OPENCODE_PORT);
+  if (Number.isInteger(port) && port > 0 && port < 65536) urls.push(`http://127.0.0.1:${port}`);
+  for (const p of [4096, 4097, 4098, 4099, 4100, 4095]) urls.push(`http://127.0.0.1:${p}`);
+  return [...new Set(urls)];
+}
 async function readJson(
   connection: Connection,
   route: string,
   params: Record<string, string> = {},
+  timeoutMs = 8000,
 ) {
   const url = new URL(route, connection.baseUrl);
   // Stay in the server's existing project. A directory override could initialize
@@ -74,7 +90,7 @@ async function readJson(
     response = await fetch(url, {
       method: 'GET',
       redirect: 'error',
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: connection.authorization ? { Authorization: connection.authorization } : {},
     });
   } catch {
@@ -174,6 +190,37 @@ export class OpenCodeReview {
       throw new Error('OpenCode must be scoped to the same repository folder as this map.');
     if (epoch !== this.epoch) throw new Error('The connection changed while connecting. Retry.');
     this.connection = candidate;
+    this.tracking = null;
+    if (this.expiryTimer) clearTimeout(this.expiryTimer);
+    this.expiryTimer = setTimeout(() => this.disconnect(), 3600000);
+    this.expiryTimer.unref();
+    return this.status();
+  }
+  // Find a local OpenCode server already scoped to this repository, so the
+  // common case needs no address or credentials in the UI.
+  async autoConnect(input: { path: string }) {
+    const epoch = ++this.epoch;
+    const root = await resolveRoot(this.allowedRoot, input.path);
+    const probe = async (baseUrl: string) => {
+      const connection: Connection = { baseUrl, root, expires: Date.now() + 3600000 };
+      try {
+        const remotePath = z
+          .object({ directory: z.string() })
+          .parse(await readJson(connection, '/path', {}, 700));
+        return path.isAbsolute(remotePath.directory) && path.resolve(remotePath.directory) === root
+          ? connection
+          : null;
+      } catch {
+        return null;
+      }
+    };
+    const found = (await Promise.all(openCodeCandidates().map(probe))).find(Boolean) ?? null;
+    if (!found)
+      throw new Error(
+        'No local OpenCode server found for this repository. Start it with `opencode --port 4096` here, or enter an address.',
+      );
+    if (epoch !== this.epoch) throw new Error('The connection changed while connecting. Retry.');
+    this.connection = found;
     this.tracking = null;
     if (this.expiryTimer) clearTimeout(this.expiryTimer);
     this.expiryTimer = setTimeout(() => this.disconnect(), 3600000);

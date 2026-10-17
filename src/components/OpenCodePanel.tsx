@@ -34,7 +34,10 @@ export default function OpenCodePanel({
   const [selected, setSelected] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
+  const [discovering, setDiscovering] = useState(false);
+  const [autoFailed, setAutoFailed] = useState(false);
   const active = useRef(true);
+  const autoTried = useRef(false);
   const onReviewRef = useRef(onReview);
   onReviewRef.current = onReview;
   const sameRoot = connection.connected && connection.root === root;
@@ -48,13 +51,33 @@ export default function OpenCodePanel({
   }
   useEffect(() => {
     active.current = true;
-    request('/api/opencode/status')
-      .then((raw) => {
-        if (active.current) setConnection(agentConnectionSchema.parse(raw));
-      })
-      .catch((e) => {
-        if (active.current) setError(e.message);
-      });
+    (async () => {
+      let raw: AgentConnection;
+      try {
+        raw = agentConnectionSchema.parse(await request('/api/opencode/status'));
+      } catch (e) {
+        if (active.current) setError(e instanceof Error ? e.message : 'OpenCode status failed.');
+        return;
+      }
+      if (!active.current) return;
+      setConnection(raw);
+      if (!root || (raw.connected && raw.root === root) || autoTried.current) return;
+      autoTried.current = true;
+      setDiscovering(true);
+      try {
+        const next = agentConnectionSchema.parse(
+          await request('/api/opencode/auto', { path: root }),
+        );
+        if (active.current) {
+          setConnection(next);
+          setAutoFailed(false);
+        }
+      } catch {
+        if (active.current) setAutoFailed(true);
+      } finally {
+        if (active.current) setDiscovering(false);
+      }
+    })();
     return () => {
       active.current = false;
     };
@@ -153,6 +176,17 @@ export default function OpenCodePanel({
         >
           {connection.connected && (
             <p>Another repository is connected. Connecting here replaces its in-memory baseline.</p>
+          )}
+          {discovering && (
+            <p className="wm-opencode-discovering">
+              <LoaderCircle size={14} className="spinning" /> Looking for a local OpenCode server…
+            </p>
+          )}
+          {autoFailed && !discovering && (
+            <p className="wm-subtle">
+              No local OpenCode server found. Start it with <code>opencode --port 4096</code> here,
+              or enter an address below.
+            </p>
           )}
           <label>
             Local OpenCode address
