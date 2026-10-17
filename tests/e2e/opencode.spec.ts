@@ -68,7 +68,8 @@ for (const width of [1440, 390]) {
       await page.getByRole('button', { name: 'Component', exact: true }).click();
       await page.getByLabel('New component name').fill('My planned cache');
       await page.getByRole('button', { name: 'Add component', exact: true }).click();
-      await page.getByRole('button', { name: 'Sessions', exact: true }).click();
+      await page.getByRole('button', { name: 'Changes', exact: true }).click();
+      await page.getByRole('button', { name: 'Track an agent task', exact: true }).click();
       await page.getByLabel('OpenCode server address').fill(`http://127.0.0.1:${address.port}`);
       await page.getByText('Server authentication (optional)', { exact: true }).click();
       await page.getByLabel('OpenCode password').fill('synthetic-password');
@@ -103,7 +104,8 @@ for (const width of [1440, 390]) {
       await expect(page.locator('.react-flow__node')).toHaveCount(3);
       const previousPolls = calls.filter((call) => call === 'GET /session/status').length;
       await page.getByRole('button', { name: 'Architecture', exact: true }).click();
-      await page.getByRole('button', { name: 'Sessions', exact: true }).click();
+      await page.getByRole('button', { name: 'Changes', exact: true }).click();
+      await page.getByRole('button', { name: 'Track an agent task', exact: true }).click();
       await expect
         .poll(() => calls.filter((call) => call === 'GET /session/status').length)
         .toBeGreaterThan(previousPolls + 1);

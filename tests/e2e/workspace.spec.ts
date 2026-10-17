@@ -197,7 +197,7 @@ test('model settings clear the credential field and never include keys in map ex
   );
   await page.goto('/#workspace/example');
   await expect(page.locator('.react-flow__node')).toHaveCount(9);
-  await page.getByRole('button', { name: 'Connections', exact: true }).click();
+  await page.getByRole('button', { name: 'Model and agent settings', exact: true }).click();
   await page.getByLabel('Model name', { exact: true }).fill('test-model');
   await page.getByLabel('Model API key').fill('synthetic-key');
   await page.getByRole('button', { name: 'Use this model' }).click();

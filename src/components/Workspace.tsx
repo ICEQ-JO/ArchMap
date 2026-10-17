@@ -557,10 +557,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     { name: 'Architecture', icon: Network, hint: 'The big picture' },
     { name: 'Flows', icon: Play, hint: 'Follow source connections' },
     { name: 'Changes', icon: GitCompareArrows, hint: 'Review the working tree' },
-    { name: 'Sessions', icon: Cable, hint: 'Follow a coding agent' },
     { name: 'Ask', icon: MessageSquare, hint: 'Understand a feature' },
-    { name: 'Connections', icon: Settings2, hint: 'Models and integrations' },
-    { name: 'Roadmap', icon: GitBranch, hint: 'What works. What comes next.' },
   ];
   const descriptions: Record<string, string> = {
     Architecture: 'Understand the parts. Follow the evidence.',
@@ -569,7 +566,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     Sessions: 'Track a local OpenCode task and review its actual changes.',
     Ask: 'Ask a question. Get an explanation grounded in your source.',
     Connections: 'Connect a model for understanding, or an agent for change review.',
-    Roadmap: 'A map of ArchMap today, and the direction ahead.',
   };
   return (
     <div className="wm-workspace">
@@ -613,6 +609,10 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             <Upload size={16} />
             Import map
           </button>
+          <a href="/product-map.html" target="_blank" rel="noreferrer">
+            <GitBranch size={16} />
+            Capability map
+          </a>
           <a href="https://github.com/ICEQ-JO/ArchMap#readme" target="_blank" rel="noreferrer">
             <CircleHelp size={16} />
             Documentation
@@ -637,6 +637,14 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             <h1>{showOpen ? 'Open a project' : view}</h1>
           </div>
           <div className="wm-workspace-header-actions">
+            <button
+              className="wm-small-button"
+              aria-label="Model and agent settings"
+              onClick={() => navigate('Connections')}
+            >
+              <Settings2 size={15} />
+              <span>Settings</span>
+            </button>
             <button
               className="wm-small-button"
               aria-label="Open repository"
@@ -798,11 +806,6 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             {view !== 'Changes' && (
               <div className="wm-page-intro">
                 <p>{descriptions[view]}</p>
-                {view === 'Roadmap' && (
-                  <a href="/product-map.html" target="_blank" rel="noreferrer">
-                    Open standalone map <ArrowRight size={14} />
-                  </a>
-                )}
               </div>
             )}
             {view === 'Architecture' && (
@@ -1411,23 +1414,33 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             {view === 'Changes' && (
               <main className="wm-review-page">
                 {project?.root ? (
-                  <ChangesPanel
-                    embedded
-                    key={sessionReview?.report.current.analyzedAt ?? 'git-review'}
-                    initialReport={sessionReview?.report}
-                    sessionTitle={sessionReview?.title}
-                    sessionRequest={sessionReview?.request}
-                    onRefresh={
-                      sessionReview
-                        ? () => request<Comparison>('/api/opencode/review', {})
-                        : undefined
-                    }
-                    root={project.root}
-                    focus={project.focus ?? ''}
-                    onClose={() => {
-                      setView('Architecture');
-                    }}
-                  />
+                  <>
+                    <div className="wm-changes-agent-entry">
+                      <span>
+                        <Cable size={15} /> Following a coding agent?
+                      </span>
+                      <button className="wm-small-button" onClick={() => navigate('Sessions')}>
+                        Track an agent task <ArrowRight size={14} />
+                      </button>
+                    </div>
+                    <ChangesPanel
+                      embedded
+                      key={sessionReview?.report.current.analyzedAt ?? 'git-review'}
+                      initialReport={sessionReview?.report}
+                      sessionTitle={sessionReview?.title}
+                      sessionRequest={sessionReview?.request}
+                      onRefresh={
+                        sessionReview
+                          ? () => request<Comparison>('/api/opencode/review', {})
+                          : undefined
+                      }
+                      root={project.root}
+                      focus={project.focus ?? ''}
+                      onClose={() => {
+                        setView('Architecture');
+                      }}
+                    />
+                  </>
                 ) : (
                   <div className="wm-page-empty">
                     <GitCompareArrows size={32} />
@@ -1443,6 +1456,9 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             {view === 'Sessions' && (
               <main className="wm-task-page">
                 <div className="wm-task-context">
+                  <button className="wm-text-button" onClick={() => navigate('Changes')}>
+                    <ArrowLeft size={14} /> Back to changes
+                  </button>
                   <span className="wm-nav-caption">CODING AGENT</span>
                   <h2>Keep up with your agent.</h2>
                   <p>
@@ -1500,6 +1516,9 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
             }
             {view === 'Connections' && (
               <main className="wm-connections-page">
+                <button className="wm-text-button" onClick={() => navigate('Architecture')}>
+                  <ArrowLeft size={14} /> Back to architecture
+                </button>
                 <section className="wm-connection-card">
                   <div className="wm-connection-label">
                     <Settings2 size={22} />
@@ -1533,16 +1552,16 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       Runtime service connections and traces are on the roadmap. Current maps
                       describe static source relationships.
                     </p>
-                    <button className="wm-small-button" onClick={() => navigate('Roadmap')}>
-                      View roadmap <ArrowRight size={15} />
-                    </button>
+                    <a
+                      className="wm-small-button"
+                      href="/product-map.html"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View capability map <ArrowRight size={15} />
+                    </a>
                   </section>
                 </div>
-              </main>
-            )}
-            {view === 'Roadmap' && (
-              <main className="wm-roadmap-page">
-                <iframe title="ArchMap capability roadmap" src="/product-map.html" />
               </main>
             )}
           </>

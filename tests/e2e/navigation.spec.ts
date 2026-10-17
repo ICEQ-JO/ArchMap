@@ -19,31 +19,20 @@ for (const width of [1440, 390, 320]) {
     }
     await page.getByRole('navigation').getByRole('button', { name: 'Ask', exact: true }).click();
     await page.getByLabel('Question about your codebase').fill('Map billing permissions');
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Connections', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Model and agent settings', exact: true }).click();
     await expect(page.getByLabel('Model API base URL')).toBeVisible();
     await expect(page.getByLabel('OpenCode server address')).toHaveCount(0);
     await page
       .getByRole('navigation')
-      .getByRole('button', { name: 'Sessions', exact: true })
+      .getByRole('button', { name: 'Changes', exact: true })
       .click();
+    await page.getByRole('button', { name: 'Track an agent task', exact: true }).click();
     await expect(page.getByLabel('OpenCode server address')).toBeVisible();
     await expect(page.getByLabel('Model API key')).toHaveCount(0);
     await page.getByRole('navigation').getByRole('button', { name: 'Ask', exact: true }).click();
     await expect(page.getByLabel('Question about your codebase')).toHaveValue(
       'Map billing permissions',
     );
-    await page
-      .getByRole('navigation')
-      .getByRole('button', { name: 'Roadmap', exact: true })
-      .click();
-    await expect(
-      page
-        .frameLocator('iframe')
-        .getByRole('heading', { name: 'ArchMap · Product capability map', exact: true }),
-    ).toBeVisible();
     await page
       .getByRole('navigation')
       .getByRole('button', { name: 'Architecture', exact: true })
