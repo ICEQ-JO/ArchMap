@@ -113,7 +113,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   const reviewedTurns = useRef(new Set<string>());
   const fileInput = useRef<HTMLInputElement>(null);
   const init = useRef(false);
-  const { fitView, setCenter } = useReactFlow<ArchitectureFlowNode>();
+  const { fitView, setCenter, getViewport } = useReactFlow<ArchitectureFlowNode>();
   const selected = project?.nodes.find((n) => n.id === selectedId);
   const selectedEdge = project?.edges.find((e) => e.id === selectedEdgeId);
   const walk = useMemo(
@@ -171,6 +171,22 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
     setFlowId(null);
     setFlowIndex(0);
   };
+  // Fitting a large graph makes every card unreadable. Show a legible cluster
+  // instead, and leave Fit map for the whole picture.
+  function focusLegible(target: Project, duration = 350) {
+    const hub = [...target.nodes].sort(
+      (a, b) =>
+        target.edges.filter((e) => e.source === b.id || e.target === b.id).length -
+        target.edges.filter((e) => e.source === a.id || e.target === a.id).length,
+    )[0];
+    setTimeout(async () => {
+      await fitView({ padding: 0.22, maxZoom: 1, duration });
+      if (getViewport().zoom < 0.75 && hub) {
+        void setCenter(hub.position.x + 122, hub.position.y + 65, { zoom: 0.85, duration });
+        setNotice('Showing a readable area. Fit map shows the whole graph.');
+      }
+    }, 120);
+  }
   async function openProject(example: boolean, refresh = false) {
     if (loading) return;
     setLoading(true);
@@ -182,7 +198,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         refresh && project ? project.root : path,
         refresh ? (project?.focus ?? focus) : focus,
       );
-      setProject(refresh && project ? refreshProject(fresh, project) : arrangeSparse(fresh));
+      const next = refresh && project ? refreshProject(fresh, project) : arrangeSparse(fresh);
+      setProject(next);
       setView('Architecture');
       setHistory([]);
       setDirty(refresh);
@@ -190,7 +207,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       setServerSession(true);
       setShowOpen(false);
       resetSelection();
-      setTimeout(() => fitView({ padding: 0.25, duration: 350 }), 100);
+      focusLegible(next);
       if (refresh)
         setNotice('Repository refreshed. Your positions and manual components were preserved.');
     } catch (e) {
@@ -311,7 +328,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       resetSelection();
       setError('');
       setNotice('Map imported. Refresh its repository to start a question session.');
-      setTimeout(() => fitView({ padding: 0.25 }), 100);
+      focusLegible(imported);
     } catch {
       setError('Could not import this map. Choose a valid .archmap.json file under 8 MB.');
     }
@@ -402,7 +419,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
         id: edge.id,
         source: edge.source,
         target: edge.target,
-        label: edge.label,
+        label:
+          selectedEdgeId === edge.id || edge.id === activeWalkEdge?.id ? edge.label : undefined,
         type: 'smoothstep',
         selected: selectedEdgeId === edge.id,
         animated: edge.id === activeWalkEdge?.id,
@@ -497,15 +515,16 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
   function switchView() {
     if (!project?.alternate) return;
     const { nodes, edges, flows } = project;
-    edit({
+    const next = {
       ...project,
       ...project.alternate,
       alternate: { nodes, edges, flows },
       level: project.level === 'architecture' ? 'modules' : 'architecture',
-    });
+    } as Project;
+    edit(next);
     resetSelection();
     setQuery('');
-    setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100);
+    focusLegible(next, 300);
   }
   function applyProposal(proposal: Proposal) {
     if (!project || proposal.projectId !== project.id) return;
@@ -513,18 +532,19 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
       project.level === 'modules'
         ? { nodes: project.nodes, edges: project.edges, flows: project.flows }
         : project.alternate;
-    edit({
+    const next = {
       ...project,
       ...proposal.graph,
       alternate: original,
       level: 'architecture',
       summary: proposal.summary,
-    });
+    } as Project;
+    edit(next);
     resetSelection();
     setQuery('');
     setView('Architecture');
     setNotice('Proposed map applied. Undo restores your previous view.');
-    setTimeout(() => fitView({ padding: 0.2, duration: 300 }), 100);
+    focusLegible(next, 300);
   }
   function navigate(next: string) {
     setView(next);
