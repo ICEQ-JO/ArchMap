@@ -78,8 +78,12 @@ export function buildArchitecture(project: Project, calls: CallSite[] = []): Pro
         exports: [...node.exports],
       });
   }
-  for (const group of groups.values())
-    group.description = `${group.members!.length} source file${group.members!.length === 1 ? '' : 's'} grouped by paths and exported names. ${group.exports.length ? `Includes ${group.exports.slice(0, 4).join(', ')}.` : ''} This boundary is a structural suggestion, not a verified deployment boundary.`;
+  for (const group of groups.values()) {
+    const files = group.members!;
+    group.description = `${files.length} source file${files.length === 1 ? '' : 's'}: ${files
+      .slice(0, 6)
+      .join(', ')}${files.length > 6 ? `, +${files.length - 6} more` : ''}`;
+  }
   const edges = new Map<string, Project['edges'][number]>();
   for (const edge of project.edges) {
     const source = membership.get(edge.source)!;
@@ -114,7 +118,7 @@ export function buildArchitecture(project: Project, calls: CallSite[] = []): Pro
       id,
       title: humanize(sites[0].caller),
       origin: 'observed',
-      description: `Follow the imported calls in ${sites[0].caller} (${sites[0].file}). Steps use source order; runtime paths may differ.`,
+      description: `Imported calls in ${sites[0].caller} (${sites[0].file}).`,
       steps: sites.slice(0, 100).map((call, index) => ({
         id: `${id}:${index}`,
         edgeId: `${membership.get(call.file)}->${membership.get(call.target)}`,

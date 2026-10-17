@@ -232,7 +232,7 @@ export async function analyze(
       kind: kindFor(file),
       description: exports.length
         ? `Exports ${exports.slice(0, 5).join(', ')}${exports.length > 5 ? ', …' : ''}.`
-        : 'Source module. Select a connection to inspect its import evidence.',
+        : 'No exported symbols.',
       exports,
       lines: content.split(/\r?\n/).length,
       contentHash: hash,

@@ -828,8 +828,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                       </span>
                       <span className="wm-map-origin">
                         {project.level === 'architecture'
-                          ? 'Inferred responsibilities · verify against source'
-                          : 'Static dependencies · not runtime order'}
+                          ? 'Inferred boundaries · observed connections'
+                          : 'Static imports · not runtime order'}
                       </span>
                     </div>
                     {project.edges.length < project.nodes.length / 2 &&
@@ -837,9 +837,8 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         <div className="wm-coverage-notice">
                           <CircleHelp size={16} />
                           <span>
-                            <strong>Limited connection coverage.</strong> These areas are inferred
-                            from source. Unconnected cards do not prove isolation. Try source files
-                            or ask about a feature.
+                            <strong>Sparse connections.</strong> Unconnected cards are not proof of
+                            isolation. Try Source files, or ask about a feature.
                           </span>
                         </div>
                       )}
@@ -1142,9 +1141,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                             <div className="wm-walk-progress">
                               <span style={{ width: `${((walkStep + 1) / walk.length) * 100}%` }} />
                             </div>
-                            <p className="wm-walk-disclaimer">
-                              Static dependency traversal. Does not establish runtime order.
-                            </p>
+                            <p className="wm-walk-disclaimer">Static dependency traversal.</p>
                           </div>
                         ) : (
                           <div className="wm-walk-player">
@@ -1203,10 +1200,10 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                             <p className="wm-detail-description">
                               {selected?.description ||
                                 (selectedEdge?.origin === 'manual'
-                                  ? 'A user-authored relationship. No source evidence is attached.'
+                                  ? 'User-authored relationship. No source evidence.'
                                   : selectedEdge?.origin === 'inferred'
-                                    ? 'A proposed architectural relationship. Check this interpretation against the supporting source.'
-                                    : 'The supporting source for this connection is shown below.')}
+                                    ? 'Proposed relationship. Check the source below.'
+                                    : 'Supporting source below.')}
                             </p>
                             {selected && (
                               <>
@@ -1314,8 +1311,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                         {project.revision?.slice(0, 7) || 'Unversioned'} ·{' '}
                         {dirty ? 'Unsaved edits' : 'Source snapshot'}
                       </span>
-                      <span>Drag to pan · select a card for source</span>
-                      <span>Repository code is never executed</span>
+                      <span>Read-only · repository code is never executed</span>
                     </footer>
                   </>
                 ) : (
@@ -1402,10 +1398,7 @@ function WorkspaceInner({ initialExample }: { initialExample: boolean }) {
                     <div className="wm-page-empty">
                       <Play size={32} />
                       <h2>Follow the connections.</h2>
-                      <p>
-                        Choose a flow to read its steps alongside the supporting source. Static
-                        source order does not establish runtime execution order.
-                      </p>
+                      <p>Choose a flow to read its steps alongside the supporting source.</p>
                     </div>
                   )}
                 </section>
