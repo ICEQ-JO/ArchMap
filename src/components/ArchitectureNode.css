@@ -1,0 +1,176 @@
+/* ArchitectureNode — React Flow graph node */
+
+.arch-node {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  width: 260px;
+  min-height: 100px;
+  cursor: pointer;
+  transition: all var(--duration-normal) var(--ease-out);
+  font-size: var(--text-sm);
+}
+
+.arch-node:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+/* Selected state */
+.arch-node.is-selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+/* Focused state (during flow navigation) */
+.arch-node.is-focused {
+  border-color: var(--color-accent);
+  background: var(--color-accent-light);
+}
+
+/* Dimmed state (unfocused during flow) */
+.arch-node.is-dimmed {
+  opacity: 0.4;
+}
+
+/* Kind-specific left border accent */
+.arch-node--entry {
+  border-left-width: 4px;
+  border-left-color: #0066ff; /* Blue for entry points */
+}
+
+.arch-node--service {
+  border-left-width: 4px;
+  border-left-color: #10b981; /* Green for services */
+}
+
+.arch-node--data {
+  border-left-width: 4px;
+  border-left-color: #8b5cf6; /* Purple for data */
+}
+
+.arch-node--ui {
+  border-left-width: 4px;
+  border-left-color: #f59e0b; /* Orange for UI */
+}
+
+.arch-node--module {
+  border-left-width: 4px;
+  border-left-color: var(--color-gray-400);
+}
+
+.arch-node--external {
+  border-left-width: 4px;
+  border-left-color: var(--color-gray-300);
+  border-style: dashed;
+}
+
+/* Header */
+.arch-node__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+  gap: var(--space-2);
+}
+
+.arch-node__kind {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.arch-node__origin {
+  font-size: 10px;
+  font-weight: var(--font-semibold);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-100);
+  color: var(--color-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.arch-node[data-origin="manual"] .arch-node__origin {
+  background: var(--color-info-light);
+  color: #1e40af;
+}
+
+.arch-node[data-origin="inferred"] .arch-node__origin {
+  background: var(--color-warning-light);
+  color: #92400e;
+}
+
+/* Body */
+.arch-node__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.arch-node__label {
+  font-size: var(--text-md);
+  font-weight: var(--font-semibold);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.arch-node__desc {
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  color: var(--color-text-muted);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.arch-node__stats {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-1);
+}
+
+.arch-node__stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+/* React Flow handles */
+.arch-node__handle {
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent);
+  border: 2px solid var(--color-surface);
+}
+
+.arch-node__handle:hover {
+  width: 10px;
+  height: 10px;
+}
+
+/* Compact mode for smaller nodes */
+.arch-node--compact {
+  width: 200px;
+  padding: var(--space-2);
+}
+
+.arch-node--compact .arch-node__label {
+  font-size: var(--text-sm);
+}
+
+.arch-node--compact .arch-node__desc {
+  display: none;
+}

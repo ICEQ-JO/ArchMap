@@ -6,18 +6,15 @@ import {
   Network,
   Search,
   Sparkles,
+  X,
+  Cable,
   ArrowRight,
   ShieldCheck,
-  X,
   ExternalLink,
-  Layers,
-  FileCode2,
-  Cable,
-  CheckCircle2,
-  Terminal,
   HelpCircle,
 } from 'lucide-react';
 import { Brand, Github } from './Brand';
+import { Button } from './ui/Button';
 import ProjectCard from './ProjectCard';
 import EmptyState from './EmptyState';
 import ProjectSetup from './ProjectSetup';
@@ -53,9 +50,7 @@ export default function Dashboard({
 }: DashboardProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [search, setSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'local' | 'sketch' | 'example'>(
-    'all',
-  );
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'local' | 'sketch' | 'example'>('all');
   const [sortBy, setSortBy] = useState<'recent' | 'components' | 'name'>('recent');
   const [notice, setNotice] = useState('');
   const [serverStatus, setServerStatus] = useState<ServerStatus | null>(null);
@@ -176,62 +171,47 @@ export default function Dashboard({
     }
   };
 
-  // Filter and sort projects
+  // Compute telemetry stats from projects
+  const telemetry = useMemo(() => {
+    return {
+      mapsCount: projects.length,
+      totalFiles: projects.reduce((sum, p) => sum + p.filesScanned, 0),
+      totalComponents: projects.reduce((sum, p) => sum + p.nodes.length, 0),
+      totalConnections: projects.reduce((sum, p) => sum + p.edges.length, 0),
+    };
+  }, [projects]);
+
   const filteredProjects = useMemo(() => {
     let result = [...projects];
 
-    // Category filter
     if (categoryFilter === 'local') {
-      result = result.filter((p) => p.mode === 'local' && Boolean(p.root));
+      result = result.filter((p) => p.mode === 'local' && p.root);
     } else if (categoryFilter === 'sketch') {
       result = result.filter((p) => !p.root && p.mode !== 'example');
     } else if (categoryFilter === 'example') {
       result = result.filter((p) => p.mode === 'example');
     }
 
-    // Search query
     const q = search.trim().toLowerCase();
     if (q) {
       result = result.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
-          (p.summary && p.summary.toLowerCase().includes(q)) ||
-          (p.root && p.root.toLowerCase().includes(q)) ||
-          p.nodes.some(
-            (n) =>
-              n.label.toLowerCase().includes(q) || (n.file && n.file.toLowerCase().includes(q)),
-          ),
+          p.summary?.toLowerCase().includes(q) ||
+          p.root?.toLowerCase().includes(q),
       );
     }
 
-    // Sorting
     if (sortBy === 'components') {
       result.sort((a, b) => b.nodes.length - a.nodes.length);
     } else if (sortBy === 'name') {
       result.sort((a, b) => a.name.localeCompare(b.name));
     } else {
-      // recent
       result.sort((a, b) => new Date(b.analyzedAt).getTime() - new Date(a.analyzedAt).getTime());
     }
 
     return result;
   }, [projects, categoryFilter, search, sortBy]);
-
-  // Aggregate telemetry
-  const telemetry = useMemo(() => {
-    const totalFiles = projects.reduce((acc, p) => acc + (p.filesScanned || 0), 0);
-    const totalComponents = projects.reduce((acc, p) => acc + (p.nodes.length || 0), 0);
-    const totalConnections = projects.reduce(
-      (acc, p) => acc + (p.edges.filter((e) => e.origin === 'observed').length || 0),
-      0,
-    );
-    return {
-      mapsCount: projects.length,
-      totalFiles,
-      totalComponents,
-      totalConnections,
-    };
-  }, [projects]);
 
   return (
     <div className="wm-dashboard">

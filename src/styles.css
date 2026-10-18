@@ -36,25 +36,26 @@
 }
 :root {
   font-family: Geist, sans-serif;
-  color: #292927;
-  background: #f7f7f5;
+  color: var(--color-text);
+  background: var(--color-bg);
   color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --sans: Geist, sans-serif;
-  --bg: #f7f7f5;
-  --surface: #fff;
-  --surface-raised: #efefec;
-  --line: #deded8;
-  --text: #292927;
-  --muted: #676761;
-  --accent: #30302e;
+  /* Legacy vars for compatibility - point to new tokens */
+  --sans: var(--font-sans);
+  --bg: var(--color-bg);
+  --surface: var(--color-surface);
+  --surface-raised: var(--color-surface-raised);
+  --line: var(--color-border);
+  --text: var(--color-text);
+  --muted: var(--color-text-muted);
+  --accent: var(--color-accent);
   --accent-ink: #fff;
-  --accent-wash: #30302e14;
-  --mono: 'Geist Mono', monospace;
+  --accent-wash: var(--color-accent-light);
+  --mono: var(--font-mono);
   --pixel: 'Jersey 10', sans-serif;
-  --radius: 12px;
+  --radius: var(--radius-lg);
 }
 * {
   box-sizing: border-box;

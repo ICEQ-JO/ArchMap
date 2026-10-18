@@ -1,0 +1,49 @@
+/* Badge Component Styles */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+/* Sizes */
+.badge--sm {
+  height: 20px;
+  padding: 0 var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.badge--md {
+  height: 24px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-sm);
+}
+
+/* Variants */
+.badge--default {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+.badge--success {
+  background: var(--color-success-light);
+  color: #065f46;
+}
+
+.badge--warning {
+  background: var(--color-warning-light);
+  color: #92400e;
+}
+
+.badge--error {
+  background: var(--color-error-light);
+  color: #991b1b;
+}
+
+.badge--info {
+  background: var(--color-info-light);
+  color: #1e40af;
+}

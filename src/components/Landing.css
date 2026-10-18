@@ -1,10 +1,10 @@
-/* Pixel Atlas: source-backed software exploration in amber, black and chalk. */
+/* Pixel Atlas: Modern architecture mapping with clean blue accents. */
 .atlas-landing {
-  --paper: #fafaf7;
-  --ink: #24241f;
-  --quiet: #626257;
-  --rule: #dcdcd1;
-  --amber: #efb965;
+  --paper: #ffffff;
+  --ink: #09090b;
+  --quiet: #71717a;
+  --rule: #e4e4e7;
+  --amber: #0066ff;
   --mono: 'Geist Mono', monospace;
   color: var(--ink);
   background: var(--paper);
@@ -51,7 +51,7 @@
 }
 .atlas-landing ::selection {
   background: #24241f;
-  color: #efb965;
+  color: #0066ff;
 }
 .atlas-landing .atlas-skip {
   position: fixed;
@@ -168,7 +168,7 @@
   max-width: 12ch;
 }
 .atlas-hero h1 > span {
-  color: #70451e;
+  color: #0052cc;
 }
 .atlas-hero-copy > p:first-of-type {
   font-size: 17px;
@@ -742,7 +742,7 @@
   font-size: clamp(42px, 5vw, 70px);
 }
 .atlas-workflow h2 > span {
-  color: #eabc76;
+  color: #3385ff;
 }
 .atlas-workflow-heading > p {
   color: #c0c0af;
@@ -803,9 +803,9 @@
   color: #fbf8eb;
 }
 .atlas-workflow-steps > button[aria-pressed='true'] .workflow-step-number {
-  background: #eabc76;
+  background: #3385ff;
   color: #2e2d24;
-  border-color: #eabc76;
+  border-color: #3385ff;
 }
 .atlas-workflow-steps > button[aria-pressed='true'] > svg {
   opacity: 1;
@@ -913,7 +913,7 @@
   display: flex;
   align-items: center;
   gap: 9px;
-  color: #eabc76;
+  color: #3385ff;
   font-size: 9px;
   padding: 15px 0;
   border-block: 1px solid #44473a;
