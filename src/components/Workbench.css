@@ -1513,6 +1513,86 @@
   height: 100%;
   background: #85856a;
 }
+.wm-workspace .wm-map-flows {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: min(340px, calc(100% - 28px));
+  max-height: calc(100% - 28px);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 16px;
+  box-shadow: 0 6px 22px #202a151a;
+  z-index: 5;
+  font-size: 13px;
+}
+.wm-map-flows .wm-flow-heading {
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+.wm-map-flows .wm-flow-walkthrough > h3 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+.wm-map-flows .wm-flow-step-controls {
+  margin: 14px 0;
+}
+.wm-map-flows .wm-flow-step-dots {
+  margin-top: 14px;
+}
+.wm-map-flows .wm-flow-step-dots button {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+.wm-map-flow-source {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.wm-map-flow-source h3 {
+  font: 11px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.wm-map-explainer {
+  margin: 0 24px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.wm-map-explainer summary {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+.wm-map-explainer ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  line-height: 1.6;
+}
+.wm-map-explainer strong {
+  color: var(--text);
+}
+.wm-origin-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid #a7a7a0;
+  vertical-align: middle;
+}
+.wm-origin-dot.is-observed {
+  border-color: #5f7a52;
+  background: #5f7a52;
+}
 @media (max-width: 1200px) {
   .wm-workspace-nav {
     width: 190px;
@@ -2114,4 +2194,308 @@
   background: #858579;
   margin-right: 5px;
   vertical-align: middle;
+}
+
+/* ==========================================================================
+   Dockable Developer Console & Diagnostics Drawer
+   ========================================================================== */
+
+.wm-dockable-console {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 340px;
+  background: #ffffff;
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.07);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  animation: consoleSlideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes consoleSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.wm-console-header {
+  height: 44px;
+  background: #fafaf8;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.wm-console-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #24241f;
+}
+
+.wm-console-badge {
+  font-size: 11px;
+  font-family: var(--mono, monospace);
+  background: #eaeae5;
+  color: #55554f;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+
+.wm-console-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wm-console-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  padding: 5px 11px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wm-console-tab:hover {
+  color: #24241f;
+  background: #f0f0ec;
+}
+
+.wm-console-tab.is-active {
+  color: #24241f;
+  background: #ffffff;
+  border-color: var(--line);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.wm-console-close-btn {
+  color: var(--muted);
+  padding: 5px;
+  border-radius: 4px;
+}
+.wm-console-close-btn:hover {
+  color: #24241f;
+  background: #f0f0ec;
+}
+
+.wm-console-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  max-height: 290px;
+  background: #ffffff;
+}
+
+/* Diagnostics tab */
+.wm-console-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.wm-console-card {
+  background: #fbfbf9;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wm-console-card h4 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0ec;
+}
+
+.wm-console-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.wm-console-stat-row span {
+  color: var(--muted);
+}
+
+.wm-console-stat-row strong {
+  color: #24241f;
+}
+
+.wm-console-stat-row code {
+  font-family: var(--mono, monospace);
+  font-size: 11px;
+  color: #24241f;
+  background: #eaeae5;
+  padding: 1px 5px;
+  border-radius: 3px;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wm-safety-pill {
+  font-size: 11px;
+  font-weight: 500;
+  color: #2e7d32 !important;
+  background: #e8f5e9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #c8e6c9;
+}
+
+.wm-console-warnings-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: #a43e22;
+}
+
+.wm-console-empty-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* Graph Queries Tab */
+.wm-console-queries-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.wm-console-query-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wm-console-query-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #24241f;
+}
+
+.wm-console-query-title small {
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--muted);
+}
+
+.wm-console-tags-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wm-console-node-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #f4f4f0;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  color: #24241f;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wm-console-node-chip:hover {
+  background: #e8e8e2;
+  border-color: #24241f;
+  transform: translateY(-1px);
+}
+
+.wm-console-node-chip span {
+  font-size: 10px;
+  font-family: var(--mono, monospace);
+  background: #eaeae5;
+  color: #676761;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.wm-console-node-chip.is-entry {
+  border-color: #cce1c9;
+  background: #f2f7f1;
+}
+
+.wm-console-node-chip.is-orphan {
+  border-color: #f6d1c6;
+  background: #fdf5f3;
+  color: #a43e22;
+}
+
+/* Git Tab */
+.wm-console-git-tab,
+.wm-console-agent-tab,
+.wm-console-audit-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 600px;
+}
+
+.wm-console-git-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.wm-console-git-row code {
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  background: #f4f4f0;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+
+.wm-console-git-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .wm-console-grid {
+    grid-template-columns: 1fr;
+  }
+  .wm-dockable-console {
+    max-height: 280px;
+  }
 }

@@ -118,6 +118,7 @@ export const fileChangeSchema = z.object({
   after: moduleSchema.optional(),
   beforeEvidence: evidenceSchema.optional(),
   afterEvidence: evidenceSchema.optional(),
+  patch: z.string().max(200000).optional(),
 });
 export const dependencyChangeSchema = z.object({
   source: z.string(),
@@ -156,6 +157,27 @@ export const comparisonSchema = z.object({
 });
 export type Comparison = z.infer<typeof comparisonSchema>;
 export type FileChange = z.infer<typeof fileChangeSchema>;
+
+export const refsSchema = z.object({
+  branch: z.string().nullable(),
+  sha: z.string().nullable(),
+  dirty: z.boolean(),
+  refs: z
+    .array(
+      z.object({
+        name: z.string().max(300),
+        sha: z.string().max(60),
+        kind: z.enum(['branch', 'tag']),
+      }),
+    )
+    .max(500),
+  recent: z
+    .array(
+      z.object({ sha: z.string().max(60), date: z.string().max(40), subject: z.string().max(300) }),
+    )
+    .max(50),
+});
+export type Refs = z.infer<typeof refsSchema>;
 
 export const codingSessionSchema = z.object({
   id: z.string().max(200),

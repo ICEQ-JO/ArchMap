@@ -160,76 +160,98 @@ export default function OpenCodePanel({
       {!root ? (
         <p>Open a local repository first.</p>
       ) : !sameRoot ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void act(async () => {
-              const next = agentConnectionSchema.parse(
-                await request('/api/opencode/connect', { path: root, baseUrl, username, password }),
-              );
-              if (active.current) {
-                setConnection(next);
-                setPassword('');
-              }
-            });
-          }}
-        >
+        <div className="wm-opencode-connect">
           {connection.connected && (
             <p>Another repository is connected. Connecting here replaces its in-memory baseline.</p>
           )}
           {discovering && (
             <p className="wm-opencode-discovering">
-              <LoaderCircle size={14} className="spinning" /> Looking for a local OpenCode server…
+              <LoaderCircle size={14} className="spinning" /> Checking for a running OpenCode
+              server…
             </p>
           )}
           {autoFailed && !discovering && (
-            <p className="wm-subtle">
-              No local OpenCode server found. Start it with <code>opencode --port 4096</code> here,
-              or enter an address below.
-            </p>
+            <p className="wm-subtle">No running OpenCode server found for this repository.</p>
           )}
-          <label>
-            Local OpenCode address
-            <input
-              aria-label="OpenCode server address"
-              type="url"
-              required
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-            />
-          </label>
-          <details>
-            <summary>Server authentication (optional)</summary>
-            <label>
-              Username
-              <input
-                aria-label="OpenCode username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                maxLength={100}
-              />
-            </label>
-            <label>
-              Password
-              <input
-                aria-label="OpenCode password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="off"
-                maxLength={2000}
-              />
-            </label>
-          </details>
-          <button className="wm-button wm-primary" disabled={pending}>
+          <button
+            className="wm-button wm-primary"
+            disabled={pending}
+            onClick={() =>
+              void act(async () => {
+                const next = agentConnectionSchema.parse(
+                  await request('/api/opencode/launch', { path: root }),
+                );
+                if (active.current) setConnection(next);
+              })
+            }
+          >
             {pending ? <LoaderCircle size={14} className="spinning" /> : <Cable size={14} />}{' '}
             Connect OpenCode
           </button>
-          <p>
-            Start OpenCode yourself in this repository, using <code>opencode --port 4096</code>.
-            ArchMap connects to its existing local HTTP server.
+          <p className="wm-subtle">
+            Starts <code>opencode serve</code> in this repository. Read-only; it never runs your
+            repository's code. Prompts are sent only when you ask for a review.
           </p>
-        </form>
+          <details className="wm-opencode-manual">
+            <summary>Connect to a server you already started</summary>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void act(async () => {
+                  const next = agentConnectionSchema.parse(
+                    await request('/api/opencode/connect', {
+                      path: root,
+                      baseUrl,
+                      username,
+                      password,
+                    }),
+                  );
+                  if (active.current) {
+                    setConnection(next);
+                    setPassword('');
+                  }
+                });
+              }}
+            >
+              <label>
+                Local OpenCode address
+                <input
+                  aria-label="OpenCode server address"
+                  type="url"
+                  required
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                />
+              </label>
+              <details>
+                <summary>Server authentication (optional)</summary>
+                <label>
+                  Username
+                  <input
+                    aria-label="OpenCode username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    maxLength={100}
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    aria-label="OpenCode password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="off"
+                    maxLength={2000}
+                  />
+                </label>
+              </details>
+              <button className="wm-small-button" disabled={pending}>
+                Connect to address
+              </button>
+            </form>
+          </details>
+        </div>
       ) : (
         <>
           <div className="wm-agent-link-status">
@@ -339,9 +361,10 @@ export default function OpenCodePanel({
         </p>
       )}
       <p className="wm-opencode-disclosure">
-        <ShieldCheck size={14} /> Read-only connection. No prompts, tools, or source are sent to
-        OpenCode. Credentials and one baseline stay in server memory for up to an hour. Changes from
-        other editors are included; session attribution is not proven.
+        <ShieldCheck size={14} /> Read-only connection: it never runs your repository. No prompts
+        are sent until you ask for an agent review. Credentials and one baseline stay in server
+        memory for up to an hour. Changes from other editors are included; session attribution is
+        not proven.
       </p>
     </div>
   );

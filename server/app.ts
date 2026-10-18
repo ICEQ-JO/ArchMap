@@ -5,7 +5,8 @@ import { z } from 'zod';
 import { analyze, resolveRoot } from './analyzer.js';
 import { proposeMap } from './proposals.js';
 import { explain } from './explain.js';
-import { compareWorkingTree } from './comparison.js';
+import { compareRevisions } from './comparison.js';
+import { listRefs } from './git-refs.js';
 import { OpenCodeReview } from './opencode.js';
 import type { Project } from '../shared/schema.js';
 
@@ -63,6 +64,14 @@ export function createApp(allowedRoot: string) {
       next(error);
     }
   });
+  app.post('/api/opencode/launch', async (req, res, next) => {
+    try {
+      const input = z.object({ path: z.string().trim().min(1).max(2000) }).parse(req.body);
+      res.json(await opencode.launch(input));
+    } catch (error) {
+      next(error);
+    }
+  });
   app.post('/api/opencode/disconnect', (_req, res) => res.json(opencode.disconnect()));
   app.post('/api/opencode/auto', async (req, res, next) => {
     try {
@@ -84,6 +93,23 @@ export function createApp(allowedRoot: string) {
       res.json(await opencode.poll());
     } catch (error) {
       next(error);
+    }
+  });
+  app.post('/api/opencode/agent-review', async (req, res, next) => {
+    if (scanning) {
+      res.status(429).json({ error: 'Another scan is running. Try again when it finishes.' });
+      return;
+    }
+    try {
+      const input = z
+        .object({ focus: z.string().max(500).default(''), model: z.string().max(200).default('') })
+        .parse(req.body ?? {});
+      scanning = true;
+      res.json(await opencode.agentReview(input.focus, input.model));
+    } catch (error) {
+      next(error);
+    } finally {
+      scanning = false;
     }
   });
   app.post('/api/opencode/:action', async (req, res, next) => {
@@ -186,6 +212,14 @@ export function createApp(allowedRoot: string) {
       next(error);
     }
   });
+  app.get('/api/refs', async (req, res, next) => {
+    try {
+      const input = z.object({ path: z.string().trim().min(1).max(2000) }).parse(req.query);
+      res.json(await listRefs(await resolveRoot(allowedRoot, input.path)));
+    } catch (error) {
+      next(error);
+    }
+  });
   app.post('/api/compare', async (req, res, next) => {
     if (scanning) {
       res.status(429).json({ error: 'Another scan is running. Try again when it finishes.' });
@@ -196,12 +230,13 @@ export function createApp(allowedRoot: string) {
         .object({
           path: z.string().trim().min(1).max(2000),
           ref: z.string().trim().min(1).max(200).default('HEAD'),
+          compare: z.string().trim().min(1).max(200).optional(),
           focus: z.string().max(500).default(''),
         })
         .parse(req.body);
       scanning = true;
       const root = await resolveRoot(allowedRoot, input.path);
-      res.json(await compareWorkingTree(root, input.ref, input.focus));
+      res.json(await compareRevisions(root, input.ref, input.focus, input.compare));
     } catch (error) {
       next(error);
     } finally {

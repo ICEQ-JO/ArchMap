@@ -105,6 +105,18 @@
   align-items: center;
   gap: 7px;
 }
+.wm-opencode-connect {
+  border-top: 1px solid var(--line);
+  margin-top: 22px;
+  padding-top: 4px;
+}
+.wm-opencode-manual {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.wm-opencode-manual .wm-small-button {
+  margin-top: 14px;
+}
 .wm-opencode-panel .wm-opencode-disclosure {
   font-size: 11px;
   border-top: 1px solid var(--line);

@@ -123,19 +123,18 @@ test('loads with large cookies left by other localhost apps', async ({ page, con
   await expect(page.locator('.react-flow__node')).toHaveCount(9);
 });
 
-test('named feature flows coordinate source evidence and map highlighting', async ({ page }) => {
+test('named feature flows play on the map without leaving the diagram', async ({ page }) => {
   const failures: string[] = [];
   page.on('pageerror', (e) => failures.push(e.message));
   await page.goto('/#workspace/example');
   await page.getByRole('button', { name: /^Flows/ }).click();
-  await page.getByRole('button', { name: 'Generate Image 3 source connections' }).click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(9);
+  await page.getByRole('button', { name: /Generate Image/ }).click();
   await expect(page.getByRole('region', { name: 'Flow walkthrough' })).toContainText(
     'Authenticate',
   );
   await expect(page.locator('.wm-evidence-card').first()).toContainText('authenticate(token)');
-  await page.getByRole('button', { name: 'Show this connection on the map' }).click();
   await expect(page.locator('.wm-architecture-node.is-traced')).toHaveCount(2);
-  await page.getByRole('button', { name: /^Flows/ }).click();
   await page.getByRole('button', { name: 'Next flow step' }).click();
   await expect(page.getByRole('region', { name: 'Flow walkthrough' })).toContainText(
     'Reserve Credits',
@@ -144,7 +143,8 @@ test('named feature flows coordinate source evidence and map highlighting', asyn
     'reserveCredits(user.id, 1)',
   );
   await page.getByRole('button', { name: 'Close guided flow' }).click();
-  await expect(page.getByRole('heading', { name: 'Follow the connections.' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Flow walkthrough' })).toHaveCount(0);
+  await expect(page.locator('.react-flow__node')).toHaveCount(9);
   expect(failures).toEqual([]);
 });
 

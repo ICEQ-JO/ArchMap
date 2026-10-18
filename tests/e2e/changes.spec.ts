@@ -64,7 +64,11 @@ for (const width of [1440, 390, 320]) {
     await expect(dialog.getByRole('alert')).toContainText('Baseline not found');
     await page.getByLabel('Baseline revision').fill('HEAD');
     await page.getByRole('button', { name: 'Compare changes', exact: true }).click();
-    await expect(dialog.getByRole('status')).toContainText('2 dependency changes');
+    await expect(dialog.locator('.wm-changes-summary')).toContainText('2 dependency changes');
+    const agentReview = dialog.getByRole('region', { name: 'Agent review' });
+    await expect(agentReview.getByRole('button', { name: 'Ask OpenCode to review' })).toBeVisible();
+    await agentReview.getByText('ArchMap review rules', { exact: true }).click();
+    await expect(agentReview).toContainText('no edits, no test runs');
     await expect(dialog.locator('.react-flow__node')).toHaveCount(3);
     await page.getByLabel('Filter changed files').fill('What changed in authentication?');
     await expect(dialog.locator('.wm-changes-file-list button')).toHaveCount(1);
@@ -74,11 +78,11 @@ for (const width of [1440, 390, 320]) {
     );
     await dialog.locator('.wm-changes-file-list button').click();
     await expect(dialog.getByRole('heading', { name: 'src/main.ts' })).toBeVisible();
-    await expect(dialog.locator('.wm-changes-source-side').first()).toContainText('authenticate');
-    await expect(dialog.locator('.wm-changes-source-side').last()).toContainText('enqueue');
+    await expect(dialog.locator('.wm-changes-diff')).toContainText('authenticate');
+    await expect(dialog.locator('.wm-changes-diff')).toContainText('enqueue');
     expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: `test-results/change-review-${width}.png`, fullPage: true });
-    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Architecture', exact: true }).click();
     await expect(dialog).not.toBeVisible();
     await expect(page.locator('.react-flow__node')).toHaveCount(4);
     expect(errors).toEqual([]);

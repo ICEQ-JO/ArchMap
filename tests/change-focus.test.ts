@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { analyze } from '../server/analyzer.js';
 import { compareProjects } from '../server/comparison.js';
-import { focusChanges } from '../shared/change-focus.js';
+import { focusChanges, summarizeChanges } from '../shared/change-focus.js';
 
 async function fixture() {
   const beforeFiles = new Map([
@@ -54,6 +54,20 @@ test('feature questions match exports, paths and responsibility names with cited
     focusChanges(report, 'authorize').files.map((f) => f.file),
     ['auth.ts'],
   );
+});
+
+test('change summary counts files, areas and dependencies in plain language', async () => {
+  const report = await fixture();
+  const summary = summarizeChanges(report);
+  assert.equal(summary.modified, 2);
+  assert.equal(summary.removed, 1);
+  assert.equal(summary.added, 0);
+  assert.equal(summary.dependencies, 1);
+  assert.match(summary.text, /3 files changed/);
+  assert.match(summary.text, /1 removed/);
+  assert.match(summary.text, /1 dependency change$/);
+  const empty = summarizeChanges({ ...report, files: [], dependencies: [], partial: false });
+  assert.match(empty.text, /No JavaScript or TypeScript source changes/);
 });
 
 test('unmatched filters stay empty, area restrictions combine with questions, and removal remains mapped', async () => {

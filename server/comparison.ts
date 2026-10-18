@@ -1,6 +1,7 @@
 import { analyze } from './analyzer.js';
 import { readGitSnapshot } from './git-snapshot.js';
 import { buildArchitecture, layoutGraph } from './architecture.js';
+import { unifiedDiff } from './diff.js';
 import { comparisonSchema, type Comparison, type Project } from '../shared/schema.js';
 import { createHash } from 'node:crypto';
 
@@ -107,20 +108,32 @@ export function compareProjects(before: Project, after: Project, ref: string): C
     partial,
   });
 }
-export async function compareWorkingTree(root: string, ref = 'HEAD', focus = '') {
-  const snapshot = await readGitSnapshot(root, ref, focus);
-  const before = await analyze(root, 'local', true, focus, snapshot);
-  const currentFiles = new Map<string, string>();
-  const after = await analyze(root, 'local', true, focus, undefined, true, (file, content) =>
-    currentFiles.set(file, content),
-  );
+export async function compareRevisions(root: string, ref = 'HEAD', focus = '', compare?: string) {
+  const before = await readGitSnapshot(root, ref, focus);
+  const beforeProject = await analyze(root, 'local', true, focus, before);
+  let afterProject: Project;
+  let currentFiles: Map<string, string>;
+  if (compare) {
+    const after = await readGitSnapshot(root, compare, focus);
+    currentFiles = after.files;
+    afterProject = await analyze(root, 'local', true, focus, after);
+  } else {
+    currentFiles = new Map<string, string>();
+    afterProject = await analyze(root, 'local', true, focus, undefined, true, (file, content) =>
+      currentFiles.set(file, content),
+    );
+  }
   const report = compareProjects(
-    { ...before, ...before.alternate!, level: 'modules' },
-    { ...after, ...after.alternate!, level: 'modules' },
+    { ...beforeProject, ...beforeProject.alternate!, level: 'modules' },
+    { ...afterProject, ...afterProject.alternate!, level: 'modules' },
     ref,
   );
-  return addChangeEvidence(report, snapshot.files, currentFiles);
+  if (compare)
+    report.baseline = { ...report.baseline, kind: 'git', revision: before.revision, ref };
+  return addChangeEvidence(report, before.files, currentFiles);
 }
+export const compareWorkingTree = (root: string, ref = 'HEAD', focus = '') =>
+  compareRevisions(root, ref, focus);
 export function addChangeEvidence(
   report: Comparison,
   beforeFiles: Map<string, string>,
@@ -154,6 +167,8 @@ export function addChangeEvidence(
     };
     if (old !== undefined) change.beforeEvidence = excerpt(old, oldLines);
     if (current !== undefined) change.afterEvidence = excerpt(current, newLines);
+    const patch = unifiedDiff(old ?? '', current ?? '');
+    if (patch) change.patch = patch.slice(0, 200000);
   }
   return comparisonSchema.parse(report);
 }

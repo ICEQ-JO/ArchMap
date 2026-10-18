@@ -1,7 +1,10 @@
 import { z } from 'zod';
 import path from 'node:path';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { createServer } from 'node:net';
 import { analyze, resolveRoot } from './analyzer.js';
-import { addChangeEvidence, compareProjects } from './comparison.js';
+import { addChangeEvidence, compareProjects, compareRevisions } from './comparison.js';
+import { REVIEW_SYSTEM, buildReviewPrompt } from './review-rules.js';
 import {
   agentConnectionSchema,
   codingSessionSchema,
@@ -60,6 +63,48 @@ export function localOpenCodeUrl(input: string) {
   if (url.hostname === 'localhost') url.hostname = '127.0.0.1';
   return url.origin;
 }
+function freePort() {
+  return new Promise<number>((resolve, reject) => {
+    const probe = createServer();
+    probe.on('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const address = probe.address();
+      const port = typeof address === 'object' && address ? address.port : 0;
+      probe.close(() => (port ? resolve(port) : reject(new Error('No free local port.'))));
+    });
+  });
+}
+// `opencode serve` prints "opencode server listening on http://127.0.0.1:<port>"
+// once ready, so the port does not have to be guessed.
+function waitForOpenCodeUrl(child: ChildProcess, timeoutMs: number) {
+  return new Promise<number>((resolve, reject) => {
+    let buffer = '';
+    const finish = (error: Error | null, port = 0) => {
+      clearTimeout(timer);
+      child.stdout?.off('data', onData);
+      child.off('exit', onExit);
+      child.off('error', onError);
+      if (error) reject(error);
+      else resolve(port);
+    };
+    const onData = (chunk: Buffer) => {
+      buffer += chunk.toString();
+      const match = buffer.match(/https?:\/\/127\.0\.0\.1:(\d+)/);
+      if (match) finish(null, Number(match[1]));
+    };
+    const onExit = (code: number | null) =>
+      finish(new Error(`OpenCode exited before it was ready (code ${code ?? 'null'}).`));
+    const onError = (error: Error) =>
+      finish(new Error(`Could not start OpenCode: ${error.message}`));
+    const timer = setTimeout(
+      () => finish(new Error('OpenCode did not start within 25 seconds.')),
+      timeoutMs,
+    );
+    child.stdout?.on('data', onData);
+    child.once('exit', onExit);
+    child.once('error', onError);
+  });
+}
 export function openCodeCandidates() {
   const urls: string[] = [];
   const env = process.env.ARCHMAP_OPENCODE_URL || process.env.OPENCODE_URL;
@@ -80,6 +125,7 @@ async function readJson(
   route: string,
   params: Record<string, string> = {},
   timeoutMs = 8000,
+  init?: { method: string; body: unknown; timeoutMs?: number },
 ) {
   const url = new URL(route, connection.baseUrl);
   // Stay in the server's existing project. A directory override could initialize
@@ -88,10 +134,14 @@ async function readJson(
   let response: Response;
   try {
     response = await fetch(url, {
-      method: 'GET',
+      method: init?.method ?? 'GET',
       redirect: 'error',
-      signal: AbortSignal.timeout(timeoutMs),
-      headers: connection.authorization ? { Authorization: connection.authorization } : {},
+      signal: AbortSignal.timeout(init?.timeoutMs ?? timeoutMs),
+      headers: {
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(connection.authorization ? { Authorization: connection.authorization } : {}),
+      },
+      body: init?.body ? JSON.stringify(init.body) : undefined,
     });
   } catch {
     throw new Error('Cannot reach OpenCode. Start its local server and check the address.');
@@ -132,6 +182,8 @@ export class OpenCodeReview {
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
   private connection: Connection | null = null;
   private tracking: Tracking | null = null;
+  private launched: ChildProcess | null = null;
+  private launching: Promise<AgentConnection> | null = null;
   constructor(private allowedRoot: string) {}
   private current() {
     if (!this.connection || this.connection.expires < Date.now()) {
@@ -170,7 +222,14 @@ export class OpenCodeReview {
     this.epoch++;
     this.connection = null;
     this.tracking = null;
+    this.killLaunched();
     return this.status();
+  }
+  private killLaunched() {
+    if (this.launched) {
+      this.launched.kill('SIGTERM');
+      this.launched = null;
+    }
   }
   async connect(input: { path: string; baseUrl: string; username: string; password: string }) {
     const epoch = ++this.epoch;
@@ -226,6 +285,54 @@ export class OpenCodeReview {
     this.expiryTimer = setTimeout(() => this.disconnect(), 3600000);
     this.expiryTimer.unref();
     return this.status();
+  }
+  // Launch a local OpenCode server scoped to this repository and connect to it,
+  // so connecting needs no address or credentials. This starts the OpenCode dev
+  // tool (loopback only); it never executes the analyzed repository's own code.
+  async launch(input: { path: string }): Promise<AgentConnection> {
+    const root = await resolveRoot(this.allowedRoot, input.path);
+    if (this.connection?.root === root) return this.status();
+    if (!this.launching)
+      this.launching = this.startLaunched(root).finally(() => {
+        this.launching = null;
+      });
+    return this.launching;
+  }
+  private async startLaunched(root: string): Promise<AgentConnection> {
+    this.killLaunched();
+    const port = await freePort();
+    const child = spawn(
+      process.env.OPENCODE_BIN || 'opencode',
+      ['serve', '--port', String(port), '--hostname', '127.0.0.1'],
+      { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], env: process.env },
+    );
+    try {
+      const ready = await waitForOpenCodeUrl(child, 25000);
+      const candidate: Connection = {
+        baseUrl: `http://127.0.0.1:${ready}`,
+        root,
+        expires: Date.now() + 3600000,
+      };
+      const remotePath = z
+        .object({ directory: z.string() })
+        .parse(await readJson(candidate, '/path'));
+      if (!path.isAbsolute(remotePath.directory) || path.resolve(remotePath.directory) !== root)
+        throw new Error('OpenCode started in a different folder than this repository.');
+      this.launched = child;
+      child.once('exit', () => {
+        if (this.launched === child) this.launched = null;
+      });
+      this.epoch++;
+      this.connection = candidate;
+      this.tracking = null;
+      if (this.expiryTimer) clearTimeout(this.expiryTimer);
+      this.expiryTimer = setTimeout(() => this.disconnect(), 3600000);
+      this.expiryTimer.unref();
+      return this.status();
+    } catch (error) {
+      child.kill('SIGTERM');
+      throw error;
+    }
   }
   async sessions(): Promise<CodingSession[]> {
     const connection = this.current();
@@ -373,4 +480,71 @@ export class OpenCodeReview {
     );
     return report;
   }
+  // Ask the connected agent to argue about the change. Explicit user action only:
+  // this sends the diff to the user's own model and never runs repository code.
+  async agentReview(focus = '', model = process.env.ARCHMAP_OPENCODE_MODEL ?? '') {
+    const connection = this.current();
+    const report = this.tracking
+      ? await this.review()
+      : await compareRevisions(connection.root, 'HEAD', focus);
+    const diff = report.files
+      .map((file) =>
+        [`### ${file.file} (${file.status})`, file.patch ?? 'No line-level diff recorded.'].join(
+          '\n',
+        ),
+      )
+      .join('\n\n');
+    const prompt = buildReviewPrompt(
+      {
+        files: report.files.map((file) => file.file),
+        dependencies: report.dependencies.length,
+        partial: report.partial,
+        focus,
+      },
+      diff,
+    );
+    const created = z.object({ id: idSchema }).parse(
+      await readJson(connection, '/session', {}, 8000, {
+        method: 'POST',
+        body: { title: 'ArchMap review' },
+        timeoutMs: 15000,
+      }),
+    );
+    // Leave the model unset to use OpenCode's own default.
+    const selected = model.trim();
+    const slash = selected.indexOf('/');
+    const chosen =
+      slash > 0
+        ? { providerID: selected.slice(0, slash), modelID: selected.slice(slash + 1) }
+        : null;
+    const reply = await readJson(connection, `/session/${created.id}/message`, {}, 0, {
+      method: 'POST',
+      // Read-only review: disable every tool that could change or run the repo.
+      body: {
+        system: REVIEW_SYSTEM,
+        tools: { edit: false, write: false, patch: false, bash: false },
+        ...(chosen ? { model: chosen } : {}),
+        parts: [{ type: 'text', text: prompt }],
+      },
+      timeoutMs: 180000,
+    });
+    this.unchanged(connection);
+    return { sessionId: created.id, text: assistantText(reply) };
+  }
+}
+
+function assistantText(message: unknown) {
+  const parsed = z
+    .object({
+      parts: z.array(z.object({ type: z.string(), text: z.string().optional() })).max(200),
+    })
+    .parse(message);
+  const text = parsed.parts
+    .filter((part) => part.type === 'text' && part.text)
+    .map((part) => part.text!.trim())
+    .filter(Boolean)
+    .join('\n\n')
+    .trim();
+  if (!text) throw new Error('The agent returned no review text. Try again or check its model.');
+  return text.slice(0, 20000);
 }

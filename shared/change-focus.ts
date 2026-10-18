@@ -74,6 +74,34 @@ export function focusChanges(report: Comparison, question = '', areaId?: string 
     brief: files.map(describeChange),
   };
 }
+/** Plain-language head line for a change review. Deterministic, from the report only. */
+export function summarizeChanges(report: Comparison) {
+  const count = (status: FileChange['status']) =>
+    report.files.filter((file) => file.status === status).length;
+  const added = count('added'),
+    modified = count('modified'),
+    removed = count('removed');
+  const depAdded = report.dependencies.filter((d) => d.status === 'added').length;
+  const depRemoved = report.dependencies.filter((d) => d.status === 'removed').length;
+  const dependencies = depAdded + depRemoved;
+  const areas = report.areas.map((area) => area.label);
+  const parts: string[] = [];
+  if (report.files.length) {
+    parts.push(`${report.files.length} file${report.files.length === 1 ? '' : 's'} changed`);
+    if (added) parts.push(`${added} added`);
+    if (modified) parts.push(`${modified} modified`);
+    if (removed) parts.push(`${removed} removed`);
+    if (areas.length) parts.push(`${areas.length} area${areas.length === 1 ? '' : 's'} touched`);
+    if (dependencies)
+      parts.push(`${dependencies} dependency change${dependencies === 1 ? '' : 's'}`);
+  }
+  const text = report.files.length
+    ? parts.join(' · ')
+    : report.partial
+      ? 'No changes found in the files inspected on both sides. Coverage is incomplete.'
+      : 'No JavaScript or TypeScript source changes in the inspected scope.';
+  return { added, modified, removed, dependencies, areas, partial: report.partial, text };
+}
 export function describeChange(file: FileChange) {
   const old = new Set(file.before?.exports ?? []),
     current = new Set(file.after?.exports ?? []);

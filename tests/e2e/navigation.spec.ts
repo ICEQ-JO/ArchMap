@@ -27,7 +27,7 @@ for (const width of [1440, 390, 320]) {
       .getByRole('button', { name: 'Changes', exact: true })
       .click();
     await page.getByRole('button', { name: 'Track an agent task', exact: true }).click();
-    await expect(page.getByLabel('OpenCode server address')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Connect OpenCode', exact: true })).toBeVisible();
     await expect(page.getByLabel('Model API key')).toHaveCount(0);
     await page.getByRole('navigation').getByRole('button', { name: 'Ask', exact: true }).click();
     await expect(page.getByLabel('Question about your codebase')).toHaveValue(
@@ -45,6 +45,7 @@ for (const width of [1440, 390, 320]) {
     await page.getByRole('button', { name: 'Open repository', exact: true }).click();
     await page.getByRole('button', { name: /Image Studio/ }).click();
     await expect(page.locator('.react-flow__node')).toHaveCount(9);
+    await page.waitForTimeout(600);
     await page.keyboard.press('Control+s');
     await expect(page.getByRole('status')).toContainText('Map saved');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

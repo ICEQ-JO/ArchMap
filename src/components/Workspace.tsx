@@ -26,6 +26,7 @@ import {
   GitBranch,
   GitCompareArrows,
   LayoutGrid,
+  LoaderCircle,
   MessageSquare,
   Network,
   Play,
@@ -35,17 +36,21 @@ import {
   Search,
   Settings2,
   ShieldCheck,
+  Terminal,
   Trash2,
   Undo2,
   Upload,
   X,
+  Activity,
 } from 'lucide-react';
 import {
   projectSchema,
+  agentConnectionSchema,
   type Module,
   type Project,
   type Proposal,
   type Comparison,
+  type AgentConnection,
 } from '../../shared/schema';
 import { getStatus, loadProject } from '../lib/api';
 import { dependencyWalk, downloadProject, refreshProject, SAVE_KEY } from '../lib/graph';
@@ -78,23 +83,36 @@ function readSaved(): Project | null {
 
 export default function Workspace({
   initialExample,
+  initialSetup,
+  initialSketch,
   onDashboard,
 }: {
   initialExample: boolean;
+  initialSetup?: boolean;
+  initialSketch?: boolean;
   onDashboard?: () => void;
 }) {
   return (
     <ReactFlowProvider>
-      <WorkspaceInner initialExample={initialExample} onDashboard={onDashboard} />
+      <WorkspaceInner
+        initialExample={initialExample}
+        initialSetup={initialSetup}
+        initialSketch={initialSketch}
+        onDashboard={onDashboard}
+      />
     </ReactFlowProvider>
   );
 }
 
 function WorkspaceInner({
   initialExample,
+  initialSetup,
+  initialSketch,
   onDashboard,
 }: {
   initialExample: boolean;
+  initialSetup?: boolean;
+  initialSketch?: boolean;
   onDashboard?: () => void;
 }) {
   const [project, setProject] = useState<Project | null>(null);
@@ -103,19 +121,26 @@ function WorkspaceInner({
   const [notice, setNotice] = useState('');
   const [path, setPath] = useState('.');
   const [focus, setFocus] = useState('');
-  const [showOpen, setShowOpen] = useState(!initialExample);
+  const [showOpen, setShowOpen] = useState(
+    Boolean(initialSetup || (!initialExample && !initialSketch)),
+  );
   const [status, setStatus] = useState<ServerStatus | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [flowId, setFlowId] = useState<string | null>(null);
   const [flowIndex, setFlowIndex] = useState(0);
+  const [flowsOpen, setFlowsOpen] = useState(false);
   const [walkStart, setWalkStart] = useState<string | undefined>();
   const [walkStep, setWalkStep] = useState<number | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [consoleOpen, setConsoleOpen] = useState(false);
+  const [consoleTab, setConsoleTab] = useState<
+    'diagnostics' | 'queries' | 'git' | 'agent' | 'audit'
+  >('diagnostics');
   const [history, setHistory] = useState<Project[]>([]);
   const [dirty, setDirty] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -129,6 +154,9 @@ function WorkspaceInner({
     request: string;
   } | null>(null);
   const [serverSession, setServerSession] = useState(false);
+  const [agent, setAgent] = useState<AgentConnection>({ connected: false, tracking: null });
+  const [agentPending, setAgentPending] = useState(false);
+  const [agentError, setAgentError] = useState('');
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureFlowNode>([]);
   const reviewedTurns = useRef(new Set<string>());
   const fileInput = useRef<HTMLInputElement>(null);
@@ -190,6 +218,32 @@ function WorkspaceInner({
       .catch(() => setStatus(null));
   }, []);
 
+  useEffect(() => {
+    if (view !== 'Connections') return;
+    let active = true;
+    request<unknown>('/api/opencode/status')
+      .then((r) => active && setAgent(agentConnectionSchema.parse(r)))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [view]);
+
+  async function connectAgent() {
+    if (!project?.root) return;
+    setAgentPending(true);
+    setAgentError('');
+    try {
+      setAgent(
+        agentConnectionSchema.parse(await request('/api/opencode/launch', { path: project.root })),
+      );
+    } catch (e) {
+      setAgentError(e instanceof Error ? e.message : 'Could not start OpenCode.');
+    } finally {
+      setAgentPending(false);
+    }
+  }
+
   const resetSelection = () => {
     setSelectedId(null);
     setSelectedEdgeId(null);
@@ -250,8 +304,23 @@ function WorkspaceInner({
   useEffect(() => {
     if (init.current) return;
     init.current = true;
-    if (initialExample) void openProject(true);
-    else {
+    try {
+      const initialView = sessionStorage.getItem('archmap.initial_view');
+      if (initialView) {
+        setView(initialView);
+        sessionStorage.removeItem('archmap.initial_view');
+      }
+    } catch {
+      // ignore
+    }
+    if (initialSketch) {
+      startSketch();
+      setShowOpen(false);
+    } else if (initialSetup) {
+      setShowOpen(true);
+    } else if (initialExample) {
+      void openProject(true);
+    } else {
       const saved = readSaved();
       if (saved) {
         setProject(saved);
@@ -495,6 +564,7 @@ function WorkspaceInner({
         setInspectorOpen(false);
         setSettingsOpen(false);
         setPaletteOpen(false);
+        setConsoleOpen(false);
         resetSelection();
         if (reviewing) {
           setView('Architecture');
@@ -504,6 +574,11 @@ function WorkspaceInner({
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setPaletteOpen((prev) => !prev);
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && (event.key === '`' || event.key === '~')) {
+        event.preventDefault();
+        setConsoleOpen((prev) => !prev);
         return;
       }
       if (reviewing || paletteOpen || settingsOpen) return;
@@ -531,6 +606,42 @@ function WorkspaceInner({
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [project, history, reviewing, paletteOpen, settingsOpen]);
+
+  const graphQueries = useMemo(() => {
+    if (!project) return { orphans: [], hubs: [], entrypoints: [] };
+    const incoming = new Map<string, number>();
+    const outgoing = new Map<string, number>();
+    project.nodes.forEach((n) => {
+      incoming.set(n.id, 0);
+      outgoing.set(n.id, 0);
+    });
+    project.edges.forEach((e) => {
+      incoming.set(e.target, (incoming.get(e.target) || 0) + 1);
+      outgoing.set(e.source, (outgoing.get(e.source) || 0) + 1);
+    });
+
+    const orphans = project.nodes.filter(
+      (n) => (incoming.get(n.id) || 0) === 0 && (outgoing.get(n.id) || 0) === 0,
+    );
+
+    const hubs = [...project.nodes]
+      .map((n) => ({
+        ...n,
+        degree: (incoming.get(n.id) || 0) + (outgoing.get(n.id) || 0),
+        inCount: incoming.get(n.id) || 0,
+        outCount: outgoing.get(n.id) || 0,
+      }))
+      .filter((n) => n.degree > 0)
+      .sort((a, b) => b.degree - a.degree)
+      .slice(0, 8);
+
+    const entrypoints = project.nodes.filter(
+      (n) =>
+        n.kind === 'entry' || ((incoming.get(n.id) || 0) === 0 && (outgoing.get(n.id) || 0) > 0),
+    );
+
+    return { orphans, hubs, entrypoints };
+  }, [project]);
 
   function startSketch() {
     setProject({
@@ -565,7 +676,7 @@ function WorkspaceInner({
     setWalkStep(null);
     setSelectedId(null);
     setSelectedEdgeId(step.edgeId);
-    setInspectorOpen(true);
+    setInspectorOpen(false);
   }
 
   function switchView() {
@@ -605,11 +716,18 @@ function WorkspaceInner({
   }
 
   function navigate(next: string) {
+    if (next === 'Flows') {
+      setView('Architecture');
+      setShowOpen(false);
+      setSidebarOpen(false);
+      setFlowsOpen(true);
+      if (project?.level === 'modules' && project.alternate) switchView();
+      return;
+    }
     setView(next);
     setShowOpen(false);
     setSidebarOpen(false);
     if (next === 'Changes') setSessionReview(null);
-    if (next === 'Flows' && project?.level === 'modules' && project.alternate) switchView();
   }
 
   const destinations = [
@@ -773,7 +891,15 @@ function WorkspaceInner({
           {destinations.map(({ name, icon: Icon, hint }) => (
             <button
               key={name}
-              aria-current={view === name && !showOpen ? 'page' : undefined}
+              aria-current={
+                (
+                  name === 'Flows'
+                    ? view === 'Architecture' && flowsOpen
+                    : view === name && !showOpen
+                )
+                  ? 'page'
+                  : undefined
+              }
               onClick={() => navigate(name)}
               title={hint}
             >
@@ -831,6 +957,15 @@ function WorkspaceInner({
             >
               <Search size={15} />
               <span>⌘K</span>
+            </button>
+            <button
+              className={`wm-small-button ${consoleOpen ? 'wm-primary' : ''}`}
+              onClick={() => setConsoleOpen(!consoleOpen)}
+              title="Toggle developer console & diagnostics (Ctrl+`)"
+              type="button"
+            >
+              <Terminal size={15} />
+              <span>Console</span>
             </button>
             <button
               className="wm-small-button"
@@ -941,6 +1076,34 @@ function WorkspaceInner({
                           : 'Static imports · not runtime order'}
                       </span>
                     </div>
+                    <details className="wm-map-explainer">
+                      <summary>
+                        <CircleHelp size={14} /> What am I looking at?
+                      </summary>
+                      <ul>
+                        <li>
+                          <strong>Boxes</strong> are{' '}
+                          {project.level === 'modules'
+                            ? 'source files'
+                            : 'responsibilities (groups of files)'}
+                          . Select one to read its exports and source evidence.
+                        </li>
+                        <li>
+                          <strong>Lines</strong> are static imports observed in the source. They
+                          show what depends on what, <em>not</em> runtime order or call frequency.
+                        </li>
+                        <li>
+                          <span className="wm-origin-dot is-observed" /> <strong>Observed</strong>{' '}
+                          connections come from real import statements;{' '}
+                          <span className="wm-origin-dot" /> <strong>manual</strong> ones you drew.
+                          Groupings marked <em>inferred</em> are the analyzer&rsquo;s best guess.
+                        </li>
+                        <li>
+                          Nothing here runs your code or installs dependencies &mdash; it reads
+                          source files only.
+                        </li>
+                      </ul>
+                    </details>
                     {project.edges.length < project.nodes.length / 2 &&
                       project.nodes.length > 2 && (
                         <div className="wm-coverage-notice">
@@ -1186,8 +1349,8 @@ function WorkspaceInner({
                             className="wm-walk-launcher"
                             onClick={() => {
                               if (project.level === 'architecture' && project.flows?.length) {
+                                setFlowsOpen(true);
                                 pickFlow(project.flows[0].id, 0);
-                                setView('Flows');
                               } else {
                                 setWalkStart(selectedId ?? undefined);
                                 setWalkStep(0);
@@ -1293,6 +1456,26 @@ function WorkspaceInner({
                             Manual
                           </span>
                         </div>
+                        {flowsOpen && project.flows?.length ? (
+                          <aside className="wm-map-flows" aria-label="Guided flows">
+                            <FlowInspector
+                              flows={project.flows}
+                              activeId={flowId}
+                              index={flowIndex}
+                              onSelect={pickFlow}
+                              onClose={() => {
+                                setFlowsOpen(false);
+                                setFlowId(null);
+                              }}
+                            />
+                            {activeFlowStep && (
+                              <div className="wm-map-flow-source">
+                                <h3>Source evidence</h3>
+                                <EvidenceCard evidence={activeFlowStep.evidence} />
+                              </div>
+                            )}
+                          </aside>
+                        ) : null}
                       </div>
                       {inspectorOpen && (selected || selectedEdge) && (
                         <aside className="wm-inspector" aria-label="Source inspector">
@@ -1520,82 +1703,6 @@ function WorkspaceInner({
                 )}
               </main>
             )}
-            {view === 'Flows' && (
-              <main className="wm-flows-page">
-                <aside className="wm-flow-library">
-                  <span className="wm-nav-caption">SOURCE-SUPPORTED FLOWS</span>
-                  {project?.flows?.length ? (
-                    project.flows.map((f) => (
-                      <button
-                        key={f.id}
-                        aria-current={flowId === f.id ? 'step' : undefined}
-                        onClick={() => pickFlow(f.id, 0)}
-                        type="button"
-                      >
-                        <Play size={16} />
-                        <span>
-                          <strong>{f.title}</strong>
-                          <small>{f.steps.length} source connections</small>
-                        </span>
-                        <ChevronRight size={16} />
-                      </button>
-                    ))
-                  ) : (
-                    <div className="wm-empty-copy">
-                      <h2>No supported flows resolved.</h2>
-                      <p>
-                        This scan found no named source-call journeys. Framework routing and runtime
-                        behavior may be missing from static analysis.
-                      </p>
-                      <button onClick={() => navigate('Architecture')} type="button">
-                        Explore the source map
-                      </button>
-                      <button onClick={() => navigate('Ask')} type="button">
-                        Ask about a feature
-                      </button>
-                    </div>
-                  )}
-                </aside>
-                <section className="wm-flow-detail">
-                  {activeFlow ? (
-                    <>
-                      <FlowInspector
-                        flows={project?.flows ?? []}
-                        activeId={flowId}
-                        index={flowIndex}
-                        onSelect={pickFlow}
-                        onClose={() => {
-                          setFlowId(null);
-                          setSelectedEdgeId(null);
-                        }}
-                      />
-                      <div className="wm-flow-source">
-                        <h3>Source evidence</h3>
-                        {selectedEvidence.map((e) => (
-                          <EvidenceCard key={e.id} evidence={e} />
-                        ))}
-                        <button
-                          className="wm-small-button"
-                          onClick={() => {
-                            setView('Architecture');
-                            setInspectorOpen(true);
-                          }}
-                          type="button"
-                        >
-                          Show this connection on the map <ArrowRight size={15} />
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <EmptyState
-                      icon={Play}
-                      title="Follow the connections."
-                      description="Choose a flow from the library to read its steps alongside supporting source evidence."
-                    />
-                  )}
-                </section>
-              </main>
-            )}
             {view === 'Changes' && (
               <main className="wm-review-page">
                 {project?.root ? (
@@ -1743,17 +1850,53 @@ function WorkspaceInner({
                 <div className="wm-connection-secondary">
                   <section className="wm-connection-card">
                     <Cable size={24} />
+                    <span className="wm-connection-state">
+                      {agent.connected && agent.root === project?.root
+                        ? 'Connected'
+                        : 'Not connected'}
+                    </span>
                     <h2>Coding agent</h2>
                     <p>
-                      OpenCode has its own connection. Use Sessions to track a task and review the
-                      resulting source changes.
+                      OpenCode argues about your changes under ArchMap's review rules. Read-only: it
+                      never runs your repository.
                     </p>
+                    {agent.connected && agent.root === project?.root ? (
+                      <>
+                        <p className="wm-subtle">Server: {agent.baseUrl}</p>
+                        <button
+                          className="wm-small-button"
+                          onClick={() => navigate('Sessions')}
+                          type="button"
+                        >
+                          Track a task or ask for a review <ArrowRight size={15} />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        className="wm-small-button"
+                        disabled={agentPending || !project?.root}
+                        onClick={() => void connectAgent()}
+                        type="button"
+                      >
+                        {agentPending ? (
+                          <LoaderCircle size={15} className="spinning" />
+                        ) : (
+                          <Cable size={15} />
+                        )}{' '}
+                        {agentPending ? 'Starting OpenCode…' : 'Connect OpenCode'}
+                      </button>
+                    )}
+                    {agentError && (
+                      <p className="wm-error-text" role="alert">
+                        {agentError}
+                      </p>
+                    )}
                     <button
-                      className="wm-small-button"
+                      className="wm-text-button"
                       onClick={() => navigate('Sessions')}
                       type="button"
                     >
-                      Open sessions <ArrowRight size={15} />
+                      Open sessions <ArrowRight size={14} />
                     </button>
                   </section>
                   <section className="wm-connection-card">
@@ -1777,6 +1920,298 @@ function WorkspaceInner({
               </main>
             )}
           </>
+        )}
+
+        {/* Dockable Developer Console & Diagnostics Drawer */}
+        {consoleOpen && (
+          <aside className="wm-dockable-console" role="region" aria-label="Developer Console">
+            <div className="wm-console-header">
+              <div className="wm-console-header-left">
+                <Terminal size={15} />
+                <strong>Developer Console</strong>
+                <span className="wm-console-badge">{project?.name || 'Local Session'}</span>
+              </div>
+
+              <div className="wm-console-tabs" role="tablist">
+                <button
+                  className={`wm-console-tab ${consoleTab === 'diagnostics' ? 'is-active' : ''}`}
+                  onClick={() => setConsoleTab('diagnostics')}
+                  role="tab"
+                  aria-selected={consoleTab === 'diagnostics'}
+                  type="button"
+                >
+                  <Activity size={13} /> Diagnostics
+                </button>
+                <button
+                  className={`wm-console-tab ${consoleTab === 'queries' ? 'is-active' : ''}`}
+                  onClick={() => setConsoleTab('queries')}
+                  role="tab"
+                  aria-selected={consoleTab === 'queries'}
+                  type="button"
+                >
+                  <Network size={13} /> Graph Queries
+                </button>
+                <button
+                  className={`wm-console-tab ${consoleTab === 'git' ? 'is-active' : ''}`}
+                  onClick={() => setConsoleTab('git')}
+                  role="tab"
+                  aria-selected={consoleTab === 'git'}
+                  type="button"
+                >
+                  <GitBranch size={13} /> Git &amp; Worktree
+                </button>
+                <button
+                  className={`wm-console-tab ${consoleTab === 'agent' ? 'is-active' : ''}`}
+                  onClick={() => setConsoleTab('agent')}
+                  role="tab"
+                  aria-selected={consoleTab === 'agent'}
+                  type="button"
+                >
+                  <Cable size={13} /> Agent Link
+                </button>
+                <button
+                  className={`wm-console-tab ${consoleTab === 'audit' ? 'is-active' : ''}`}
+                  onClick={() => setConsoleTab('audit')}
+                  role="tab"
+                  aria-selected={consoleTab === 'audit'}
+                  type="button"
+                >
+                  <Undo2 size={13} /> History ({history.length})
+                </button>
+              </div>
+
+              <button
+                className="wm-bare-icon wm-console-close-btn"
+                onClick={() => setConsoleOpen(false)}
+                aria-label="Close developer console"
+                type="button"
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div className="wm-console-body">
+              {consoleTab === 'diagnostics' && (
+                <div className="wm-console-grid">
+                  <div className="wm-console-card">
+                    <h4>AST Scan Status</h4>
+                    <div className="wm-console-stat-row">
+                      <span>Files Scanned:</span>
+                      <strong>{project?.filesScanned || 0} / 400</strong>
+                    </div>
+                    <div className="wm-console-stat-row">
+                      <span>Mode:</span>
+                      <strong>
+                        {project?.mode === 'example' ? 'Illustrative Studio' : 'Local Repository'}
+                      </strong>
+                    </div>
+                    <div className="wm-console-stat-row">
+                      <span>Root Folder:</span>
+                      <code>{project?.root || 'None'}</code>
+                    </div>
+                    <div className="wm-console-stat-row">
+                      <span>Execution Policy:</span>
+                      <strong className="wm-safety-pill">Read-only AST (No execution)</strong>
+                    </div>
+                  </div>
+
+                  <div className="wm-console-card">
+                    <h4>Topology Breakdown</h4>
+                    <div className="wm-console-stat-row">
+                      <span>Components on Map:</span>
+                      <strong>{project?.nodes.length || 0}</strong>
+                    </div>
+                    <div className="wm-console-stat-row">
+                      <span>Observed Connections:</span>
+                      <strong>
+                        {project?.edges.filter((e) => e.origin === 'observed').length || 0}
+                      </strong>
+                    </div>
+                    <div className="wm-console-stat-row">
+                      <span>Manual Connections:</span>
+                      <strong>
+                        {project?.edges.filter((e) => e.origin === 'manual').length || 0}
+                      </strong>
+                    </div>
+                    <div className="wm-console-stat-row">
+                      <span>Guided Feature Flows:</span>
+                      <strong>{project?.flows?.length || 0}</strong>
+                    </div>
+                  </div>
+
+                  <div className="wm-console-card">
+                    <h4>Scan Diagnostics &amp; Warnings</h4>
+                    {project?.warnings && project.warnings.length > 0 ? (
+                      <ul className="wm-console-warnings-list">
+                        {project.warnings.map((w, idx) => (
+                          <li key={idx}>{w}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="wm-console-empty-text">
+                        Zero scan warnings. Static parse completed cleanly.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {consoleTab === 'queries' && (
+                <div className="wm-console-queries-container">
+                  <div className="wm-console-query-group">
+                    <div className="wm-console-query-title">
+                      <span>Central Hub Components ({graphQueries.hubs.length})</span>
+                      <small>Top components by total connection degree</small>
+                    </div>
+                    <div className="wm-console-tags-wrap">
+                      {graphQueries.hubs.map((hub) => (
+                        <button
+                          key={hub.id}
+                          className="wm-console-node-chip"
+                          onClick={() => {
+                            setView('Architecture');
+                            selectNode(hub.id);
+                          }}
+                          type="button"
+                        >
+                          <strong>{hub.label}</strong>
+                          <span>{hub.degree} connections</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="wm-console-query-group">
+                    <div className="wm-console-query-title">
+                      <span>Entrypoints &amp; Roots ({graphQueries.entrypoints.length})</span>
+                      <small>No observed incoming dependencies</small>
+                    </div>
+                    <div className="wm-console-tags-wrap">
+                      {graphQueries.entrypoints.slice(0, 10).map((ep) => (
+                        <button
+                          key={ep.id}
+                          className="wm-console-node-chip is-entry"
+                          onClick={() => {
+                            setView('Architecture');
+                            selectNode(ep.id);
+                          }}
+                          type="button"
+                        >
+                          <strong>{ep.label}</strong>
+                          <span>{ep.file ? ep.file.split('/').pop() : 'root'}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {graphQueries.orphans.length > 0 && (
+                    <div className="wm-console-query-group">
+                      <div className="wm-console-query-title">
+                        <span>Unconnected Components ({graphQueries.orphans.length})</span>
+                        <small>No observed imports or importers</small>
+                      </div>
+                      <div className="wm-console-tags-wrap">
+                        {graphQueries.orphans.map((orph) => (
+                          <button
+                            key={orph.id}
+                            className="wm-console-node-chip is-orphan"
+                            onClick={() => {
+                              setView('Architecture');
+                              selectNode(orph.id);
+                            }}
+                            type="button"
+                          >
+                            <strong>{orph.label}</strong>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {consoleTab === 'git' && (
+                <div className="wm-console-git-tab">
+                  <div className="wm-console-git-row">
+                    <span>Revision SHA:</span>
+                    <code>{project?.revision || 'Unversioned / Working Tree'}</code>
+                  </div>
+                  <div className="wm-console-git-row">
+                    <span>Working Tree Edits:</span>
+                    <strong>
+                      {dirty ? 'Unsaved edits present' : 'Source snapshot up-to-date'}
+                    </strong>
+                  </div>
+                  <div className="wm-console-git-actions">
+                    <button
+                      className="wm-small-button wm-primary"
+                      onClick={() => {
+                        navigate('Changes');
+                        setConsoleOpen(false);
+                      }}
+                      type="button"
+                    >
+                      <GitCompareArrows size={14} /> Compare changes against baseline
+                    </button>
+                    {project?.root && (
+                      <button
+                        className="wm-small-button"
+                        onClick={() => void openProject(project.mode === 'example', true)}
+                        type="button"
+                      >
+                        <RefreshCw size={14} /> Refresh repository
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {consoleTab === 'agent' && (
+                <div className="wm-console-agent-tab">
+                  <div className="wm-console-stat-row">
+                    <span>OpenCode Connection:</span>
+                    <strong>
+                      {agent.connected ? `Connected (${agent.baseUrl})` : 'Not Connected'}
+                    </strong>
+                  </div>
+                  <div className="wm-console-stat-row">
+                    <span>Active Tracking:</span>
+                    <strong>
+                      {agent.tracking
+                        ? `${agent.tracking.session.title} (${agent.tracking.state})`
+                        : 'Idle / No session tracked'}
+                    </strong>
+                  </div>
+                  <button
+                    className="wm-small-button"
+                    onClick={() => {
+                      navigate('Sessions');
+                      setConsoleOpen(false);
+                    }}
+                    type="button"
+                  >
+                    Open coding agent panel <ArrowRight size={14} />
+                  </button>
+                </div>
+              )}
+
+              {consoleTab === 'audit' && (
+                <div className="wm-console-audit-tab">
+                  <p>
+                    In-memory undo stack has <strong>{history.length}</strong> previous states.
+                  </p>
+                  <button
+                    className="wm-small-button"
+                    disabled={!history.length}
+                    onClick={undo}
+                    type="button"
+                  >
+                    <Undo2 size={14} /> Undo last change
+                  </button>
+                </div>
+              )}
+            </div>
+          </aside>
         )}
       </div>
 

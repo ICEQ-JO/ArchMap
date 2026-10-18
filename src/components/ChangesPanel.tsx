@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReactFlow, ReactFlowProvider, Background, Controls, MarkerType } from '@xyflow/react';
-import { ArrowLeft, GitCompareArrows, LoaderCircle, X } from 'lucide-react';
-import { comparisonSchema, type Comparison, type FileChange } from '../../shared/schema';
+import { ArrowLeft, Bot, GitCompareArrows, LoaderCircle, X } from 'lucide-react';
+import {
+  comparisonSchema,
+  refsSchema,
+  type Comparison,
+  type FileChange,
+  type Refs,
+} from '../../shared/schema';
 import { request } from '../lib/api';
 import EvidenceCard from './EvidenceCard';
-import { focusChanges } from '../../shared/change-focus';
+import { focusChanges, summarizeChanges } from '../../shared/change-focus';
 import ArchitectureNode, { type ArchitectureFlowNode } from './ArchitectureNode';
 import './ChangesPanel.css';
 
@@ -37,12 +43,34 @@ function ChangesReview({
   onRefresh,
 }: ReviewProps) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const started = useRef(false);
   useEffect(() => {
     if (!embedded) dialog.current?.showModal();
   }, [embedded]);
+  useEffect(() => {
+    if (!embedded || initialReport || started.current) return;
+    started.current = true;
+    void compare();
+    // ponytail: single mount-time diff for the embedded review; user refresh re-runs it
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embedded, initialReport]);
+  useEffect(() => {
+    if (sessionTitle || !root) return;
+    let active = true;
+    request<unknown>(`/api/refs?path=${encodeURIComponent(root)}`)
+      .then((r) => active && setRefs(refsSchema.parse(r)))
+      .catch(() => active && setRefs(null));
+    return () => {
+      active = false;
+    };
+  }, [root, sessionTitle]);
   const [ref, setRef] = useState('HEAD');
+  const [compareRef, setCompareRef] = useState('');
+  const [refs, setRefs] = useState<Refs | null>(null);
   const [report, setReport] = useState<Comparison | null>(initialReport ?? null);
   const [busy, setBusy] = useState(false);
+  const [agentReview, setAgentReview] = useState('');
+  const [reviewing, setReviewing] = useState(false);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -109,7 +137,14 @@ function ChangesReview({
     setError('');
     try {
       const next = comparisonSchema.parse(
-        onRefresh ? await onRefresh() : await request('/api/compare', { path: root, ref, focus }),
+        onRefresh
+          ? await onRefresh()
+          : await request('/api/compare', {
+              path: root,
+              ref,
+              focus,
+              ...(compareRef ? { compare: compareRef } : {}),
+            }),
       );
       setReport(next);
       setSelectedFile(null);
@@ -122,22 +157,39 @@ function ChangesReview({
   }
   const counts = (status: FileChange['status']) =>
     report?.files.filter((f) => f.status === status).length ?? 0;
+  async function askAgent() {
+    setReviewing(true);
+    setError('');
+    try {
+      const result = await request<{ sessionId: string; text: string }>(
+        '/api/opencode/agent-review',
+        { focus: filter.trim() || focus },
+      );
+      setAgentReview(result.text);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'The agent review failed.');
+    } finally {
+      setReviewing(false);
+    }
+  }
   const content = (
     <>
       <header className="wm-changes-header">
         <div>
           <GitCompareArrows size={18} />
           <strong>Review changes</strong>
-          <span>Read-only · your map stays intact</span>
+          <span>Read-only · your working tree is untouched</span>
         </div>
-        <button
-          autoFocus
-          className="wm-small-button"
-          onClick={onClose}
-          aria-label="Close change review"
-        >
-          <X size={15} /> Close
-        </button>
+        {!embedded && (
+          <button
+            autoFocus
+            className="wm-small-button"
+            onClick={onClose}
+            aria-label="Close change review"
+          >
+            <X size={15} /> Close
+          </button>
+        )}
       </header>
       {sessionTitle ? (
         <div className="wm-session-review-context">
@@ -167,18 +219,42 @@ function ChangesReview({
             void compare();
           }}
         >
+          <datalist id="wm-review-refs">
+            {refs?.refs.map((r) => (
+              <option key={`${r.kind}:${r.name}`} value={r.name}>
+                {r.kind}
+              </option>
+            ))}
+            {refs?.recent.map((c) => (
+              <option key={c.sha} value={c.sha}>
+                {`${c.date} ${c.subject}`.slice(0, 80)}
+              </option>
+            ))}
+          </datalist>
           <label>
-            Baseline revision
+            Base
             <input
               aria-label="Baseline revision"
+              list="wm-review-refs"
               value={ref}
               onChange={(e) => setRef(e.target.value)}
               required
               maxLength={200}
-              placeholder="HEAD, main, or a commit"
+              placeholder="HEAD, a branch, tag or commit"
             />
           </label>
-          <span>→ working tree</span>
+          <span>→</span>
+          <label>
+            Compare
+            <input
+              aria-label="Compare revision"
+              list="wm-review-refs"
+              value={compareRef}
+              onChange={(e) => setCompareRef(e.target.value)}
+              maxLength={200}
+              placeholder="working tree"
+            />
+          </label>
           <button className="wm-small-button" disabled={busy}>
             {busy ? (
               <LoaderCircle size={14} className="spinning" />
@@ -188,8 +264,11 @@ function ChangesReview({
             {busy ? 'Comparing…' : 'Compare changes'}
           </button>
           <small title={root}>
-            {root}
-            {focus ? ` · scan focus: ${focus}` : ''}
+            {refs
+              ? `${refs.branch ?? 'detached HEAD'}${refs.dirty ? ' · uncommitted changes' : ' · clean'}${
+                  focus ? ` · focus: ${focus}` : ''
+                }`
+              : root}
           </small>
         </form>
       )}
@@ -200,6 +279,48 @@ function ChangesReview({
       )}
       {report ? (
         <>
+          <div
+            className={`wm-review-verdict${report.partial ? ' wm-is-partial' : ''}`}
+            role="status"
+          >
+            <strong>{summarizeChanges(report).text}</strong>
+            {report.partial && (
+              <span>Coverage is incomplete; absence-based claims are withheld.</span>
+            )}
+          </div>
+          <section className="wm-review-agent" aria-label="Agent review">
+            <div className="wm-review-agent-head">
+              <span>
+                <Bot size={15} /> Agent review
+              </span>
+              <small>
+                OpenCode argues about this change. Evidence only; it never runs your code.
+              </small>
+            </div>
+            <button
+              className="wm-small-button"
+              disabled={reviewing || busy}
+              onClick={() => void askAgent()}
+            >
+              {reviewing ? <LoaderCircle size={14} className="spinning" /> : <Bot size={14} />}
+              {reviewing ? 'OpenCode is reviewing…' : 'Ask OpenCode to review'}
+            </button>
+            <details className="wm-review-rules">
+              <summary>ArchMap review rules</summary>
+              <p>
+                Cite file and line from the diff; treats static imports as dependencies, not runtime
+                order; read-only (no edits, no test runs); judges error paths, test coverage and
+                security; says “unknown” instead of guessing.
+              </p>
+            </details>
+            {reviewing && (
+              <p className="wm-review-agent-wait" role="status">
+                Sending the change to your configured model. This can take a minute; it costs one
+                model call.
+              </p>
+            )}
+            {agentReview && <pre className="wm-review-agent-text">{agentReview}</pre>}
+          </section>
           <div className="wm-changes-summary" role="status">
             <span>
               <b>{counts('added')}</b> added
@@ -262,35 +383,26 @@ function ChangesReview({
                       <span>Exports before: {selected.before?.exports.join(', ') || 'none'}</span>
                       <span>Exports after: {selected.after?.exports.join(', ') || 'none'}</span>
                     </div>
-                    <p>
-                      Source around the first changed line. Further changes may exist; these
-                      excerpts are not a complete patch.
-                    </p>
-                    {(['before', 'after'] as const).map((side) => (
-                      <section key={side} className="wm-changes-source-side">
-                        <h3>
-                          {side === 'before'
-                            ? `Before · ${report.baseline.kind === 'working-tree' ? 'tracking start' : report.baseline.revision.slice(0, 7)}`
-                            : 'After · working tree'}
-                        </h3>
-                        {selected[side] ? (
-                          <>
-                            {(selected[side === 'before' ? 'beforeEvidence' : 'afterEvidence']
-                              ? [selected[side === 'before' ? 'beforeEvidence' : 'afterEvidence']!]
-                              : selected[side]!.evidence.slice(0, 2)
-                            ).map((e) => (
-                              <EvidenceCard key={e.id} evidence={e} />
-                            ))}
-                            {!selected[side]!.evidence.length &&
-                              !selected[side === 'before' ? 'beforeEvidence' : 'afterEvidence'] && (
-                                <p>No statement excerpts in this file.</p>
-                              )}
-                          </>
-                        ) : (
-                          <p>File absent on this side.</p>
-                        )}
-                      </section>
-                    ))}
+                    {selected.patch ? (
+                      <div className="wm-changes-diff" aria-label="Unified diff">
+                        {selected.patch.split('\n').map((line, index) => {
+                          const kind = line.startsWith('@@')
+                            ? 'hunk'
+                            : line.startsWith('+')
+                              ? 'add'
+                              : line.startsWith('-')
+                                ? 'del'
+                                : 'ctx';
+                          return (
+                            <div key={index} className={`wm-diff-line wm-diff-${kind}`}>
+                              {line || ' '}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p>No line-level changes recorded for this file in the inspected scope.</p>
+                    )}
                   </>
                 ) : (
                   <>
@@ -376,7 +488,7 @@ function ChangesReview({
                           ? 'No changed files match this filter.'
                           : report.partial
                             ? 'No modifications found in files inspected on both sides. Coverage is incomplete.'
-                            : 'No source changes found in the inspected scope.'}
+                            : `No source changes between ${report.baseline.kind === 'working-tree' ? 'tracking start' : report.baseline.revision.slice(0, 7)} and ${report.baseline.kind === 'working-tree' ? 'your working tree' : 'the compared ref'}. Pick another base or compare ref above.`}
                       </p>
                     )}
                     {report.dependencies.length > 0 && (
@@ -419,6 +531,12 @@ function ChangesReview({
             </aside>
           </div>
         </>
+      ) : embedded && busy ? (
+        <div className="wm-changes-start">
+          <LoaderCircle size={30} className="spinning" />
+          <h2>Comparing your working tree…</h2>
+          <p>Reading source on disk against the baseline. This never runs your code.</p>
+        </div>
       ) : (
         <div className="wm-changes-start">
           <GitCompareArrows size={30} />

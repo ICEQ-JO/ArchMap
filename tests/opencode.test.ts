@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
-import { mkdtemp, writeFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, writeFile, rm, symlink, chmod } from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { OpenCodeReview, localOpenCodeUrl } from '../server/opencode.js';
@@ -13,6 +13,8 @@ async function fixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), 'archmap-opencode-'));
   await writeFile(path.join(root, 'main.ts'), 'export const existingDirtyValue = 7;\n');
   const calls: { method: string; route: string; auth?: string }[] = [];
+  const bodies: Record<string, unknown>[] = [];
+  let reviewText = 'What changed: nothing yet.\n\nConcerns: none.';
   let phase = 'idle',
     userId = 'old',
     complete = true;
@@ -31,58 +33,79 @@ async function fixture() {
     const url = new URL(req.url!, 'http://local');
     calls.push({ method: req.method!, route: url.pathname, auth: req.headers.authorization });
     assert.equal(url.searchParams.get('directory'), null);
-    if (
-      requireAuth &&
-      req.headers.authorization !==
-        `Basic ${Buffer.from('opencode:fixture-password').toString('base64')}`
-    ) {
-      res.writeHead(401).end();
-      return;
-    }
-    if (redirect) {
-      res.writeHead(302, { Location: 'http://127.0.0.1:1/private' }).end();
-      return;
-    }
-    res.setHeader('Content-Type', 'application/json');
-    if (oversized) {
-      res.end(JSON.stringify({ text: 'x'.repeat(1024 * 1024 + 1) }));
-      return;
-    }
-    if (url.pathname === '/path')
-      res.end(JSON.stringify({ directory: foreignPath ? path.dirname(root) : root }));
-    else if (url.pathname === '/session')
-      res.end(
-        JSON.stringify([
-          session(),
-          { id: 'ses_foreign', title: 'Private other repo', directory: path.dirname(root) },
-        ]),
-      );
-    else if (url.pathname === '/session/ses_local') res.end(JSON.stringify(session()));
-    else if (url.pathname === '/session/status')
-      res.end(JSON.stringify({ ses_local: { type: invalidStatus ? 'unknown' : phase } }));
-    else if (url.pathname === '/session/ses_local/message')
-      res.end(
-        JSON.stringify([
-          {
-            info: { id: userId, role: 'user', time: { created: userId === 'old' ? 1 : 2 } },
-            parts: [{ type: 'text', text: 'Add authentication to the API' }],
-          },
-          ...(complete
-            ? [
-                {
-                  info: {
-                    id: 'assistant',
-                    role: 'assistant',
-                    parentID: userId,
-                    time: { created: 3, completed: 4 },
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      const raw = Buffer.concat(chunks).toString('utf8');
+      if (raw) bodies.push(JSON.parse(raw));
+      respond();
+    });
+    function respond() {
+      if (
+        requireAuth &&
+        req.headers.authorization !==
+          `Basic ${Buffer.from('opencode:fixture-password').toString('base64')}`
+      ) {
+        res.writeHead(401).end();
+        return;
+      }
+      if (redirect) {
+        res.writeHead(302, { Location: 'http://127.0.0.1:1/private' }).end();
+        return;
+      }
+      res.setHeader('Content-Type', 'application/json');
+      if (oversized) {
+        res.end(JSON.stringify({ text: 'x'.repeat(1024 * 1024 + 1) }));
+        return;
+      }
+      if (req.method === 'POST' && url.pathname === '/session')
+        res.end(JSON.stringify({ ...session(), id: 'ses_new' }));
+      else if (req.method === 'POST' && url.pathname === '/session/ses_new/message')
+        res.end(
+          JSON.stringify({
+            info: { id: 'assistant', role: 'assistant', time: { created: 5, completed: 6 } },
+            parts: [
+              { type: 'reasoning', text: 'thinking' },
+              { type: 'text', text: reviewText },
+            ],
+          }),
+        );
+      else if (url.pathname === '/path')
+        res.end(JSON.stringify({ directory: foreignPath ? path.dirname(root) : root }));
+      else if (url.pathname === '/session')
+        res.end(
+          JSON.stringify([
+            session(),
+            { id: 'ses_foreign', title: 'Private other repo', directory: path.dirname(root) },
+          ]),
+        );
+      else if (url.pathname === '/session/ses_local') res.end(JSON.stringify(session()));
+      else if (url.pathname === '/session/status')
+        res.end(JSON.stringify({ ses_local: { type: invalidStatus ? 'unknown' : phase } }));
+      else if (url.pathname === '/session/ses_local/message')
+        res.end(
+          JSON.stringify([
+            {
+              info: { id: userId, role: 'user', time: { created: userId === 'old' ? 1 : 2 } },
+              parts: [{ type: 'text', text: 'Add authentication to the API' }],
+            },
+            ...(complete
+              ? [
+                  {
+                    info: {
+                      id: 'assistant',
+                      role: 'assistant',
+                      parentID: userId,
+                      time: { created: 3, completed: 4 },
+                    },
+                    parts: [],
                   },
-                  parts: [],
-                },
-              ]
-            : []),
-        ]),
-      );
-    else res.writeHead(404).end('{}');
+                ]
+              : []),
+          ]),
+        );
+      else res.writeHead(404).end('{}');
+    }
   }).listen(0, '127.0.0.1');
   await once(server, 'listening');
   const address = server.address();
@@ -99,6 +122,10 @@ async function fixture() {
     bridge,
     input,
     calls,
+    bodies,
+    setReviewText: (value: string) => {
+      reviewText = value;
+    },
     setPhase: (value: string) => {
       phase = value;
     },
@@ -241,6 +268,11 @@ test('adapter API retains origin, root and symlink boundaries and rejects unknow
     const response = await post('review', {});
     assert.equal(response.status, 200);
     assert.equal((await response.json()).files.length, 0);
+    const reviewResponse = await post('agent-review', { focus: 'auth' });
+    assert.equal(reviewResponse.status, 200);
+    const review = await reviewResponse.json();
+    assert.equal(review.sessionId, 'ses_new');
+    assert.match(review.text, /Concerns/);
     await post('disconnect', {});
   } finally {
     app.close();
@@ -277,6 +309,40 @@ test('connecting verifies the server existing project without initializing a dir
   }
 });
 
+test('asks the connected agent to argue about a change, read-only and evidence-bound', async () => {
+  const f = await fixture();
+  try {
+    await f.bridge.connect(f.input);
+    await f.bridge.track('ses_local');
+    f.setTurn('new', false);
+    f.setPhase('busy');
+    await f.bridge.poll();
+    await writeFile(
+      path.join(f.root, 'main.ts'),
+      'export const existingDirtyValue = 8;\nexport const authenticated = true;\n',
+    );
+    f.setPhase('idle');
+    f.setTurn('new', true);
+    await f.bridge.poll();
+    const result = await f.bridge.agentReview('the auth path', 'opencode/glm-5.3-flash-free');
+    assert.equal(result.sessionId, 'ses_new');
+    assert.match(result.text, /Concerns/);
+    const body = f.bodies.find((b) => 'system' in b)!;
+    assert.deepEqual(body.model, { providerID: 'opencode', modelID: 'glm-5.3-flash-free' });
+    assert.equal((body.tools as Record<string, boolean>).bash, false);
+    assert.equal((body.tools as Record<string, boolean>).edit, false);
+    assert.equal((body.tools as Record<string, boolean>).write, false);
+    assert.match(String(body.system), /read-only/);
+    const prompt = (body.parts as { text: string }[])[0].text;
+    assert.match(prompt, /focused on: the auth path/);
+    assert.match(prompt, /existingDirtyValue = 8/);
+    f.setReviewText('');
+    await assert.rejects(f.bridge.agentReview(), /no review text/);
+  } finally {
+    await f.close();
+  }
+});
+
 async function withEnv(url: string, run: () => Promise<void>) {
   const previous = process.env.ARCHMAP_OPENCODE_URL;
   process.env.ARCHMAP_OPENCODE_URL = url;
@@ -300,6 +366,76 @@ test('auto-connects to a local OpenCode server scoped to the repository', async 
     });
   } finally {
     await f.close();
+  }
+});
+
+const fakeOpenCode = `#!/usr/bin/env node
+import http from 'node:http';
+const args = process.argv.slice(2);
+const port = Number(args[args.indexOf('--port') + 1]);
+const dir = process.env.FAKE_OPENCODE_DIR || process.cwd();
+const server = http.createServer((req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  const p = new URL(req.url, 'http://local').pathname;
+  if (p === '/path') res.end(JSON.stringify({ directory: dir }));
+  else if (p === '/session') res.end(JSON.stringify([]));
+  else res.writeHead(404).end('{}');
+});
+server.listen(port, '127.0.0.1', () =>
+  console.log('opencode server listening on http://127.0.0.1:' + port),
+);
+process.on('SIGTERM', () => server.close(() => process.exit(0)));
+`;
+
+async function withOpenCodeBin(run: (bin: string) => Promise<void>) {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'archmap-launch-'));
+  const bin = path.join(dir, 'fake-opencode.mjs');
+  await writeFile(bin, fakeOpenCode);
+  await chmod(bin, 0o755);
+  const previous = process.env.OPENCODE_BIN;
+  process.env.OPENCODE_BIN = bin;
+  try {
+    await run(bin);
+  } finally {
+    if (previous === undefined) delete process.env.OPENCODE_BIN;
+    else process.env.OPENCODE_BIN = previous;
+    delete process.env.FAKE_OPENCODE_DIR;
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
+test('launching starts an OpenCode server in the repository and connects to it', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'archmap-launch-root-'));
+  await writeFile(path.join(root, 'main.ts'), 'export const value = 1;\n');
+  const bridge = new OpenCodeReview(root);
+  try {
+    await withOpenCodeBin(async () => {
+      const state = await bridge.launch({ path: '.' });
+      assert.equal(state.connected, true);
+      assert.equal(state.root, root);
+      assert.match(state.baseUrl!, /^http:\/\/127\.0\.0\.1:\d+$/);
+      assert.equal((await bridge.sessions()).length, 0);
+    });
+  } finally {
+    bridge.disconnect();
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('launch refuses an OpenCode server scoped to a different folder', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'archmap-launch-root-'));
+  const other = await mkdtemp(path.join(os.tmpdir(), 'archmap-launch-other-'));
+  const bridge = new OpenCodeReview(root);
+  try {
+    await withOpenCodeBin(async () => {
+      process.env.FAKE_OPENCODE_DIR = other;
+      await assert.rejects(bridge.launch({ path: '.' }), /different folder/);
+      assert.equal(bridge.status().connected, false);
+    });
+  } finally {
+    bridge.disconnect();
+    await rm(root, { recursive: true, force: true });
+    await rm(other, { recursive: true, force: true });
   }
 });
 

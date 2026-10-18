@@ -70,10 +70,11 @@ for (const width of [1440, 390]) {
       await page.getByRole('button', { name: 'Add component', exact: true }).click();
       await page.getByRole('button', { name: 'Changes', exact: true }).click();
       await page.getByRole('button', { name: 'Track an agent task', exact: true }).click();
+      await page.getByText('Connect to a server you already started', { exact: true }).click();
       await page.getByLabel('OpenCode server address').fill(`http://127.0.0.1:${address.port}`);
       await page.getByText('Server authentication (optional)', { exact: true }).click();
       await page.getByLabel('OpenCode password').fill('synthetic-password');
-      await page.getByRole('button', { name: 'Connect OpenCode', exact: true }).click();
+      await page.getByRole('button', { name: 'Connect to address', exact: true }).click();
       await expect(page.getByLabel('OpenCode session', { exact: true })).toContainText(
         session.title,
       );
@@ -94,13 +95,16 @@ for (const width of [1440, 390]) {
       await expect(dialog).toBeVisible({ timeout: 10000 });
       await expect(dialog).toContainText('Working-tree baseline captured');
       await expect(dialog).toContainText('Update application version');
-      await expect(dialog.getByRole('status')).toContainText('1 modified');
+      await expect(dialog.locator('.wm-changes-summary')).toContainText('1 modified');
       await dialog.locator('.wm-changes-file-list button').click();
-      await expect(dialog.locator('.wm-changes-source-side').first()).toContainText('version = 1');
-      await expect(dialog.locator('.wm-changes-source-side').last()).toContainText('version = 2');
+      await expect(dialog.locator('.wm-changes-diff')).toContainText('version = 1');
+      await expect(dialog.locator('.wm-changes-diff')).toContainText('version = 2');
       expect(await dialog.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
       await page.screenshot({ path: `test-results/opencode-review-${width}.png`, fullPage: true });
-      await page.getByRole('button', { name: 'Close change review', exact: true }).click();
+      await page
+        .getByRole('navigation')
+        .getByRole('button', { name: 'Architecture', exact: true })
+        .click();
       await expect(page.locator('.react-flow__node')).toHaveCount(3);
       const previousPolls = calls.filter((call) => call === 'GET /session/status').length;
       await page.getByRole('button', { name: 'Architecture', exact: true }).click();
